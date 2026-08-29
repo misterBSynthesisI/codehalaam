@@ -1,0 +1,102 @@
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { api } from '@/lib/api'
+
+interface User {
+  id: string
+  username: string
+  displayName: string
+  email: string
+  bio: string
+  company: string
+  location: string
+  website: string
+  twitter: string
+  avatarUrl: string
+  level: number
+  xp: number
+  xpToNext: number
+  streak: number
+  longestStreak: number
+  stats: {
+    commits: number
+    pullRequests: number
+    reviews: number
+    issues: number
+    contributions: number
+  }
+  achievements: { id: string; name: string; unlockedAt: string }[]
+  contributionDays: { date: string; count: number }[]
+  createdAt: string
+}
+
+interface AuthContextType {
+  user: User | null
+  loading: boolean
+  login: (email: string, password: string) => Promise<void>
+  signup: (username: string, email: string, password: string) => Promise<void>
+  logout: () => void
+  updateUser: (data: Partial<User>) => void
+  refreshUser: () => Promise<void>
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  const refreshUser = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('codehalaam_token')
+      if (!token) {
+        setLoading(false)
+        return
+      }
+
+      const { user } = await api.getMe()
+      setUser(user)
+    } catch (err) {
+      localStorage.removeItem('codehalaam_token')
+      setUser(null)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    refreshUser()
+  }, [refreshUser])
+
+  const login = async (email: string, password: string) => {
+    const { user } = await api.login(email, password)
+    setUser(user)
+  }
+
+  const signup = async (username: string, email: string, password: string) => {
+    const { user } = await api.signup(username, email, password)
+    setUser(user)
+  }
+
+  const logout = () => {
+    api.logout()
+    setUser(null)
+  }
+
+  const updateUser = (data: Partial<User>) => {
+    setUser(prev => prev ? { ...prev, ...data } as User : null)
+  }
+
+  return (
+    <AuthContext.Provider value={{ user, loading, login, signup, logout, updateUser, refreshUser }}>
+      {children}
+    </AuthContext.Provider>
+  )
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext)
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider')
+  }
+  return context
+}
