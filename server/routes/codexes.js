@@ -29,6 +29,7 @@ import Invitation from '../models/Invitation.js'
 import Commit from '../models/Commit.js'
 import { protect } from '../middleware/auth.js'
 import * as gitService from '../services/gitService.js'
+import { uploadCodexMedia } from '../services/uploadService.js'
 
 const router = express.Router()
 
@@ -253,6 +254,71 @@ router.post('/:owner/:name/echo', protect, async (req, res) => {
   } catch (err) {
     console.error('Echo error:', err)
     res.status(500).json({ error: 'Failed to echo' })
+  }
+})
+
+// ============================================================
+//  MEDIA UPLOAD + CODEX UPDATE
+// ============================================================
+
+// POST /api/codexes/:owner/:name/media — Upload cover or logo
+router.post('/:owner/:name/media', protect, uploadCodexMedia.single('file'), async (req, res) => {
+  try {
+    const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
+    if (error) return res.status(status).json({ error })
+
+    // Only owner or admin/write collaborator
+    const isOwner = owner._id.toString() === req.user._id.toString()
+    if (!isOwner && !req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only the owner can upload media' })
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' })
+    }
+
+    const fieldType = req.body.field || 'cover' // 'cover' or 'logo'
+    const fileUrl = `/uploads/codexes/${req.file.filename}`
+
+    if (fieldType === 'logo') {
+      repo.logoUrl = fileUrl
+    } else {
+      repo.coverUrl = fileUrl
+    }
+    await repo.save()
+
+    res.json({ url: fileUrl, field: fieldType })
+  } catch (err) {
+    console.error('Upload error:', err)
+    res.status(500).json({ error: 'Failed to upload file' })
+  }
+})
+
+// PATCH /api/codexes/:owner/:name — Update codex storefront fields
+router.patch('/:owner/:name', protect, async (req, res) => {
+  try {
+    const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
+    if (error) return res.status(status).json({ error })
+
+    // Only owner or admin
+    const isOwner = owner._id.toString() === req.user._id.toString()
+    if (!isOwner && !req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only the owner can edit this codex' })
+    }
+
+    const { tagline, websiteUrl, technologies, accentColor, description } = req.body
+    if (tagline !== undefined) repo.tagline = tagline
+    if (websiteUrl !== undefined) repo.websiteUrl = websiteUrl
+    if (technologies !== undefined) repo.technologies = technologies
+    if (accentColor !== undefined) repo.accentColor = accentColor
+    if (description !== undefined) repo.description = description
+
+    await repo.save()
+
+    res.json({ repo })
+  } catch (err) {
+    console.error('Update codex error:', err)
+    res.status(500).json({ error: 'Failed to update codex' })
   }
 })
 

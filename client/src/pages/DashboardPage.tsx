@@ -112,11 +112,9 @@ export function DashboardPage() {
                       transition={{ delay: i * 0.03, duration: 0.2 }}
                     >
                       <Link
-                        to={`/${issue._repoOwner}/${issue._repoName}`}
-                        className="flex items-center gap-3 px-4 py-3 no-underline transition-colors"
+                        to={`/codex/${issue._repoOwner}/${issue._repoName}/quests/${issue.number}`}
+                        className="hover-row flex items-center gap-3 px-4 py-3 no-underline"
                         style={{ borderBottom: i < myIssues.length - 1 ? '1px solid var(--color-border-default)' : undefined, color: 'var(--color-fg-default)' }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-canvas-subtle)'}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                       >
                         <AlertCircle className="w-4 h-4 shrink-0" style={{ color: 'var(--color-success-fg)' }} />
                         <div className="min-w-0 flex-1">
@@ -162,11 +160,9 @@ export function DashboardPage() {
                       transition={{ delay: i * 0.03, duration: 0.2 }}
                     >
                       <Link
-                        to={`/${pr._repoOwner}/${pr._repoName}`}
-                        className="flex items-center gap-3 px-4 py-3 no-underline transition-colors"
+                        to={`/codex/${pr._repoOwner}/${pr._repoName}/offerings/${pr.number}`}
+                        className="hover-row flex items-center gap-3 px-4 py-3 no-underline"
                         style={{ borderBottom: i < myPRs.length - 1 ? '1px solid var(--color-border-default)' : undefined, color: 'var(--color-fg-default)' }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-canvas-subtle)'}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                       >
                         <GitPullRequest className="w-4 h-4 shrink-0" style={{
                           color: pr.state === 'merged' ? 'var(--color-done-fg)' : pr.state === 'open' ? 'var(--color-success-fg)' : 'var(--color-fg-muted)'
@@ -213,10 +209,8 @@ export function DashboardPage() {
                   >
                     <Link
                       to={`/codex/${user.username}/${repo.name}`}
-                      className="flex items-center justify-between px-4 py-2.5 no-underline transition-colors"
+                      className="hover-row flex items-center justify-between px-4 py-2.5 no-underline"
                       style={{ borderBottom: i < Math.min(repos.length, 6) - 1 ? '1px solid var(--color-border-default)' : undefined, color: 'var(--color-fg-default)' }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-canvas-subtle)'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
                       <div className="min-w-0">
                         <div className="text-sm font-medium truncate" style={{ color: 'var(--color-accent-fg)' }}>{repo.name}</div>

@@ -455,6 +455,14 @@
     border-bottom: none;
   }
 
+  /* Hoverable list row — replaces inline JS handlers */
+  .hover-row {
+    transition: background-color 80ms;
+  }
+  .hover-row:hover {
+    background-color: var(--color-canvas-subtle);
+  }
+
   .file-row:hover {
     background-color: var(--color-canvas-subtle);
   }

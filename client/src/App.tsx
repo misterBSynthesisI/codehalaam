@@ -16,7 +16,7 @@
  * For licensing inquiries: justshipitai@gmail.com
  */
 
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { XPProvider } from '@/components/gamification/XPToast'
@@ -25,7 +25,6 @@ import { CommandPalette } from '@/components/command/CommandPalette'
 import { LandingPage } from '@/pages/LandingPage'
 import { AuthPage } from '@/pages/AuthPage'
 import { DashboardPage } from '@/pages/DashboardPage'
-import { RepoPage } from '@/pages/RepoPage'
 import { CodexHomePage } from '@/pages/CodexHomePage'
 import { CodeWorkspacePage } from '@/pages/CodeWorkspacePage'
 import { QuestDetailPage } from '@/pages/QuestDetailPage'
@@ -37,6 +36,11 @@ import { CreateRepoPage } from '@/pages/CreateRepoPage'
 import { AdminPage } from '@/pages/AdminPage'
 import { AdminBadgesPage } from '@/pages/AdminBadgesPage'
 import { AdminRoute } from '@/components/auth/AdminRoute'
+
+function RepoRedirect() {
+  const { username, repoName } = useParams()
+  return <Navigate to={`/codex/${username}/${repoName}`} replace />
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
@@ -105,10 +109,10 @@ function AppRoutes() {
       <Route path="/codex/:owner/:name/releases" element={<ReleaseListPage />} />
       <Route path="/codex/:owner/:name" element={<CodexHomePage />} />
 
-      {/* Profile and repo routes */}
+      {/* Profile route */}
+      <Route path="/:username/:repoName" element={<RepoRedirect />} />
+      <Route path="/:username/:repoName/*" element={<RepoRedirect />} />
       <Route path="/:username" element={<ProfilePage />} />
-      <Route path="/:username/:repoName" element={<RepoPage />} />
-      <Route path="/:username/:repoName/*" element={<RepoPage />} />
     </Routes>
   )
 }

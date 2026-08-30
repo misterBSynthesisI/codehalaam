@@ -64,8 +64,15 @@ const repositorySchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
-  },
-  homepage: { type: String, default: '' },
+  },  homepage: { type: String, default: '' },
+
+  // Storefront fields
+  coverUrl: { type: String, default: '' },
+  logoUrl: { type: String, default: '' },
+  tagline: { type: String, default: '' },
+  websiteUrl: { type: String, default: '' },
+  technologies: [String],
+  accentColor: { type: String, default: '#58a6ff' },
 
   // Language stats
   language: { type: String, default: '' },

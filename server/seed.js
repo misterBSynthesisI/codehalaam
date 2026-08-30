@@ -1175,12 +1175,16 @@ async function seed() {
     })
     console.log('  Added mike-reviewer as collaborator')
 
-    // Update codex counters
+    // Update codex counters + storefront
     demoCodex.nextQuestNumber = 3
     demoCodex.nextOfferingNumber = 3
     demoCodex.embers = [neo._id, sarah._id]
     demoCodex.watchers = [mike._id, alex._id]
     demoCodex.echoes = [neo._id]
+    demoCodex.tagline = 'A blazing-fast React component library'
+    demoCodex.technologies = ['React', 'TypeScript', 'Tailwind', 'Framer Motion']
+    demoCodex.websiteUrl = 'https://aurora-ui.dev'
+    demoCodex.accentColor = '#6366f1'
     await demoCodex.save()
     console.log('  Updated codex counters and social data')
 

@@ -20,6 +20,7 @@ import express from 'express'
 import mongoose from 'mongoose'
 import User from '../models/User.js'
 import { generateToken, protect } from '../middleware/auth.js'
+import { uploadAvatar } from '../services/uploadService.js'
 
 const router = express.Router()
 
@@ -185,6 +186,27 @@ router.put('/password', protect, async (req, res) => {
     res.json({ message: 'Password updated successfully' })
   } catch (err) {
     res.status(500).json({ error: 'Failed to update password' })
+  }
+})
+
+// POST /api/auth/avatar — Upload user avatar
+router.post('/avatar', protect, uploadAvatar.single('avatar'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' })
+    }
+
+    const avatarUrl = `/uploads/avatars/${req.file.filename}`
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { avatarUrl },
+      { new: true }
+    ).select('-password')
+
+    res.json({ avatarUrl, user })
+  } catch (err) {
+    console.error('Avatar upload error:', err)
+    res.status(500).json({ error: 'Failed to upload avatar' })
   }
 })
 

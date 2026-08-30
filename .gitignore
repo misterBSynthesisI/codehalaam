@@ -43,3 +43,6 @@ coverage/
 # Misc
 .cache/
 .temp/
+
+# Uploads
+server/uploads/

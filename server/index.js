@@ -17,6 +17,8 @@
  */
 
 import express from 'express'
+import path from 'path'
+import { fileURLToPath } from 'url'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import mongoose from 'mongoose'
@@ -47,6 +49,12 @@ const io = new Server(httpServer, {
 })
 
 const PORT = parseInt(process.env.PORT, 10) || 5000
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
 // Middleware
 app.use(cors({
