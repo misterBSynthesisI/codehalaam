@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node --watch index.js",
     "start": "node index.js",
-    "seed": "node seed.js"
+    "seed": "node seed.js",
+    "health": "node -e \"fetch('http://localhost:5000/api/health').then(r => r.json()).then(d => console.log(JSON.stringify(d, null, 2))).catch(e => console.error('Server not reachable:', e.message))\""
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
