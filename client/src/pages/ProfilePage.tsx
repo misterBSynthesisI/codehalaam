@@ -150,7 +150,7 @@ export function ProfilePage() {
                   <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--color-fg-default)' }}>Pinned</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {repos.slice(0, 6).map(repo => (
-                      <Link key={repo._id} to={`/${profile.username}/${repo.name}`} className="Box p-4 no-underline" style={{ textDecoration: 'none' }}>
+                      <Link key={repo._id} to={`/codex/${profile.username}/${repo.name}`} className="Box p-4 no-underline" style={{ textDecoration: 'none' }}>
                         <div className="flex items-center gap-2 mb-1">
                           <BookOpen className="w-4 h-4" strokeWidth={1.5} style={{ color: 'var(--color-accent-fg)' }} />
                           <span className="text-sm font-semibold" style={{ color: 'var(--color-accent-fg)' }}>{repo.name}</span>
@@ -172,7 +172,7 @@ export function ProfilePage() {
               <div className="Box" data-testid="repo-list">
                 {repos.map(repo => (
                   <div key={repo._id} className="Box-row">
-                    <Link to={`/${profile.username}/${repo.name}`} className="flex items-center gap-2 text-sm font-semibold no-underline hover:underline" style={{ color: 'var(--color-accent-fg)' }}>
+                    <Link to={`/codex/${profile.username}/${repo.name}`} className="flex items-center gap-2 text-sm font-semibold no-underline hover:underline" style={{ color: 'var(--color-accent-fg)' }}>
                       <BookOpen className="w-4 h-4" strokeWidth={1.5} />
                       {repo.name}
                     </Link>

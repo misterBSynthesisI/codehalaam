@@ -18,51 +18,55 @@
 
 import mongoose from 'mongoose'
 
-const collaboratorSchema = new mongoose.Schema({
+const offeringSchema = new mongoose.Schema({
   codex: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Repository',
     required: true,
   },
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+  number: {
+    type: Number,
     required: true,
   },
-  repository: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Repository',
-    required: true,
-  },
-  role: {
+  title: {
     type: String,
-    enum: ['Owner', 'Admin', 'Write', 'Read'],
-    default: 'Read',
+    required: true,
+    trim: true,
+    maxlength: 256,
   },
-  addedBy: {
+  body: {
+    type: String,
+    default: '',
+  },
+  sourcePath: {
+    type: String,
+    required: true,
+  },
+  targetPath: {
+    type: String,
+    required: true,
+    default: 'main',
+  },
+  status: {
+    type: String,
+    enum: ['Open', 'Bound', 'Closed'],
+    default: 'Open',
+  },
+  author: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
   },
-  invitedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
-  acceptedAt: {
-    type: Date,
-    default: null,
-  },
-  pending: {
-    type: Boolean,
-    default: true,
-  },
+  boundAt: Date,
+  closedAt: Date,
+  closedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 }, { timestamps: true })
 
-// One role per user per repo
-collaboratorSchema.index({ user: 1, repository: 1 }, { unique: true })
-collaboratorSchema.index({ repository: 1, role: 1 })
-collaboratorSchema.index({ user: 1 })
+// Indexes
+offeringSchema.index({ codex: 1, number: 1 }, { unique: true })
+offeringSchema.index({ codex: 1, status: 1 })
+offeringSchema.index({ codex: 1, createdAt: -1 })
+offeringSchema.index({ author: 1 })
 
-const Collaborator = mongoose.model('Collaborator', collaboratorSchema)
-export default Collaborator
+const Offering = mongoose.model('Offering', offeringSchema)
+export default Offering

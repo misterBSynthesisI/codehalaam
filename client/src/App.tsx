@@ -26,6 +26,11 @@ import { LandingPage } from '@/pages/LandingPage'
 import { AuthPage } from '@/pages/AuthPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { RepoPage } from '@/pages/RepoPage'
+import { CodexHomePage } from '@/pages/CodexHomePage'
+import { CodeWorkspacePage } from '@/pages/CodeWorkspacePage'
+import { QuestDetailPage } from '@/pages/QuestDetailPage'
+import { OfferingDetailPage } from '@/pages/OfferingDetailPage'
+import { ReleaseListPage } from '@/pages/ReleaseListPage'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { CreateRepoPage } from '@/pages/CreateRepoPage'
@@ -93,8 +98,15 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
 
-      <Route path="/:username" element={<ProfilePage />} />
+      {/* Barry routes — must come BEFORE /:username catch-all */}
+      <Route path="/codex/:owner/:name/code" element={<CodeWorkspacePage />} />
+      <Route path="/codex/:owner/:name/quests/:number" element={<QuestDetailPage />} />
+      <Route path="/codex/:owner/:name/offerings/:number" element={<OfferingDetailPage />} />
+      <Route path="/codex/:owner/:name/releases" element={<ReleaseListPage />} />
+      <Route path="/codex/:owner/:name" element={<CodexHomePage />} />
 
+      {/* Profile and repo routes */}
+      <Route path="/:username" element={<ProfilePage />} />
       <Route path="/:username/:repoName" element={<RepoPage />} />
       <Route path="/:username/:repoName/*" element={<RepoPage />} />
     </Routes>

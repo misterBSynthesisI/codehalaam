@@ -1,0 +1,380 @@
+/**
+ * CODEHALAAM — The Gamified Code Hosting Platform
+ * 
+ * © 2026 JustShipitAI. All rights reserved.
+ * 
+ * CONFIDENTIAL — TRADE SECRET
+ * 
+ * This file is proprietary and confidential. Unauthorized
+ * copying, distribution, modification, or reverse engineering
+ * of this file, via any medium, is strictly prohibited.
+ * 
+ * This code was developed with AI assistance under strict
+ * confidentiality protocols. All intellectual property rights
+ * are retained by the Owner.
+ * 
+ * For licensing inquiries: justshipitai@gmail.com
+ */
+
+import { useState, useEffect, useCallback } from 'react'
+import { useParams, Link, useNavigate } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  ChevronRight, Star, GitFork, FileCode2, MessageSquare, GitPullRequest,
+  AlertCircle, Eye, GitBranch, BookOpen, Users, Flame, Radio,
+  Plus, Tag, ExternalLink, Settings, File
+} from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import { api } from '@/lib/api'
+import { useAuth } from '@/contexts/AuthContext'
+
+/* ===== MARKDOWN COMPONENTS ===== */
+const markdownComponents: Record<string, any> = {
+  h1: ({ children, ...props }: any) => <h1 className="text-3xl font-bold mt-6 mb-4 pb-2 border-b" style={{ color: 'var(--color-fg-default)', borderColor: 'var(--color-border-default)', letterSpacing: '-0.02em' }} {...props}>{children}</h1>,
+  h2: ({ children, ...props }: any) => <h2 className="text-2xl font-semibold mt-6 mb-3 pb-2 border-b" style={{ color: 'var(--color-fg-default)', borderColor: 'var(--color-border-default)', letterSpacing: '-0.015em' }} {...props}>{children}</h2>,
+  h3: ({ children, ...props }: any) => <h3 className="text-xl font-semibold mt-5 mb-2" style={{ color: 'var(--color-fg-default)', letterSpacing: '-0.01em' }} {...props}>{children}</h3>,
+  p: ({ children, ...props }: any) => <p className="mb-3 leading-relaxed" style={{ color: 'var(--color-fg-default)' }} {...props}>{children}</p>,
+  a: ({ children, href, ...props }: any) => <a href={href} className="no-underline hover:underline" style={{ color: 'var(--color-accent-fg)' }} target="_blank" rel="noopener noreferrer" {...props}>{children}</a>,
+  ul: ({ children, ...props }: any) => <ul className="mb-3 ml-6 list-disc space-y-1" style={{ color: 'var(--color-fg-default)' }} {...props}>{children}</ul>,
+  ol: ({ children, ...props }: any) => <ol className="mb-3 ml-6 list-decimal space-y-1" style={{ color: 'var(--color-fg-default)' }} {...props}>{children}</ol>,
+  li: ({ children, ...props }: any) => <li className="leading-relaxed" {...props}>{children}</li>,
+  blockquote: ({ children, ...props }: any) => (
+    <blockquote className="border-l-4 pl-4 my-4 italic" style={{ borderColor: 'var(--color-accent-fg)', color: 'var(--color-fg-muted)' }} {...props}>{children}</blockquote>
+  ),
+  code: ({ inline, className, children, ...props }: any) => {
+    if (inline) {
+      return <code className="px-1.5 py-0.5 rounded text-sm" style={{ backgroundColor: 'var(--color-canvas-subtle)', color: 'var(--color-accent-fg)', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace' }} {...props}>{children}</code>
+    }
+    return <code className={className} {...props}>{children}</code>
+  },
+  pre: ({ children, ...props }: any) => (
+    <pre className="rounded-md p-4 my-4 overflow-x-auto text-sm leading-relaxed" style={{ backgroundColor: 'var(--color-canvas-subtle)', border: '1px solid var(--color-border-default)', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace' }} {...props}>{children}</pre>
+  ),
+  table: ({ children, ...props }: any) => (
+    <div className="overflow-x-auto my-4"><table className="w-full border-collapse text-sm" style={{ border: '1px solid var(--color-border-default)' }} {...props}>{children}</table></div>
+  ),
+  thead: ({ children, ...props }: any) => <thead style={{ backgroundColor: 'var(--color-canvas-subtle)' }} {...props}>{children}</thead>,
+  th: ({ children, ...props }: any) => <th className="px-3 py-2 text-left font-semibold border" style={{ borderColor: 'var(--color-border-default)', color: 'var(--color-fg-default)' }} {...props}>{children}</th>,
+  td: ({ children, ...props }: any) => <td className="px-3 py-2 border" style={{ borderColor: 'var(--color-border-default)', color: 'var(--color-fg-default)' }} {...props}>{children}</td>,
+  hr: (props: any) => <hr className="my-6" style={{ borderColor: 'var(--color-border-default)' }} {...props} />,
+  input: ({ ...props }: any) => <input className="mr-2" {...props} />,
+}
+
+export function CodexHomePage() {
+  const { owner: ownerParam, name } = useParams()
+  const owner = ownerParam || ''
+  const navigate = useNavigate()
+  const { user } = useAuth()
+
+  const [repo, setRepo] = useState<any>(null)
+  const [readme, setReadme] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [counts, setCounts] = useState<any>({})
+
+  // Ember / Watch / Echo states
+  const [isEmbered, setIsEmbered] = useState(false)
+  const [embersCount, setEmbersCount] = useState(0)
+  const [isWatching, setIsWatching] = useState(false)
+  const [watchersCount, setWatchersCount] = useState(0)
+  const [hasEchoed, setHasEchoed] = useState(false)
+  const [echoesCount, setEchoesCount] = useState(0)
+
+  // Preview data
+  const [quests, setQuests] = useState<any[]>([])
+  const [offerings, setOfferings] = useState<any[]>([])
+  const [releases, setReleases] = useState<any[]>([])
+  const [paths, setPaths] = useState<any[]>([])
+  const [collaborators, setCollaborators] = useState<any[]>([])
+
+  useEffect(() => {
+    if (!owner || !name) return
+    setLoading(true)
+    Promise.all([
+      api.getCodex(owner, name),
+      api.getReadme(owner, name),
+    ]).then(([codexData, readmeData]) => {
+      setRepo(codexData.repo)
+      setCounts(codexData.counts)
+      setIsEmbered(codexData.isEmbered)
+      setEmbersCount(codexData.counts.embers)
+      setIsWatching(codexData.isWatching)
+      setWatchersCount(codexData.counts.watchers)
+      setHasEchoed(codexData.hasEchoed)
+      setEchoesCount(codexData.counts.echoes)
+      setReadme(readmeData.readme)
+    }).finally(() => setLoading(false))
+
+    // Load previews (best effort)
+    api.getQuests(owner, name).then(d => setQuests(d.quests?.slice(0, 5) || [])).catch(() => {})
+    api.getOfferings(owner, name).then(d => setOfferings(d.offerings?.slice(0, 5) || [])).catch(() => {})
+    api.getReleases(owner, name).then(d => setReleases(d.releases?.slice(0, 3) || [])).catch(() => {})
+    api.getPaths(owner, name).then(d => setPaths(d.paths || [])).catch(() => {})
+    api.getCodexCollaborators(owner, name).then(d => setCollaborators(d.collaborators || [])).catch(() => {})
+  }, [owner, name])
+
+  const handleToggleEmber = useCallback(async () => {
+    if (!owner || !name) return
+    const prev = { isEmbered, embersCount }
+    setIsEmbered(!isEmbered)
+    setEmbersCount(isEmbered ? embersCount - 1 : embersCount + 1)
+    try {
+      const data = await api.toggleCodexEmber(owner, name)
+      setIsEmbered(data.isEmbered)
+      setEmbersCount(data.embersCount)
+    } catch {
+      setIsEmbered(prev.isEmbered); setEmbersCount(prev.embersCount)
+    }
+  }, [owner, name, isEmbered, embersCount])
+
+  const handleToggleWatch = useCallback(async () => {
+    if (!owner || !name) return
+    const prev = { isWatching, watchersCount }
+    setIsWatching(!isWatching)
+    setWatchersCount(isWatching ? watchersCount - 1 : watchersCount + 1)
+    try {
+      const data = await api.toggleCodexWatch(owner, name)
+      setIsWatching(data.isWatching)
+      setWatchersCount(data.watchersCount)
+    } catch {
+      setIsWatching(prev.isWatching); setWatchersCount(prev.watchersCount)
+    }
+  }, [owner, name, isWatching, watchersCount])
+
+  const handleToggleEcho = useCallback(async () => {
+    if (!owner || !name) return
+    const prev = { hasEchoed, echoesCount }
+    setHasEchoed(!hasEchoed)
+    setEchoesCount(hasEchoed ? echoesCount - 1 : echoesCount + 1)
+    try {
+      const data = await api.toggleCodexEcho(owner, name)
+      setHasEchoed(data.hasEchoed)
+      setEchoesCount(data.echoesCount)
+    } catch {
+      setHasEchoed(prev.hasEchoed); setEchoesCount(prev.echoesCount)
+    }
+  }, [owner, name, hasEchoed, echoesCount])
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-canvas-default)' }}><div style={{ color: 'var(--color-fg-muted)' }}>Loading codex...</div></div>
+  }
+
+  if (!repo) {
+    return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-canvas-default)' }}><div style={{ color: 'var(--color-fg-muted)' }}>Codex not found</div></div>
+  }
+
+  const isOwner = user?.username === owner
+
+  return (
+    <div style={{ backgroundColor: 'var(--color-canvas-default)', minHeight: '100vh' }}>
+      <div className="container-lg py-4">
+        {/* Breadcrumb header */}
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <div className="flex items-center gap-2 text-sm">
+            <Link to={`/${owner}`} className="no-underline hover:underline" style={{ color: 'var(--color-accent-fg)' }}>{owner}</Link>
+            <ChevronRight className="w-3 h-3" strokeWidth={1.5} style={{ color: 'var(--color-fg-subtle)' }} />
+            <span className="font-semibold text-lg" style={{ color: 'var(--color-fg-default)' }}>{repo.name}</span>
+            <span className="Label Label-muted">{repo.visibility}</span>
+            {repo.description && <span className="text-sm hidden sm:inline" style={{ color: 'var(--color-fg-muted)' }}>— {repo.description}</span>}
+          </div>
+          {user && (
+            <div className="flex items-center gap-2">
+              <motion.button whileTap={{ scale: 0.92 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                onClick={handleToggleWatch} className="btn btn-sm btn-flash"
+                style={{ backgroundColor: isWatching ? 'var(--color-accent-muted)' : 'var(--color-btn-default-bg)', borderColor: isWatching ? 'var(--color-accent-fg)' : 'var(--color-btn-default-border)', color: isWatching ? 'var(--color-accent-fg)' : 'var(--color-fg-muted)' }}>
+                <Eye className="w-3.5 h-3.5" strokeWidth={1.5} fill={isWatching ? 'currentColor' : 'none'} /> Watch <span className="Counter">{watchersCount}</span>
+              </motion.button>
+              <motion.button whileTap={{ scale: 0.92 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                onClick={handleToggleEcho} className="btn btn-sm btn-default btn-flash">
+                <Radio className="w-3.5 h-3.5" strokeWidth={1.5} style={{ color: 'var(--color-done-fg)' }} /> Echo <span className="Counter">{echoesCount}</span>
+              </motion.button>
+              <motion.button whileTap={{ scale: 0.92 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                onClick={handleToggleEmber} className="btn btn-sm btn-flash"
+                style={{ backgroundColor: isEmbered ? 'rgba(249,115,22,0.1)' : 'var(--color-btn-default-bg)', borderColor: isEmbered ? '#f97316' : 'var(--color-btn-default-border)', color: isEmbered ? '#f97316' : 'var(--color-fg-muted)' }}>
+                <Flame className="w-3.5 h-3.5" strokeWidth={1.5} fill={isEmbered ? 'currentColor' : 'none'} /> Ember <span className="Counter">{embersCount}</span>
+              </motion.button>
+            </div>
+          )}
+        </div>
+
+        {/* Action bar */}
+        <div className="flex items-center gap-2 mb-4 flex-wrap">
+          <button onClick={() => navigate(`/codex/${owner}/${name}/code`)} className="btn btn-sm btn-primary">
+            <FileCode2 className="w-4 h-4" strokeWidth={1.5} /> Code
+          </button>
+          <button onClick={() => navigate(`/codex/${owner}/${name}/code`)} className="btn btn-sm btn-default">
+            <Eye className="w-4 h-4" strokeWidth={1.5} /> Files
+          </button>
+          <Link to={`/codex/${owner}/${name}/code`} className="btn btn-sm btn-default" style={{ textDecoration: 'none' }}>
+            <GitBranch className="w-4 h-4" strokeWidth={1.5} /> {repo.defaultBranch || 'main'}
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_296px] gap-6">
+          {/* Main content */}
+          <div>
+            {/* README */}
+            <div className="Box mb-6">
+              <div className="Box-header flex items-center gap-2" style={{ backgroundColor: 'var(--color-canvas-subtle)' }}>
+                <BookOpen className="w-4 h-4" strokeWidth={1.5} style={{ color: 'var(--color-fg-muted)' }} />
+                <span className="text-sm font-semibold" style={{ color: 'var(--color-fg-default)' }}>README.md</span>
+              </div>
+              <div className="Box-body markdown-body">
+                {readme ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                    {readme}
+                  </ReactMarkdown>
+                ) : (
+                  <div className="text-center py-8">
+                    <BookOpen className="w-8 h-8 mx-auto mb-2" strokeWidth={1.5} style={{ color: 'var(--color-fg-subtle)' }} />
+                    <p className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>No README found for this codex.</p>
+                    {isOwner && (
+                      <button onClick={() => navigate(`/codex/${owner}/${name}/code?path=README.md`)} className="btn btn-sm btn-primary mt-2">
+                        <Plus className="w-3 h-3" strokeWidth={1.5} /> Create README
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Open Quests preview */}
+            {quests.length > 0 && (
+              <div className="Box mb-4">
+                <div className="Box-header flex items-center justify-between" style={{ backgroundColor: 'var(--color-canvas-subtle)' }}>
+                  <span className="flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--color-fg-default)' }}>
+                    <AlertCircle className="w-4 h-4" strokeWidth={1.5} style={{ color: 'var(--color-success-fg)' }} />
+                    Open Quests
+                  </span>
+                  <span className="Counter">{counts.openQuests}</span>
+                </div>
+                {quests.map(q => (
+                  <Link key={q._id} to={`/codex/${owner}/${name}/quests/${q.number}`} className="Box-row flex items-center gap-3 no-underline hover:bg-canvas-subtle" style={{ textDecoration: 'none' }}>
+                    <AlertCircle className="w-4 h-4 shrink-0" strokeWidth={1.5} style={{ color: q.status === 'Closed' ? 'var(--color-done-fg)' : 'var(--color-success-fg)' }} />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-sm font-semibold" style={{ color: 'var(--color-fg-default)' }}>{q.title}</span>
+                      <p className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>#{q.number} · opened by {q.author?.username} · {new Date(q.createdAt).toLocaleDateString()}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+
+            {/* Open Offerings preview */}
+            {offerings.length > 0 && (
+              <div className="Box mb-4">
+                <div className="Box-header flex items-center justify-between" style={{ backgroundColor: 'var(--color-canvas-subtle)' }}>
+                  <span className="flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--color-fg-default)' }}>
+                    <GitPullRequest className="w-4 h-4" strokeWidth={1.5} style={{ color: 'var(--color-success-fg)' }} />
+                    Open Offerings
+                  </span>
+                  <span className="Counter">{counts.openOfferings}</span>
+                </div>
+                {offerings.map(o => (
+                  <Link key={o._id} to={`/codex/${owner}/${name}/offerings/${o.number}`} className="Box-row flex items-center gap-3 no-underline hover:bg-canvas-subtle" style={{ textDecoration: 'none' }}>
+                    <GitPullRequest className="w-4 h-4 shrink-0" strokeWidth={1.5} style={{ color: o.status === 'Bound' ? 'var(--color-done-fg)' : o.status === 'Closed' ? 'var(--color-fg-muted)' : 'var(--color-success-fg)' }} />
+                    <div className="min-w-0 flex-1">
+                      <span className="text-sm font-semibold" style={{ color: 'var(--color-fg-default)' }}>{o.title}</span>
+                      <p className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>#{o.number} · {o.sourcePath} → {o.targetPath} · {o.status}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-0">
+            {/* About */}
+            <div className="sidebar-section">
+              <h2 className="sidebar-heading" style={{ color: 'var(--color-fg-default)' }}>About</h2>
+              <p className="text-sm mb-3" style={{ color: 'var(--color-fg-muted)' }}>{repo.description || 'No description provided'}</p>
+              {repo.homepage && (
+                <a href={repo.homepage} target="_blank" rel="noopener noreferrer" className="text-xs flex items-center gap-1 mb-3" style={{ color: 'var(--color-accent-fg)' }}>
+                  <ExternalLink className="w-4 h-4" strokeWidth={1.5} />{repo.homepage.replace(/^https?:\/\//, '')}
+                </a>
+              )}
+              <div className="space-y-2 text-sm">
+                <div className="sidebar-item"><BookOpen className="w-4 h-4" strokeWidth={1.5} style={{ color: 'var(--color-fg-muted)' }} /><span style={{ color: 'var(--color-fg-muted)' }}>Readme</span></div>
+                <div className="sidebar-item"><Flame className="w-4 h-4" strokeWidth={1.5} style={{ color: '#f97316' }} /><span className="count">{embersCount}</span><span style={{ color: 'var(--color-fg-muted)' }}>embers</span></div>
+                <div className="sidebar-item"><Eye className="w-4 h-4" strokeWidth={1.5} style={{ color: 'var(--color-fg-muted)' }} /><span className="count">{watchersCount}</span><span style={{ color: 'var(--color-fg-muted)' }}>watching</span></div>
+                <div className="sidebar-item"><Radio className="w-4 h-4" strokeWidth={1.5} style={{ color: 'var(--color-done-fg)' }} /><span className="count">{echoesCount}</span><span style={{ color: 'var(--color-fg-muted)' }}>echoes</span></div>
+                {repo.topics?.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {repo.topics.map((t: string) => <span key={t} className="Label Label-blue">{t}</span>)}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* The Crew */}
+            {collaborators.length > 0 && (
+              <div className="sidebar-section">
+                <h2 className="sidebar-heading flex items-center gap-1" style={{ color: 'var(--color-fg-default)', fontSize: 16 }}>
+                  The Crew <span className="Counter">{collaborators.length}</span>
+                </h2>
+                <div className="space-y-1.5 mt-1">
+                  {collaborators.slice(0, 8).map((c: any) => (
+                    <div key={c.user?._id || c._id} className="flex items-center gap-2">
+                      <Link to={`/${c.user?.username}`} className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium no-underline hover:scale-110 transition-transform" style={{ backgroundColor: 'var(--color-success-muted)', color: 'var(--color-success-fg)' }}>
+                        {c.user?.username?.charAt(0).toUpperCase() || '?'}
+                      </Link>
+                      <Link to={`/${c.user?.username}`} className="text-sm no-underline hover:underline" style={{ color: 'var(--color-accent-fg)' }}>{c.user?.username}</Link>
+                      <span className="text-xs" style={{ color: 'var(--color-fg-subtle)' }}>{c.role}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Paths */}
+            {paths.length > 0 && (
+              <div className="sidebar-section">
+                <h2 className="sidebar-heading flex items-center gap-1" style={{ color: 'var(--color-fg-default)', fontSize: 16 }}>
+                  Paths <span className="Counter">{paths.length}</span>
+                </h2>
+                <div className="space-y-1 mt-1">
+                  {paths.map((p: any) => (
+                    <Link key={p._id} to={`/codex/${owner}/${name}/code?ref=${p.name}`} className="flex items-center gap-2 text-sm no-underline hover:underline" style={{ color: 'var(--color-accent-fg)', textDecoration: 'none' }}>
+                      <GitBranch className="w-3.5 h-3.5" strokeWidth={1.5} />
+                      {p.name}
+                      {p.isDefault && <span className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: 'var(--color-success-muted)', color: 'var(--color-success-fg)' }}>default</span>}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Latest Release */}
+            {releases.length > 0 && (
+              <div className="sidebar-section">
+                <h2 className="sidebar-heading" style={{ color: 'var(--color-fg-default)', fontSize: 16 }}>Latest Release</h2>
+                <div className="mt-1">
+                  <Link to={`/codex/${owner}/${name}/releases`} className="flex items-center gap-2 text-sm no-underline" style={{ color: 'var(--color-accent-fg)', textDecoration: 'none' }}>
+                    <Tag className="w-3.5 h-3.5" strokeWidth={1.5} />
+                    {releases[0].tagName} — {releases[0].title}
+                  </Link>
+                  <p className="text-xs mt-1" style={{ color: 'var(--color-fg-muted)' }}>{new Date(releases[0].createdAt).toLocaleDateString()} by {releases[0].author?.username}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Links */}
+            <div className="sidebar-section">
+              <div className="space-y-1">
+                <Link to={`/codex/${owner}/${name}/code`} className="sidebar-item text-sm no-underline" style={{ color: 'var(--color-accent-fg)', textDecoration: 'none' }}>
+                  <Eye className="w-4 h-4" strokeWidth={1.5} /> Open Code Workspace
+                </Link>
+                {isOwner && (
+                  <Link to={`/codex/${owner}/${name}/settings`} className="sidebar-item text-sm no-underline" style={{ color: 'var(--color-accent-fg)', textDecoration: 'none' }}>
+                    <Settings className="w-4 h-4" strokeWidth={1.5} /> Settings
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

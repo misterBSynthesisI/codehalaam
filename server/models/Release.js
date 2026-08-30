@@ -18,51 +18,37 @@
 
 import mongoose from 'mongoose'
 
-const collaboratorSchema = new mongoose.Schema({
+const releaseSchema = new mongoose.Schema({
   codex: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Repository',
     required: true,
   },
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
-  repository: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Repository',
-    required: true,
-  },
-  role: {
+  tagName: {
     type: String,
-    enum: ['Owner', 'Admin', 'Write', 'Read'],
-    default: 'Read',
+    required: true,
+    trim: true,
   },
-  addedBy: {
+  title: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  body: {
+    type: String,
+    default: '',
+  },
+  author: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
-  },
-  invitedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
-  acceptedAt: {
-    type: Date,
-    default: null,
-  },
-  pending: {
-    type: Boolean,
-    default: true,
   },
 }, { timestamps: true })
 
-// One role per user per repo
-collaboratorSchema.index({ user: 1, repository: 1 }, { unique: true })
-collaboratorSchema.index({ repository: 1, role: 1 })
-collaboratorSchema.index({ user: 1 })
+// Indexes
+releaseSchema.index({ codex: 1, createdAt: -1 })
+releaseSchema.index({ codex: 1, tagName: 1 }, { unique: true })
+releaseSchema.index({ author: 1 })
 
-const Collaborator = mongoose.model('Collaborator', collaboratorSchema)
-export default Collaborator
+const Release = mongoose.model('Release', releaseSchema)
+export default Release

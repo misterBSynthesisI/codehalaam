@@ -132,7 +132,7 @@ class ApiClient {
     })
   }
 
-  // Repositories
+  // Repositories (legacy)
   async getRepos(params?: { sort?: string; type?: string }) {
     const query = new URLSearchParams(params).toString()
     return this.request<{ repos: any[]; total: number }>(`/repos?${query}`)
@@ -203,6 +203,172 @@ class ApiClient {
   async getRepoFile(owner: string, name: string, path: string) {
     return this.request<{ file: any; path: string }>(
       `/repos/${owner}/${name}/file?path=${encodeURIComponent(path)}`
+    )
+  }
+
+  // === CODEX (Barry) API ===
+
+  // Codex meta
+  async getCodex(owner: string, name: string) {
+    return this.request<{ repo: any; isEmbered: boolean; isWatching: boolean; hasEchoed: boolean; counts: any }>(
+      `/codexes/${owner}/${name}`
+    )
+  }
+
+  async getReadme(owner: string, name: string) {
+    return this.request<{ readme: string | null; filename: string | null }>(
+      `/codexes/${owner}/${name}/readme`
+    )
+  }
+
+  async getCodexTree(owner: string, name: string) {
+    return this.request<{ tree: any[] }>(`/codexes/${owner}/${name}/tree`)
+  }
+
+  async getCodexBlob(owner: string, name: string, path: string) {
+    return this.request<{ file: any; path: string }>(
+      `/codexes/${owner}/${name}/blob?path=${encodeURIComponent(path)}`
+    )
+  }
+
+  // Ember / Watch / Echo
+  async toggleCodexEmber(owner: string, name: string) {
+    return this.request<{ isEmbered: boolean; embersCount: number }>(
+      `/codexes/${owner}/${name}/ember`, { method: 'POST' }
+    )
+  }
+
+  async toggleCodexWatch(owner: string, name: string) {
+    return this.request<{ isWatching: boolean; watchersCount: number }>(
+      `/codexes/${owner}/${name}/watch`, { method: 'POST' }
+    )
+  }
+
+  async toggleCodexEcho(owner: string, name: string) {
+    return this.request<{ hasEchoed: boolean; echoesCount: number }>(
+      `/codexes/${owner}/${name}/echo`, { method: 'POST' }
+    )
+  }
+
+  // Quests
+  async getQuests(owner: string, name: string, state?: string) {
+    const query = state ? `?state=${state}` : ''
+    return this.request<{ quests: any[]; openCount: number; closedCount: number }>(
+      `/codexes/${owner}/${name}/quests${query}`
+    )
+  }
+
+  async getQuest(owner: string, name: string, number: number) {
+    return this.request<{ quest: any; comments: any[] }>(
+      `/codexes/${owner}/${name}/quests/${number}`
+    )
+  }
+
+  async createQuest(owner: string, name: string, data: any) {
+    return this.request<{ quest: any }>(
+      `/codexes/${owner}/${name}/quests`, { method: 'POST', body: JSON.stringify(data) }
+    )
+  }
+
+  async updateQuest(owner: string, name: string, number: number, data: any) {
+    return this.request<{ quest: any }>(
+      `/codexes/${owner}/${name}/quests/${number}`, { method: 'PATCH', body: JSON.stringify(data) }
+    )
+  }
+
+  async addQuestComment(owner: string, name: string, number: number, body: string) {
+    return this.request<{ comment: any }>(
+      `/codexes/${owner}/${name}/quests/${number}/comments`,
+      { method: 'POST', body: JSON.stringify({ body }) }
+    )
+  }
+
+  // Offerings
+  async getOfferings(owner: string, name: string, state?: string) {
+    const query = state ? `?state=${state}` : ''
+    return this.request<{ offerings: any[]; openCount: number; boundCount: number; closedCount: number }>(
+      `/codexes/${owner}/${name}/offerings${query}`
+    )
+  }
+
+  async getOffering(owner: string, name: string, number: number) {
+    return this.request<{ offering: any; comments: any[] }>(
+      `/codexes/${owner}/${name}/offerings/${number}`
+    )
+  }
+
+  async createOffering(owner: string, name: string, data: any) {
+    return this.request<{ offering: any }>(
+      `/codexes/${owner}/${name}/offerings`, { method: 'POST', body: JSON.stringify(data) }
+    )
+  }
+
+  async updateOffering(owner: string, name: string, number: number, data: any) {
+    return this.request<{ offering: any }>(
+      `/codexes/${owner}/${name}/offerings/${number}`, { method: 'PATCH', body: JSON.stringify(data) }
+    )
+  }
+
+  async addOfferingComment(owner: string, name: string, number: number, body: string) {
+    return this.request<{ comment: any }>(
+      `/codexes/${owner}/${name}/offerings/${number}/comments`,
+      { method: 'POST', body: JSON.stringify({ body }) }
+    )
+  }
+
+  async bindOffering(owner: string, name: string, number: number) {
+    return this.request<{ offering: any; gitBound: boolean }>(
+      `/codexes/${owner}/${name}/offerings/${number}/bind`, { method: 'POST' }
+    )
+  }
+
+  // Paths
+  async getPaths(owner: string, name: string) {
+    return this.request<{ paths: any[] }>(`/codexes/${owner}/${name}/paths`)
+  }
+
+  async createPath(owner: string, name: string, data: { name: string; from?: string }) {
+    return this.request<{ path: any }>(
+      `/codexes/${owner}/${name}/paths`, { method: 'POST', body: JSON.stringify(data) }
+    )
+  }
+
+  // Releases
+  async getReleases(owner: string, name: string) {
+    return this.request<{ releases: any[] }>(`/codexes/${owner}/${name}/releases`)
+  }
+
+  async createRelease(owner: string, name: string, data: any) {
+    return this.request<{ release: any }>(
+      `/codexes/${owner}/${name}/releases`, { method: 'POST', body: JSON.stringify(data) }
+    )
+  }
+
+  // Collaborators (Barry)
+  async getCodexCollaborators(owner: string, name: string) {
+    return this.request<{ collaborators: any[] }>(`/codexes/${owner}/${name}/collaborators`)
+  }
+
+  async addCodexCollaborator(owner: string, name: string, data: { username?: string; email?: string; role?: string }) {
+    return this.request<{ collaborator?: any; invited?: boolean; invitation?: any; inviteLink?: string }>(
+      `/codexes/${owner}/${name}/collaborators`, { method: 'POST', body: JSON.stringify(data) }
+    )
+  }
+
+  async removeCodexCollaborator(owner: string, name: string, userId: string) {
+    return this.request<{ message: string }>(
+      `/codexes/${owner}/${name}/collaborators/${userId}`, { method: 'DELETE' }
+    )
+  }
+
+  // Invitations
+  async getInvitation(token: string) {
+    return this.request<{ invitation: any }>(`/codexes/invitations/${token}`)
+  }
+
+  async acceptInvitation(token: string) {
+    return this.request<{ message: string; codexId: string }>(
+      `/codexes/invitations/${token}/accept`, { method: 'POST' }
     )
   }
 

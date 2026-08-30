@@ -25,6 +25,11 @@ import Issue from './models/Issue.js'
 import PullRequest from './models/PullRequest.js'
 import Collaborator from './models/Collaborator.js'
 import Commit from './models/Commit.js'
+import Quest from './models/Quest.js'
+import Offering from './models/Offering.js'
+import Path from './models/Path.js'
+import Comment from './models/Comment.js'
+import Release from './models/Release.js'
 
 dotenv.config()
 
@@ -908,6 +913,11 @@ async function seed() {
       PullRequest.deleteMany({}),
       Collaborator.deleteMany({}),
       Commit.deleteMany({}),
+      Quest.deleteMany({}),
+      Offering.deleteMany({}),
+      Path.deleteMany({}),
+      Comment.deleteMany({}),
+      Release.deleteMany({}),
     ])
 
     // Create users
@@ -1047,8 +1057,8 @@ async function seed() {
 
     // ─── Create Collaborators for Kai's aurora-ui ────────────────────────
     console.log('[SEED] Creating collaborators...')
-    await Collaborator.create({ user: sarah._id, repository: kaiRepoDocs[0]._id, role: 'write', invitedBy: kai._id, pending: false, acceptedAt: new Date() })
-    await Collaborator.create({ user: neo._id, repository: kaiRepoDocs[0]._id, role: 'write', invitedBy: kai._id, pending: false, acceptedAt: new Date() })
+    await Collaborator.create({ codex: kaiRepoDocs[0]._id, user: sarah._id, repository: kaiRepoDocs[0]._id, role: 'Write', addedBy: kai._id, invitedBy: kai._id, pending: false, acceptedAt: new Date() })
+    await Collaborator.create({ codex: kaiRepoDocs[0]._id, user: neo._id, repository: kaiRepoDocs[0]._id, role: 'Write', addedBy: kai._id, invitedBy: kai._id, pending: false, acceptedAt: new Date() })
     console.log('  Created collaborators for kai-nakamura/aurora-ui')
 
     // ─── Create Commits for Kai's Repos ─────────────────────────────────
@@ -1098,6 +1108,82 @@ async function seed() {
     }
     console.log(`  Created ${kaiCommits.length} commits across Kai's repos`)
 
+    // ═══════════════════════════════════════════════════════════════════
+    //  BARRY DEMO DATA — Codex Home, Quests, Offerings, etc.
+    // ═══════════════════════════════════════════════════════════════════
+    console.log('[SEED] Creating Barry demo data...')
+
+    // Use Kai's aurora-ui as the demo Codex
+    const demoCodex = kaiRepoDocs[0] // aurora-ui
+
+    // Paths
+    const defaultPath = await Path.create({ codex: demoCodex._id, name: 'main', createdBy: kai._id, isDefault: true })
+    const devPath = await Path.create({ codex: demoCodex._id, name: 'develop', createdBy: kai._id, isDefault: false })
+    const featPath = await Path.create({ codex: demoCodex._id, name: 'feat/toast-component', createdBy: kai._id, isDefault: false })
+    console.log('  Created paths: main, develop, feat/toast-component')
+
+    // Quests
+    const q1 = await Quest.create({
+      codex: demoCodex._id, number: 1, title: 'Add dark mode toggle to navbar',
+      body: 'The theme toggle should use localStorage to persist user preference.\n\n## Requirements\n- Toggle between dark/light\n- Persist preference\n- Respect system preference',
+      status: 'Open', bountyXp: 30, author: sarah._id, assignees: [kai._id],
+    })
+    const q2 = await Quest.create({
+      codex: demoCodex._id, number: 2, title: 'Fix tooltip positioning on edge of screen',
+      body: 'Tooltips near the viewport edge overflow. Need to flip position when near edge.',
+      status: 'In Progress', bountyXp: 20, author: neo._id, assignees: [neo._id],
+    })
+    console.log('  Created 2 quests for demo codex')
+
+    // Comments on Quest 1
+    await Comment.create({ targetType: 'Quest', targetId: q1._id, author: kai._id, body: 'Great idea! I\'ll start on this next sprint.' })
+    await Comment.create({ targetType: 'Quest', targetId: q1._id, author: sarah._id, body: 'I have some mockups ready — will share them tomorrow.' })
+    await Comment.create({ targetType: 'Quest', targetId: q2._id, author: mike._id, body: 'This is a known issue with Radix UI. We should use `sideOffset` prop.' })
+    console.log('  Created comments on quests')
+
+    // Offerings
+    const o1 = await Offering.create({
+      codex: demoCodex._id, number: 1, title: 'Implement Toast notification component',
+      body: 'Adds a Toast component with auto-dismiss, swipe-to-close, and multiple variants (success, error, info).\n\nCloses Quest #3.',
+      sourcePath: 'feat/toast-component', targetPath: 'main', status: 'Bound',
+      author: kai._id, boundAt: new Date(Date.now() - 2 * 86400000),
+    })
+    const o2 = await Offering.create({
+      codex: demoCodex._id, number: 2, title: 'Add DropdownMenu with keyboard navigation',
+      body: 'Implements a fully keyboard-navigable dropdown menu with sub-menu support.',
+      sourcePath: 'feat/dropdown-menu', targetPath: 'main', status: 'Open',
+      author: kai._id,
+    })
+    console.log('  Created 2 offerings for demo codex')
+
+    // Comments on Offering 2
+    await Comment.create({ targetType: 'Offering', targetId: o2._id, author: sarah._id, body: 'Looks great! A few suggestions on the focus trap logic...' })
+    console.log('  Created comments on offerings')
+
+    // Releases
+    const rel1 = await Release.create({
+      codex: demoCodex._id, tagName: 'v2.4.0', title: 'Aurora UI v2.4.0 — Toast & Tooltip',
+      body: '## What\'s Changed\n\n- **Toast** component with auto-dismiss and swipe-to-close\n- **Tooltip** component with delay and rich content\n- Fixed Safari focus ring visibility\n\n## Breaking Changes\n\nNone. This is a minor release.',
+      author: kai._id,
+    })
+    console.log('  Created release v2.4.0 for demo codex')
+
+    // Collaborators (already exist from earlier seed, but let's add more)
+    await Collaborator.create({
+      codex: demoCodex._id, repository: demoCodex._id, user: mike._id,
+      role: 'Write', addedBy: kai._id, invitedBy: kai._id, pending: false, acceptedAt: new Date(),
+    })
+    console.log('  Added mike-reviewer as collaborator')
+
+    // Update codex counters
+    demoCodex.nextQuestNumber = 3
+    demoCodex.nextOfferingNumber = 3
+    demoCodex.embers = [neo._id, sarah._id]
+    demoCodex.watchers = [mike._id, alex._id]
+    demoCodex.echoes = [neo._id]
+    await demoCodex.save()
+    console.log('  Updated codex counters and social data')
+
     console.log('\n[SEED] ✅ Seed completed successfully!')
     console.log('[SEED] ─────────────────────────────────────────')
     console.log('[SEED] 🔐 Admin:  bishesh@codehalaam.dev / password123')
@@ -1105,6 +1191,8 @@ async function seed() {
     console.log('[SEED] 👤 Others: neo@, sarah@, mike@, alex@ (all password123)')
     console.log('[SEED] ─────────────────────────────────────────')
     console.log(`[SEED] 📦 Kai's repos: ${kaiRepos.map(r => r.name).join(', ')}`)
+    console.log('[SEED] 🏠 Demo Codex: /codex/kai-nakamura/aurora-ui')
+    console.log('[SEED] 📂 Code:        /codex/kai-nakamura/aurora-ui/code')
 
     await mongoose.disconnect()
     process.exit(0)

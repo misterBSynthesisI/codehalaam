@@ -18,51 +18,30 @@
 
 import mongoose from 'mongoose'
 
-const collaboratorSchema = new mongoose.Schema({
+const pathSchema = new mongoose.Schema({
   codex: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Repository',
     required: true,
   },
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
-  repository: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Repository',
-    required: true,
-  },
-  role: {
+  name: {
     type: String,
-    enum: ['Owner', 'Admin', 'Write', 'Read'],
-    default: 'Read',
+    required: true,
+    trim: true,
   },
-  addedBy: {
+  createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
   },
-  invitedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
-  acceptedAt: {
-    type: Date,
-    default: null,
-  },
-  pending: {
+  isDefault: {
     type: Boolean,
-    default: true,
+    default: false,
   },
 }, { timestamps: true })
 
-// One role per user per repo
-collaboratorSchema.index({ user: 1, repository: 1 }, { unique: true })
-collaboratorSchema.index({ repository: 1, role: 1 })
-collaboratorSchema.index({ user: 1 })
+// One path name per codex
+pathSchema.index({ codex: 1, name: 1 }, { unique: true })
+pathSchema.index({ codex: 1 })
 
-const Collaborator = mongoose.model('Collaborator', collaboratorSchema)
-export default Collaborator
+const Path = mongoose.model('Path', pathSchema)
+export default Path

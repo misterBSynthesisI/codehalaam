@@ -99,11 +99,15 @@ const repositorySchema = new mongoose.Schema({
   openIssuesCount: { type: Number, default: 0 },
   openPullRequestsCount: { type: Number, default: 0 },
 
-  // Stargazers, watchers, and embers
+  // Barry fields
+  nextQuestNumber: { type: Number, default: 1 },
+  nextOfferingNumber: { type: Number, default: 1 },
+
+  // Stargazers, watchers, embers, echoes
   stargazers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   watchers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   embers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  echoes: { type: Number, default: 0 },
+  echoes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 
   // Topics/tags
   topics: [String],

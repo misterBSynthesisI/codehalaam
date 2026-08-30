@@ -19,9 +19,13 @@
 import mongoose from 'mongoose'
 
 const questSchema = new mongoose.Schema({
-  repo: {
+  codex: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Repository',
+    required: true,
+  },
+  number: {
+    type: Number,
     required: true,
   },
   title: {
@@ -48,29 +52,24 @@ const questSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
-  assignee: {
+  assignees: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    default: null,
-  },
+  }],
   labels: [{
     name: { type: String, required: true },
     color: { type: String, default: 'blue' },
-  }],
-  comments: [{
-    author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    body: { type: String, required: true },
-    createdAt: { type: Date, default: Date.now },
   }],
   closedAt: Date,
   closedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
 }, { timestamps: true })
 
 // Indexes
-questSchema.index({ repo: 1, status: 1 })
-questSchema.index({ repo: 1, createdAt: -1 })
+questSchema.index({ codex: 1, number: 1 }, { unique: true })
+questSchema.index({ codex: 1, status: 1 })
+questSchema.index({ codex: 1, createdAt: -1 })
 questSchema.index({ author: 1 })
-questSchema.index({ assignee: 1 })
+questSchema.index({ assignees: 1 })
 
 const Quest = mongoose.model('Quest', questSchema)
 export default Quest

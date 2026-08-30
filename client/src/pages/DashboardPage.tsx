@@ -212,7 +212,7 @@ export function DashboardPage() {
                     transition={{ delay: i * 0.03, duration: 0.2 }}
                   >
                     <Link
-                      to={`/${user.username}/${repo.name}`}
+                      to={`/codex/${user.username}/${repo.name}`}
                       className="flex items-center justify-between px-4 py-2.5 no-underline transition-colors"
                       style={{ borderBottom: i < Math.min(repos.length, 6) - 1 ? '1px solid var(--color-border-default)' : undefined, color: 'var(--color-fg-default)' }}
                       onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-canvas-subtle)'}

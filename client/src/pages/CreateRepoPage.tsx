@@ -33,7 +33,7 @@ export function CreateRepoPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); if (!name.trim()) return; setLoading(true); setError('')
-    try { const { repo } = await api.createRepo({ name: name.trim(), description: description.trim(), visibility }); navigate(`/${user!.username}/${repo.name}`) }
+    try { const { repo } = await api.createRepo({ name: name.trim(), description: description.trim(), visibility }); navigate(`/codex/${user!.username}/${repo.name}`) }
     catch (err: any) { setError(err.message || 'Failed') } finally { setLoading(false) }
   }
 

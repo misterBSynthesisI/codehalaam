@@ -77,7 +77,7 @@ export function CommandPalette() {
           type: 'codex' as const,
           title: r.name,
           subtitle: r.description || 'No description',
-          url: `/${r.owner?.username || user?.username}/${r.name}`,
+          url: `/codex/${r.owner?.username || user?.username}/${r.name}`,
         }))
       setResults(repos)
     } catch {
