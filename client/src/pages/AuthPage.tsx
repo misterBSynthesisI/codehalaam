@@ -17,7 +17,7 @@
  */
 
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -33,8 +33,12 @@ function CodeLogo() {
 
 export function AuthPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { login, signup } = useAuth()
-  const [mode, setMode] = useState<AuthMode>('signup')
+  const [mode, setMode] = useState<AuthMode>(() => {
+    const param = searchParams.get('mode')
+    return param === 'login' ? 'login' : 'signup'
+  })
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [username, setUsername] = useState('')

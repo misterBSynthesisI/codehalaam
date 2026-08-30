@@ -110,7 +110,7 @@ export function Navbar() {
 
           {isLanding ? (
             <div className="flex items-center gap-3">
-              <Link to="/auth" className="btn-link text-sm no-underline hover:underline">Sign in</Link>
+              <Link to="/auth?mode=login" className="btn-link text-sm no-underline hover:underline">Sign in</Link>
               <Link to="/auth" className="btn-primary text-sm no-underline">Sign up</Link>
             </div>
           ) : user ? (
@@ -178,7 +178,7 @@ export function Navbar() {
             </>
           ) : (
             <div className="flex items-center gap-3">
-              <Link to="/auth" className="btn-link text-sm no-underline hover:underline">Sign in</Link>
+              <Link to="/auth?mode=login" className="btn-link text-sm no-underline hover:underline">Sign in</Link>
               <Link to="/auth" className="btn-primary text-sm no-underline">Sign up</Link>
             </div>
           )}

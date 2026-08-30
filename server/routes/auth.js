@@ -17,13 +17,22 @@
  */
 
 import express from 'express'
+import mongoose from 'mongoose'
 import User from '../models/User.js'
 import { generateToken, protect } from '../middleware/auth.js'
 
 const router = express.Router()
 
+// Middleware: reject requests if database is not connected
+const requireDB = (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({ error: 'Database unavailable' })
+  }
+  next()
+}
+
 // POST /api/auth/signup
-router.post('/signup', async (req, res) => {
+router.post('/signup', requireDB, async (req, res) => {
   try {
     const { username, email, password } = req.body
 
@@ -74,7 +83,7 @@ router.post('/signup', async (req, res) => {
 })
 
 // POST /api/auth/login
-router.post('/login', async (req, res) => {
+router.post('/login', requireDB, async (req, res) => {
   try {
     const { email, password } = req.body
 
@@ -82,7 +91,10 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' })
     }
 
-    const user = await User.findOne({ email }).select('+password')
+    // Support login by email OR username
+    const user = await User.findOne({
+      $or: [{ email }, { username: email }]
+    }).select('+password')
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' })
     }

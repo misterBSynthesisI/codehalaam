@@ -71,7 +71,7 @@ export function LandingPage() {
                 <div className="mt-4 pt-4 text-center" style={{ borderTop: '1px solid var(--color-border-default)' }}>
                   <p className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>
                     Already have an account?{' '}
-                    <button onClick={() => navigate('/auth')} style={{ color: 'var(--color-accent-fg)' }} className="hover:underline">Sign in</button>
+                    <button onClick={() => navigate('/auth?mode=login')} style={{ color: 'var(--color-accent-fg)' }} className="hover:underline">Sign in</button>
                   </p>
                 </div>
               </div>
