@@ -20,149 +20,249 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  Star, GitFork, Clock, Plus, Search, Lock, Flame
+  GitPullRequest, AlertCircle, Check, Clock, ArrowUpRight, Plus, Zap
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
-import { ContributionHeatmap } from '@/components/dashboard/ContributionHeatmap'
 
 export function DashboardPage() {
   const { user } = useAuth()
+  const [myIssues, setMyIssues] = useState<any[]>([])
+  const [myPRs, setMyPRs] = useState<any[]>([])
   const [repos, setRepos] = useState<any[]>([])
-  const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.getRepos().then(data => setRepos(data.repos)).finally(() => setLoading(false))
-  }, [])
+    if (!user) return
+    Promise.all([
+      api.getRepos().then(d => {
+        setRepos(d.repos || [])
+        // Fetch issues and PRs for user's repos
+        const allIssues: any[] = []
+        const allPRs: any[] = []
+        return Promise.all(
+          (d.repos || []).map(async (r: any) => {
+            try {
+              const ownerName = r.owner?.username || user.username
+              const [issueData, prData] = await Promise.all([
+                api.getIssues(ownerName, r.name),
+                api.getPulls(ownerName, r.name),
+              ])
+              allIssues.push(...(issueData.issues || []).map((i: any) => ({ ...i, _repoName: r.name, _repoOwner: ownerName })))
+              allPRs.push(...(prData.pulls || []).map((p: any) => ({ ...p, _repoName: r.name, _repoOwner: ownerName })))
+            } catch { /* skip */ }
+          })
+        ).then(() => {
+          // Filter to relevant items
+          setMyIssues(allIssues.filter(i => i.state === 'open').slice(0, 8))
+          setMyPRs(allPRs.slice(0, 8))
+        })
+      }),
+    ]).finally(() => setLoading(false))
+  }, [user])
 
-  const filteredRepos = repos.filter(r => r.name.toLowerCase().includes(searchQuery.toLowerCase()))
-  const xpPercent = user ? Math.round((user.xp / user.xpToNext) * 100) : 0
-
-  const contributionHeatmap = user?.contributionDays?.reduce((acc: number[][], day: any) => {
-    if (acc.length === 0 || acc[acc.length - 1].length === 7) acc.push([day.count])
-    else acc[acc.length - 1].push(day.count)
-    return acc
-  }, []) || []
+  if (!user) return null
 
   return (
-    <div style={{ backgroundColor: 'var(--color-canvas-default)', color: 'var(--color-fg-default)', minHeight: '100vh' }}>
-      <div className="container-lg py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_296px] gap-6">
-          {/* Main content */}
+    <div className="flex-1" style={{ backgroundColor: 'var(--color-canvas-default)', color: 'var(--color-fg-default)' }}>
+      <div className="px-6 py-5" style={{ maxWidth: 1200, margin: '0 auto' }}>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <div className="relative flex-1 max-w-xs">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--color-fg-subtle)' }} />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Find a Codex…"
-                  className="form-control pl-9"
-                  data-testid="repo-search"
-                />
-              </div>
-              <Link to="/new" className="btn btn-primary no-underline">
-                <Plus className="w-4 h-4" /> New
-              </Link>
-            </div>
-
-            {loading ? (
-              <div className="Box"><div className="Box-body text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>Loading codexes...</div></div>
-            ) : (
-              <div className="Box" data-testid="repo-list">
-                {filteredRepos.map((repo, i) => (
-                  <motion.div key={repo._id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', bounce: 0, duration: 0.3, delay: i * 0.03 }}>
-                    <Link to={`/${user?.username}/${repo.name}`} className="Box-row flex items-start justify-between gap-4 no-underline" style={{ textDecoration: 'none' }}>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <h3 className="text-base font-semibold" style={{ color: 'var(--color-accent-fg)' }}>{user?.username}/{repo.name}</h3>
-                          <span className="Label" style={{
-                            backgroundColor: repo.visibility === 'private' ? 'var(--color-counter-bg)' : 'var(--color-success-muted)',
-                            color: repo.visibility === 'private' ? 'var(--color-fg-muted)' : 'var(--color-success-fg)',
-                            borderColor: repo.visibility === 'private' ? 'var(--color-border-default)' : 'rgba(46,160,67,0.4)',
-                          }}>
-                            {repo.visibility === 'private' ? <><Lock className="w-3 h-3 inline mr-1" />Private</> : 'Public'}
-                          </span>
-                        </div>
-                        <p className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>{repo.description}</p>
-                        <div className="flex items-center gap-4 mt-1.5 text-xs" style={{ color: 'var(--color-fg-muted)' }}>
-                          {repo.language && <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: repo.languageColor || '#8b8b8b' }} />{repo.language}</span>}
-                          {repo.starsCount > 0 && <span className="flex items-center gap-1"><Star className="w-3 h-3" />{repo.starsCount.toLocaleString()}</span>}
-                          {repo.forksCount > 0 && <span className="flex items-center gap-1"><GitFork className="w-3 h-3" />{repo.forksCount}</span>}
-                          <span className="flex items-center gap-1"><Clock className="w-3 h-3" />Updated {new Date(repo.updatedAt).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                      <button className="btn btn-sm btn-outline shrink-0" onClick={(e) => { e.preventDefault(); api.toggleStar(user!.username, repo.name) }}>
-                        <Star className="w-3 h-3" /> Ember
-                        {repo.starsCount > 0 && <span style={{ color: 'var(--color-fg-muted)' }}>{repo.starsCount}</span>}
-                      </button>
-                    </Link>
-                  </motion.div>
-                ))}
-                {filteredRepos.length === 0 && (
-                  <div className="Box-body text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>
-                    {searchQuery ? 'No codexes match your search' : 'No codexes yet. Create your first one!'}
-                  </div>
-                )}
-              </div>
-            )}
+            <h1 className="text-xl font-semibold" style={{ color: 'var(--color-fg-default)' }}>
+              Welcome back, {user.displayName || user.username}
+            </h1>
+            <p className="text-sm mt-0.5" style={{ color: 'var(--color-fg-muted)' }}>
+              Here's your workspace at a glance.
+            </p>
           </div>
-
-          {/* Sidebar */}
-          <div className="space-y-4">
-            {user && (
-              <div className="Box">
-                <div className="Box-body">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Link to={`/${user.username}`}>
-                      <div className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-semibold no-underline" style={{ backgroundColor: 'var(--color-counter-bg)', color: 'var(--color-fg-default)' }}>
-                        {user.username.charAt(0).toUpperCase()}
-                      </div>
-                    </Link>
-                    <div>
-                      <Link to={`/${user.username}`} className="text-base font-semibold no-underline hover:underline" style={{ color: 'var(--color-fg-default)' }}>{user.displayName || user.username}</Link>
-                      <p className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>{user.username}</p>
-                    </div>
-                  </div>
-
-                  <div className="mb-3">
-                    <div className="flex items-center justify-between text-xs mb-1" style={{ color: 'var(--color-fg-muted)' }}>
-                      <span>Level {user.level}</span>
-                      <span>{user.xp.toLocaleString()} / {user.xpToNext.toLocaleString()} XP</span>
-                    </div>
-                    <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-counter-bg)' }}>
-                      <motion.div initial={{ width: 0 }} animate={{ width: `${xpPercent}%` }} transition={{ type: 'spring', bounce: 0, duration: 0.8 }}
-                        className="h-full rounded-full" style={{ backgroundColor: 'var(--color-success-fg)' }} />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--color-fg-muted)' }}>
-                    <span>{user.stats?.commits?.toLocaleString() || 0} inscriptions</span>
-                    <span>{user.stats?.pullRequests || 0} offerings</span>
-                    <span>{user.streak || 0} day streak</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div className="Box">
-              <div className="Box-header" style={{ backgroundColor: 'var(--color-canvas-subtle)' }}>
-                <h3 className="text-sm font-semibold" style={{ color: 'var(--color-fg-default)' }}>Recent activity</h3>
-              </div>
-              <div className="Box-body text-sm" style={{ color: 'var(--color-fg-muted)' }}>
-                <p>Your recent activity will appear here.</p>
-              </div>
-            </div>
+          <div className="flex items-center gap-3">
+            <Link to="/new" className="btn btn-primary btn-sm no-underline flex items-center gap-1.5">
+              <Plus className="w-3.5 h-3.5" /> New Codex
+            </Link>
           </div>
         </div>
 
-        {user && contributionHeatmap.length > 0 && (
-          <div className="Box mt-6">
-            <ContributionHeatmap contributions={contributionHeatmap} totalContributions={user.stats?.contributions || 0} />
+        {/* 2-Column Cockpit */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-6">
+
+          {/* ═══ LEFT: My Work ═══ */}
+          <div className="space-y-5">
+
+            {/* Active Quests */}
+            <section>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold flex items-center gap-2" style={{ color: 'var(--color-fg-default)' }}>
+                  <AlertCircle className="w-4 h-4" style={{ color: 'var(--color-success-fg)' }} />
+                  Active Quests
+                  {myIssues.length > 0 && <span className="text-xs font-normal" style={{ color: 'var(--color-fg-muted)' }}>({myIssues.length})</span>}
+                </h2>
+              </div>
+              <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--color-border-default)' }}>
+                {loading ? (
+                  <div className="px-4 py-8 text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>Loading...</div>
+                ) : myIssues.length === 0 ? (
+                  <div className="px-4 py-8 text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>
+                    No active quests. You're all caught up.
+                  </div>
+                ) : (
+                  myIssues.map((issue, i) => (
+                    <motion.div key={issue._id}
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                      transition={{ delay: i * 0.03, duration: 0.2 }}
+                    >
+                      <Link
+                        to={`/${issue._repoOwner}/${issue._repoName}`}
+                        className="flex items-center gap-3 px-4 py-3 no-underline transition-colors"
+                        style={{ borderBottom: i < myIssues.length - 1 ? '1px solid var(--color-border-default)' : undefined, color: 'var(--color-fg-default)' }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-canvas-subtle)'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      >
+                        <AlertCircle className="w-4 h-4 shrink-0" style={{ color: 'var(--color-success-fg)' }} />
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-medium truncate">{issue.title}</div>
+                          <div className="text-xs mt-0.5 flex items-center gap-2" style={{ color: 'var(--color-fg-muted)' }}>
+                            <span>#{issue.number}</span>
+                            <span>·</span>
+                            <span>{issue._repoOwner}/{issue._repoName}</span>
+                            {issue.bountyXp > 0 && <><span>·</span><span style={{ color: 'var(--color-attention-fg)' }}>⚡{issue.bountyXp}</span></>}
+                          </div>
+                        </div>
+                        {(issue.labels || []).slice(0, 2).map((l: any) => (
+                          <span key={l.name} className="text-[11px] px-1.5 py-0.5 rounded shrink-0" style={{ backgroundColor: 'var(--color-canvas-subtle)', color: 'var(--color-fg-muted)', border: '1px solid var(--color-border-default)' }}>{l.name}</span>
+                        ))}
+                        <ArrowUpRight className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--color-fg-subtle)' }} />
+                      </Link>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+            </section>
+
+            {/* Pending Offerings */}
+            <section>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold flex items-center gap-2" style={{ color: 'var(--color-fg-default)' }}>
+                  <GitPullRequest className="w-4 h-4" style={{ color: 'var(--color-done-fg)' }} />
+                  Pending Offerings
+                  {myPRs.length > 0 && <span className="text-xs font-normal" style={{ color: 'var(--color-fg-muted)' }}>({myPRs.length})</span>}
+                </h2>
+              </div>
+              <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--color-border-default)' }}>
+                {loading ? (
+                  <div className="px-4 py-8 text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>Loading...</div>
+                ) : myPRs.length === 0 ? (
+                  <div className="px-4 py-8 text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>
+                    No pending offerings.
+                  </div>
+                ) : (
+                  myPRs.map((pr, i) => (
+                    <motion.div key={pr._id}
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                      transition={{ delay: i * 0.03, duration: 0.2 }}
+                    >
+                      <Link
+                        to={`/${pr._repoOwner}/${pr._repoName}`}
+                        className="flex items-center gap-3 px-4 py-3 no-underline transition-colors"
+                        style={{ borderBottom: i < myPRs.length - 1 ? '1px solid var(--color-border-default)' : undefined, color: 'var(--color-fg-default)' }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-canvas-subtle)'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      >
+                        <GitPullRequest className="w-4 h-4 shrink-0" style={{
+                          color: pr.state === 'merged' ? 'var(--color-done-fg)' : pr.state === 'open' ? 'var(--color-success-fg)' : 'var(--color-fg-muted)'
+                        }} />
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-medium truncate">{pr.title}</div>
+                          <div className="text-xs mt-0.5 flex items-center gap-2" style={{ color: 'var(--color-fg-muted)' }}>
+                            <span>#{pr.number}</span>
+                            <span>·</span>
+                            <span>{pr._repoOwner}/{pr._repoName}</span>
+                            <span>·</span>
+                            <span style={{ color: 'var(--color-success-fg)' }}>+{pr.additions}</span>
+                            <span style={{ color: 'var(--color-danger-fg)' }}>-{pr.deletions}</span>
+                          </div>
+                        </div>
+                        {pr.state === 'merged' && (
+                          <span className="text-[11px] px-1.5 py-0.5 rounded shrink-0" style={{ backgroundColor: 'var(--color-done-subtle)', color: 'var(--color-done-fg)' }}>Bound</span>
+                        )}
+                        <ArrowUpRight className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--color-fg-subtle)' }} />
+                      </Link>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+            </section>
           </div>
-        )}
+
+          {/* ═══ RIGHT: Activity Feed ═══ */}
+          <div>
+            {/* Codexes */}
+            <section>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-semibold flex items-center gap-2" style={{ color: 'var(--color-fg-default)' }}>
+                  <Zap className="w-4 h-4" style={{ color: 'var(--color-attention-fg)' }} />
+                  Your Codexes
+                </h2>
+                <Link to="/new" className="text-xs no-underline" style={{ color: 'var(--color-accent-fg)' }}>New</Link>
+              </div>
+              <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--color-border-default)' }}>
+                {repos.slice(0, 6).map((repo, i) => (
+                  <motion.div key={repo._id}
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                    transition={{ delay: i * 0.03, duration: 0.2 }}
+                  >
+                    <Link
+                      to={`/${user.username}/${repo.name}`}
+                      className="flex items-center justify-between px-4 py-2.5 no-underline transition-colors"
+                      style={{ borderBottom: i < Math.min(repos.length, 6) - 1 ? '1px solid var(--color-border-default)' : undefined, color: 'var(--color-fg-default)' }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-canvas-subtle)'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium truncate" style={{ color: 'var(--color-accent-fg)' }}>{repo.name}</div>
+                        {repo.description && (
+                          <div className="text-xs truncate mt-0.5" style={{ color: 'var(--color-fg-muted)' }}>{repo.description}</div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 text-xs shrink-0 ml-3" style={{ color: 'var(--color-fg-muted)' }}>
+                        {repo.language && <span>{repo.language}</span>}
+                        {repo.starsCount > 0 && <span>★{repo.starsCount}</span>}
+                      </div>
+                    </Link>
+                  </motion.div>
+                ))}
+                {repos.length === 6 && (
+                  <div className="px-4 py-2 text-center text-xs" style={{ borderTop: '1px solid var(--color-border-default)' }}>
+                    <span style={{ color: 'var(--color-fg-muted)' }}>{repos.length} codexes total</span>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* Activity summary */}
+            <section className="mt-5">
+              <h2 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: 'var(--color-fg-default)' }}>
+                <Clock className="w-4 h-4" style={{ color: 'var(--color-fg-muted)' }} />
+                Activity
+              </h2>
+              <div className="rounded-lg p-4" style={{ border: '1px solid var(--color-border-default)' }}>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: 'Inscriptions', value: user.stats?.commits || 0 },
+                    { label: 'Offerings', value: user.stats?.pullRequests || 0 },
+                    { label: 'Reviews', value: user.stats?.reviews || 0 },
+                    { label: 'Streak', value: `${user.streak || 0}d` },
+                  ].map((stat) => (
+                    <div key={stat.label} className="text-center py-2 rounded" style={{ backgroundColor: 'var(--color-canvas-subtle)' }}>
+                      <div className="text-lg font-semibold" style={{ color: 'var(--color-fg-default)' }}>{stat.value}</div>
+                      <div className="text-[11px]" style={{ color: 'var(--color-fg-muted)' }}>{stat.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
       </div>
     </div>
   )
