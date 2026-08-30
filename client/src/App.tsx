@@ -30,6 +30,7 @@ import { ProfilePage } from '@/pages/ProfilePage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { CreateRepoPage } from '@/pages/CreateRepoPage'
 import { AdminPage } from '@/pages/AdminPage'
+import { AdminBadgesPage } from '@/pages/AdminBadgesPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
@@ -78,6 +79,12 @@ function AppRoutes() {
       <Route path="/admin" element={
         <ProtectedRoute>
           <AdminPage />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/admin/badges" element={
+        <ProtectedRoute>
+          <AdminBadgesPage />
         </ProtectedRoute>
       } />
 

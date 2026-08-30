@@ -756,6 +756,25 @@ async function seed() {
     console.log('🧹 Cleared all collections')
 
     // ─── Users ────────────────────────────────────────
+    const bishesh = await User.create({
+      username: 'bishesh',
+      email: 'bishesh@codehalaam.dev',
+      password: 'bishesh12',
+      displayName: 'Bishesh',
+      bio: 'Founder & Admin of CODEHALAAM.',
+      class: 'Mage',
+      isAdmin: true,
+      badgeColor: 'red',
+      level: 20,
+      xp: 5000,
+      xpToNext: 6000,
+      streak: 30,
+      longestStreak: 60,
+      lastActiveDate: new Date(),
+      stats: { commits: 1000, pullRequests: 150, reviews: 200, issues: 100, contributions: 1200 },
+      contributionDays: generateHeatmap(),
+    })
+
     const kai = await User.create({
       username: 'kai-nakamura',
       email: 'kai@codehalaam.dev',

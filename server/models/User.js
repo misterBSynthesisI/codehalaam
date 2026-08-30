@@ -91,6 +91,10 @@ const userSchema = new mongoose.Schema({
   emailNotifications: { type: Boolean, default: true },
   theme: { type: String, enum: ['dark', 'light', 'system'], default: 'dark' },
 
+  // Admin & badges
+  isAdmin: { type: Boolean, default: false },
+  badgeColor: { type: String, enum: ['none', 'blue', 'black', 'red'], default: 'none' },
+
   // Account status
   isPublic: { type: Boolean, default: true },
   isActive: { type: Boolean, default: true },

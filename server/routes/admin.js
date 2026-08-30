@@ -181,4 +181,33 @@ router.get('/activity', protect, adminOnly, async (req, res) => {
   }
 })
 
+// PATCH /api/admin/users/:userId/badge — update user badge
+router.patch('/users/:userId/badge', protect, async (req, res) => {
+  try {
+    // Only super admin can assign badges
+    if (!req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only administrators can assign badges' })
+    }
+
+    const { badgeColor } = req.body
+    const validBadges = ['none', 'blue', 'black', 'red']
+    if (!validBadges.includes(badgeColor)) {
+      return res.status(400).json({ error: 'Invalid badge color' })
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.params.userId,
+      { badgeColor },
+      { new: true }
+    ).select('-password -contributionDays')
+
+    if (!user) return res.status(404).json({ error: 'User not found' })
+
+    res.json({ user })
+  } catch (err) {
+    console.error('Badge update error:', err)
+    res.status(500).json({ error: 'Failed to update badge' })
+  }
+})
+
 export default router
