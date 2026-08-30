@@ -150,9 +150,9 @@ export function AuthPage() {
 
         <p className="text-center text-sm mt-4" style={{ color: 'var(--color-fg-muted)' }}>
           {mode === 'signup' ? (
-            <>Already have an account? <button onClick={() => { setMode('login'); setError('') }} style={{ color: 'var(--color-accent-fg)' }} className="hover:underline">Sign in</button></>
+            <>Already have an account? <button onClick={() => { setMode('login'); setError(''); setEmail(''); setPassword(''); setUsername('') }} style={{ color: 'var(--color-accent-fg)' }} className="hover:underline">Sign in</button></>
           ) : (
-            <>New to CODEHALAAM? <button onClick={() => { setMode('signup'); setError('') }} style={{ color: 'var(--color-accent-fg)' }} className="hover:underline">Create an account</button></>
+            <>New to CODEHALAAM? <button onClick={() => { setMode('signup'); setError(''); setEmail(''); setPassword(''); setUsername('') }} style={{ color: 'var(--color-accent-fg)' }} className="hover:underline">Create an account</button></>
           )}
         </p>
       </motion.div>
