@@ -35,6 +35,9 @@ interface User {
   xpToNext: number
   streak: number
   longestStreak: number
+  isAdmin: boolean
+  badgeColor: string
+  characterClass?: string
   stats: {
     commits: number
     pullRequests: number

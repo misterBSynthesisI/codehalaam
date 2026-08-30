@@ -31,6 +31,7 @@ import { SettingsPage } from '@/pages/SettingsPage'
 import { CreateRepoPage } from '@/pages/CreateRepoPage'
 import { AdminPage } from '@/pages/AdminPage'
 import { AdminBadgesPage } from '@/pages/AdminBadgesPage'
+import { AdminRoute } from '@/components/auth/AdminRoute'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth()
@@ -78,13 +79,17 @@ function AppRoutes() {
 
       <Route path="/admin" element={
         <ProtectedRoute>
-          <AdminPage />
+          <AdminRoute>
+            <AdminPage />
+          </AdminRoute>
         </ProtectedRoute>
       } />
 
       <Route path="/admin/badges" element={
         <ProtectedRoute>
-          <AdminBadgesPage />
+          <AdminRoute>
+            <AdminBadgesPage />
+          </AdminRoute>
         </ProtectedRoute>
       } />
 

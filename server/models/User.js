@@ -94,6 +94,7 @@ const userSchema = new mongoose.Schema({
   // Admin & badges
   isAdmin: { type: Boolean, default: false },
   badgeColor: { type: String, enum: ['none', 'blue', 'black', 'red'], default: 'none' },
+  characterClass: { type: String, enum: ['Mage', 'Tank', 'Rogue'], default: '' },
 
   // Account status
   isPublic: { type: Boolean, default: true },

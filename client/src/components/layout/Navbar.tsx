@@ -17,7 +17,7 @@
  */
 
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Search, Bell, ChevronDown, Sun, Moon } from 'lucide-react'
+import { Search, Bell, ChevronDown, ShieldAlert } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useState, useRef, useEffect, useCallback } from 'react'
@@ -208,13 +208,13 @@ export function Navbar() {
                       { to: `/${user.username}`, label: 'Profile' },
                       { to: '/settings', label: 'Settings' },
                       { to: '/new', label: 'New Codex' },
-                      { to: '/admin', label: 'Admin' },
-                    ].map(({ to, label }) => (
-                      <Link key={to} to={to} className="block px-3 py-1.5 text-sm no-underline" style={{ color: 'var(--color-fg-default)' }}
+                      ...(user.isAdmin ? [{ to: '/admin', label: 'Admin', icon: true }] : []),
+                    ].map(({ to, label, icon }) => (
+                      <Link key={to} to={to} className="flex items-center gap-2 px-3 py-1.5 text-sm no-underline" style={{ color: 'var(--color-fg-default)' }}
                         onClick={() => setShowUserMenu(false)}
                         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-canvas-subtle)'}
                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                      >{label}</Link>
+                      >{icon && <ShieldAlert className="w-3.5 h-3.5" style={{ color: 'var(--color-danger-fg)' }} />}{label}</Link>
                     ))}
                     <div className="border-t mt-1 pt-1" style={{ borderColor: 'var(--color-border-default)' }}>
                       <button onClick={() => { logout(); setShowUserMenu(false); navigate('/') }} className="w-full text-left px-3 py-1.5 text-sm"

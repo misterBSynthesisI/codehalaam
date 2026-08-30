@@ -21,19 +21,15 @@ import User from '../models/User.js'
 import Repository from '../models/Repository.js'
 import Issue from '../models/Issue.js'
 import PullRequest from '../models/PullRequest.js'
-import { protect } from '../middleware/auth.js'
+import { protect, requireAdmin } from '../middleware/auth.js'
 
 const router = express.Router()
 
-// Admin middleware — check if user is admin
-const adminOnly = async (req, res, next) => {
-  // For now, any authenticated user can access admin
-  // In production, add an `isAdmin` field to User model
-  next()
-}
+// All admin routes require authentication + admin role
+router.use(protect, requireAdmin)
 
 // GET /api/admin/stats — platform-wide stats
-router.get('/stats', protect, adminOnly, async (req, res) => {
+router.get('/stats', async (req, res) => {
   try {
     const [totalUsers, totalRepos, totalIssues, totalPRs, publicRepos, privateRepos] = await Promise.all([
       User.countDocuments(),
@@ -102,7 +98,7 @@ router.get('/stats', protect, adminOnly, async (req, res) => {
 })
 
 // GET /api/admin/users — list all users with pagination
-router.get('/users', protect, adminOnly, async (req, res) => {
+router.get('/users', async (req, res) => {
   try {
     const { page = 1, limit = 20, sort = '-createdAt', search = '' } = req.query
 
@@ -130,7 +126,7 @@ router.get('/users', protect, adminOnly, async (req, res) => {
 })
 
 // GET /api/admin/repos — list all repos with pagination
-router.get('/repos', protect, adminOnly, async (req, res) => {
+router.get('/repos', async (req, res) => {
   try {
     const { page = 1, limit = 20, sort = '-createdAt', search = '', visibility = '' } = req.query
 
@@ -158,7 +154,7 @@ router.get('/repos', protect, adminOnly, async (req, res) => {
 })
 
 // GET /api/admin/activity — recent activity feed
-router.get('/activity', protect, adminOnly, async (req, res) => {
+router.get('/activity', async (req, res) => {
   try {
     const [recentUsers, recentRepos, recentIssues, recentPRs] = await Promise.all([
       User.find().sort({ createdAt: -1 }).limit(10).select('username displayName createdAt'),
@@ -181,14 +177,47 @@ router.get('/activity', protect, adminOnly, async (req, res) => {
   }
 })
 
-// PATCH /api/admin/users/:userId/badge — update user badge
-router.patch('/users/:userId/badge', protect, async (req, res) => {
+// PATCH /api/admin/users/:userId — update user (class, level, xp, badgeColor)
+router.patch('/users/:userId', async (req, res) => {
   try {
-    // Only super admin can assign badges
-    if (!req.user.isAdmin) {
-      return res.status(403).json({ error: 'Only administrators can assign badges' })
+    const { level, xp, badgeColor, characterClass } = req.body
+    const update = {}
+
+    if (level !== undefined) update.level = level
+    if (xp !== undefined) update.xp = xp
+    if (badgeColor !== undefined) {
+      const validBadges = ['none', 'blue', 'black', 'red']
+      if (!validBadges.includes(badgeColor)) {
+        return res.status(400).json({ error: 'Invalid badge color' })
+      }
+      update.badgeColor = badgeColor
+    }
+    if (characterClass !== undefined) {
+      const validClasses = ['Mage', 'Tank', 'Rogue']
+      if (!validClasses.includes(characterClass)) {
+        return res.status(400).json({ error: 'Invalid character class' })
+      }
+      update.characterClass = characterClass
     }
 
+    const user = await User.findByIdAndUpdate(
+      req.params.userId,
+      update,
+      { new: true }
+    ).select('-password -contributionDays')
+
+    if (!user) return res.status(404).json({ error: 'User not found' })
+
+    res.json({ user })
+  } catch (err) {
+    console.error('User update error:', err)
+    res.status(500).json({ error: 'Failed to update user' })
+  }
+})
+
+// PATCH /api/admin/users/:userId/badge — update user badge (backward compat)
+router.patch('/users/:userId/badge', async (req, res) => {
+  try {
     const { badgeColor } = req.body
     const validBadges = ['none', 'blue', 'black', 'red']
     if (!validBadges.includes(badgeColor)) {
@@ -207,6 +236,26 @@ router.patch('/users/:userId/badge', protect, async (req, res) => {
   } catch (err) {
     console.error('Badge update error:', err)
     res.status(500).json({ error: 'Failed to update badge' })
+  }
+})
+
+// DELETE /api/admin/users/:userId — delete user permanently
+router.delete('/users/:userId', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId)
+    if (!user) return res.status(404).json({ error: 'User not found' })
+
+    // Prevent admin from deleting themselves
+    if (user._id.toString() === req.user._id.toString()) {
+      return res.status(400).json({ error: 'Cannot delete your own admin account' })
+    }
+
+    await User.findByIdAndDelete(req.params.userId)
+
+    res.json({ message: `User ${user.username} has been banished`, user: { _id: user._id, username: user.username } })
+  } catch (err) {
+    console.error('User delete error:', err)
+    res.status(500).json({ error: 'Failed to delete user' })
   }
 })
 

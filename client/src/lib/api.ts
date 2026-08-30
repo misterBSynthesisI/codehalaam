@@ -288,6 +288,25 @@ class ApiClient {
       method: 'PATCH',
     })
   }
+
+  // Admin
+  async adminGetUsers(params?: { page?: number; limit?: number; search?: string; sort?: string }) {
+    const query = new URLSearchParams(params as any).toString()
+    return this.request<{ users: any[]; total: number; page: number; pages: number }>(`/admin/users?${query}`)
+  }
+
+  async adminUpdateUser(userId: string, data: { level?: number; xp?: number; badgeColor?: string; characterClass?: string }) {
+    return this.request<{ user: any }>(`/admin/users/${userId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async adminDeleteUser(userId: string) {
+    return this.request<{ message: string; user: { _id: string; username: string } }>(`/admin/users/${userId}`, {
+      method: 'DELETE',
+    })
+  }
 }
 
 export const api = new ApiClient()

@@ -47,3 +47,11 @@ export const protect = async (req, res, next) => {
 export const generateToken = (userId) => {
   return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '30d' })
 }
+
+export const requireAdmin = (req, res, next) => {
+  if (!req.user || !req.user.isAdmin) {
+    return res.status(403).json({ error: 'Forbidden: Admin access required' })
+  }
+  next()
+}
+

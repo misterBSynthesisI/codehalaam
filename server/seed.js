@@ -50,6 +50,37 @@ function generateContributions() {
 
 const seedUsers = [
   {
+    username: 'bishesh',
+    email: 'bishesh@codehalaam.dev',
+    password: 'password123',
+    displayName: 'Bishesh',
+    bio: 'Founder & Admin of CODEHALAAM.',
+    level: 20,
+    xp: 5000,
+    xpToNext: 6000,
+    stats: { commits: 2400, pullRequests: 600, reviews: 1200, issues: 300, contributions: 5000 },
+    streak: 30,
+    longestStreak: 60,
+    isAdmin: true,
+    badgeColor: 'red',
+    characterClass: 'Mage',
+  },
+  {
+    username: 'kai-nakamura',
+    email: 'kai@codehalaam.dev',
+    password: 'password123',
+    displayName: 'Kai Nakamura',
+    bio: 'Full-stack developer. I build things with TypeScript, React, and Node. Open source enthusiast.',
+    level: 12,
+    xp: 2340,
+    xpToNext: 3000,
+    stats: { commits: 780, pullRequests: 190, reviews: 420, issues: 78, contributions: 2340 },
+    streak: 14,
+    longestStreak: 47,
+    isAdmin: false,
+    characterClass: 'Rogue',
+  },
+  {
     username: 'neo-coder',
     email: 'neo@codehalaam.dev',
     password: 'password123',
@@ -303,8 +334,9 @@ async function seed() {
     console.log('  Created commits')
 
     console.log('\n[SEED] Seed completed successfully!')
-    console.log('[SEED] Login with: neo@codehalaam.dev / password123')
-    console.log('[SEED] Other users: sarah@, mike@, alex@ (all password123)')
+    console.log('[SEED] Admin login: bishesh@codehalaam.dev / password123 (isAdmin: true)')
+    console.log('[SEED] Demo login: kai@codehalaam.dev / password123 (isAdmin: false)')
+    console.log('[SEED] Other users: neo@, sarah@, mike@, alex@ (all password123)')
 
     await mongoose.disconnect()
     process.exit(0)
