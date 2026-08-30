@@ -25,8 +25,9 @@ import { useAuth } from '@/contexts/AuthContext'
 import { toast } from 'sonner'
 
 export function CodexSettingsPage() {
-  const { owner: ownerParam, name } = useParams()
+  const { owner: ownerParam, name: nameParam } = useParams()
   const owner = ownerParam || ''
+  const name = nameParam || ''
   const navigate = useNavigate()
   const { user } = useAuth()
 

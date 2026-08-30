@@ -313,3 +313,29 @@ Before shipping any upload feature, verify all 5 links:
 3. URL is saved to DB (not just returned in response)
 4. Frontend uses server URL (not blob URL)
 5. `express.static` returns HTTP 200 for the URL
+
+---
+
+## Quality Safety Net (Foundation)
+
+### Commands
+
+| Command | Location | What it does |
+|---------|----------|--------------|
+| `npm run check` | `client/` | TypeScript strict check + Vite build |
+| `npm run check` | `server/` | Vitest test suite (16 tests) |
+| `npm run build` | `client/` | Production build |
+| `npm test` | `server/` | Run API tests |
+
+### Rules
+
+1. **`npm run check` must pass** before any feature is considered done.
+2. **TypeScript `strict: true`** is enforced in `client/tsconfig.json`.
+3. **No mock data** — all UI data comes from real API endpoints backed by MongoDB.
+4. **Error Boundary** wraps the entire app (`client/src/components/ui/ErrorBoundary.tsx`).
+5. **Backend errors** are logged with method, path, timestamp, and stack trace.
+6. **Test database** is cleaned up in `beforeAll`/`afterAll` hooks — no test data leaks.
+
+### Definition of Done
+
+See [`docs/definition-of-done.md`](definition-of-done.md) for the full quality checklist.

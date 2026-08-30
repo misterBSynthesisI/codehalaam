@@ -1,8 +1,7 @@
 {
   "name": "thegithub-server",
   "version": "1.0.0",
-  "private": true,
-  "type": "module",
+  "private": true,    "type": "module",
   "scripts": {
     "dev": "node --watch index.js",
     "start": "node index.js",
@@ -10,7 +9,9 @@
     "health": "node -e \"fetch('http://localhost:5000/api/health').then(r => r.json()).then(d => console.log(JSON.stringify(d, null, 2))).catch(e => console.error('Server not reachable:', e.message))\"",
     "db:init": "node scripts/init-db.js",
     "db:seed-notifications": "node scripts/seed-notifications.js",
-    "db:seed:barry": "node seed.js"
+    "db:seed:barry": "node seed.js",
+    "test": "vitest run",
+    "check": "vitest run"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -23,5 +24,9 @@
     "multer": "^2.3.0",
     "simple-git": "^3.36.0",
     "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "supertest": "^7.2.2",
+    "vitest": "^4.1.11"
   }
 }

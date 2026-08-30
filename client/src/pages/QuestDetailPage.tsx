@@ -27,8 +27,10 @@ import { useAuth } from '@/contexts/AuthContext'
 import { VerificationBadge } from '@/components/ui/UserBadge'
 
 export function QuestDetailPage() {
-  const { owner: ownerParam, name, number } = useParams()
+  const { owner: ownerParam, name: nameParam, number: numberParam } = useParams()
   const owner = ownerParam || ''
+  const name = nameParam || ''
+  const number = numberParam || ''
   const { user } = useAuth()
 
   const [quest, setQuest] = useState<any>(null)

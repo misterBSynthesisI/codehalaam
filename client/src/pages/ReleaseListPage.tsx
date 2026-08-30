@@ -26,8 +26,9 @@ import { api } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 
 export function ReleaseListPage() {
-  const { owner: ownerParam, name } = useParams()
+  const { owner: ownerParam, name: nameParam } = useParams()
   const owner = ownerParam || ''
+  const name = nameParam || ''
   const { user } = useAuth()
 
   const [releases, setReleases] = useState<any[]>([])

@@ -39,7 +39,7 @@ export function SettingsPage() {
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault(); setSaving(true); setMessage('')
-    try { const { user: updated } = await api.updateProfile({ displayName, bio, company, location, website, twitter }); updateUser(updated); setMessage('Profile updated successfully') }
+    try { const { user: updated } = await api.updateProfile({ displayName, bio, company, location, websiteUrl: website, twitter }); updateUser(updated); setMessage('Profile updated successfully') }
     catch (err: any) { setMessage(err.message || 'Failed') } finally { setSaving(false) }
   }
 

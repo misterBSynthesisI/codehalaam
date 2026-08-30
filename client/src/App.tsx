@@ -17,6 +17,7 @@
  */
 
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { Toaster } from 'sonner'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
@@ -122,6 +123,7 @@ function AppRoutes() {
 
 function App() {
   return (
+    <ErrorBoundary>
     <BrowserRouter>
       <AuthProvider>
         <ThemeProvider>
@@ -136,6 +138,7 @@ function App() {
         </ThemeProvider>
       </AuthProvider>
     </BrowserRouter>
+    </ErrorBoundary>
   )
 }
 
