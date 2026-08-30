@@ -19,9 +19,13 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { GitBranch, Users, Lock, Zap, Globe, ArrowRight } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
+import { useState } from 'react'
 
 export function LandingPage() {
   const navigate = useNavigate()
+  const { login } = useAuth()
+  const [demoLoading, setDemoLoading] = useState(false)
 
   return (
     <div style={{ backgroundColor: 'var(--color-canvas-default)', color: 'var(--color-fg-default)' }}>
@@ -40,7 +44,20 @@ export function LandingPage() {
                 <button onClick={() => navigate('/auth')} className="btn btn-primary text-base px-6 py-2">
                   Get started for free <ArrowRight className="w-4 h-4" />
                 </button>
-                <button className="btn btn-default text-base px-6 py-2">See the demo</button>
+                <button
+                  onClick={async () => {
+                    setDemoLoading(true)
+                    try {
+                      await login('kai@codehalaam.dev', 'kai12345')
+                      navigate('/dashboard')
+                    } catch { navigate('/auth?mode=login') } finally { setDemoLoading(false) }
+                  }}
+                  disabled={demoLoading}
+                  className="btn btn-default text-base px-6 py-2"
+                  data-testid="see-demo"
+                >
+                  {demoLoading ? 'Signing in...' : 'See the demo'}
+                </button>
               </div>
               <div className="flex items-center gap-6 text-sm" style={{ color: 'var(--color-fg-muted)' }}>
                 <div className="flex items-center gap-2">
