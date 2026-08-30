@@ -1,33 +1,23 @@
-# CODEHALAAM — Run Doc
+# CODEHALAAM — Run Instructions
 
-## How to Reproduce Artifacts
+## Servers
 
-1. Install all dependencies:
-   ```
-   npm install
-   cd client && npm install && cd ..
-   cd server && npm install && cd ..
-   ```
-2. Start MongoDB (local instance or MongoDB Atlas)
-3. Seed the database:
-   ```
-   cd server && npm run seed
-   ```
-4. Copy `.env` from main checkout if needed:
-   ```
-   cp server/.env server/.env.local
-   ```
+### Backend (Express + MongoDB)
+- **Port:** 5000
+- **Health:** `http://localhost:5000/api/health`
+- **DB:** `mongodb://localhost:27017/codehalaam`
+- **Start:** `cd server && node index.js`
 
-## How to Run the Dev Servers
+### Frontend (Vite + React)
+- **Port:** 5174
+- **URL:** `http://localhost:5174`
+- **Start:** `cd client && npx vite --port 5174`
 
-### Client (Vite)
+## Demo Credentials
+- **Email:** neo@codehalaam.dev
+- **Password:** password123
+
+## Seed Database
 ```bash
-cd client && npx vite --port 5174
+cd server && node seed.js
 ```
-
-### Server (Express)
-```bash
-cd server && npm run dev
-```
-
-The client dev server is already running on **port 5174**.
