@@ -21,8 +21,9 @@ import { useParams, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronRight, File, Folder, FolderOpen,
-  Star, GitFork, Code, MessageSquare, GitPullRequest,
-  Settings, Check, Plus, AlertCircle, Users, Eye
+  Star, GitFork, FileCode2, MessageSquare, GitPullRequest,
+  Settings, Check, Plus, AlertCircle, Users, Eye, GitBranch,
+  BookOpen, Activity, ExternalLink, Trash2, FolderGit2
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
@@ -45,15 +46,15 @@ function FileTreeNode({ node, depth = 0, onSelect, selectedPath }: {
       >
         {isFolder ? (
           <>
-            <ChevronRight className="w-3 h-3 transition-transform" style={{ color: 'var(--color-fg-subtle)', transform: expanded ? 'rotate(90deg)' : 'none' }} />
+            <ChevronRight className="w-3 h-3 transition-transform" strokeWidth={1.5} style={{ color: 'var(--color-fg-subtle)', transform: expanded ? 'rotate(90deg)' : 'none' }} />
             {expanded ? (
-              <FolderOpen className="file-icon" style={{ color: 'var(--color-accent-fg)' }} />
+              <FolderOpen className="file-icon" strokeWidth={1.5} style={{ color: 'var(--color-accent-fg)' }} />
             ) : (
-              <Folder className="file-icon" style={{ color: 'var(--color-accent-fg)' }} />
+              <Folder className="file-icon" strokeWidth={1.5} style={{ color: 'var(--color-accent-fg)' }} />
             )}
           </>
         ) : (
-          <><span className="w-3 h-3" /><File className="file-icon" style={{ color: 'var(--color-fg-subtle)' }} /></>
+          <><span className="w-3 h-3" /><File className="file-icon" strokeWidth={1.5} style={{ color: 'var(--color-fg-subtle)' }} /></>
         )}
         <span className="file-name">{node.name}</span>
         {node.size && <span style={{ color: 'var(--color-fg-subtle)', fontSize: 12 }}>{node.size}</span>}
@@ -105,11 +106,11 @@ function CodeTab({ repo, owner }: { repo: any; owner: string }) {
       <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
         <div className="flex items-center gap-3">
           <button className="btn btn-sm btn-default" style={{ gap: 4 }}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M9.5 3.25a2.25 2.25 0 1 1 3 2.122V6A2.5 2.5 0 0 1 10 8.5H6a1 1 0 0 0-1 1v1.128a2.251 2.251 0 1 1-1.5 0V5.372a2.25 2.25 0 1 1 1.5 0v1.836A2.493 2.493 0 0 1 6 7.5h4a1 1 0 0 0 1-1v-.628A2.25 2.25 0 0 1 9.5 3.25Zm-6 0a.75.75 0 1 0 1.5 0 .75.75 0 0 0-1.5 0Zm8.25-.75a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5ZM4.25 12a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Z" /></svg>
+            <GitBranch className="w-4 h-4" strokeWidth={1.5} style={{ color: 'var(--color-fg-muted)' }} />
             {repo.defaultBranch || 'main'}
           </button>
-          <span className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="inline mr-1 align-text-bottom"><path d="M2.5 7.775V2.75a.25.25 0 0 1 .25-.25h5.025a.25.25 0 0 1 .177.073l6.25 6.25a.25.25 0 0 1 0 .354l-5.025 5.025a.25.25 0 0 1-.354 0l-6.25-6.25a.25.25 0 0 1-.073-.177Z" /></svg>
+          <span className="text-sm flex items-center gap-1" style={{ color: 'var(--color-fg-muted)' }}>
+            <FolderGit2 className="w-4 h-4" strokeWidth={1.5} />
             {totalFiles} Path
           </span>
         </div>
@@ -119,7 +120,7 @@ function CodeTab({ repo, owner }: { repo: any; owner: string }) {
           </div>
           <button className="btn btn-sm btn-default">Add file</button>
           <button className="btn btn-sm btn-primary">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M2.75 1.5a.25.25 0 0 0-.25.25v11.5c0 .138.112.25.25.25h10.5a.25.25 0 0 0 .25-.25V4.664a.25.25 0 0 0-.073-.177l-2.914-2.914a.25.25 0 0 0-.177-.073H2.75ZM1 1.75v11.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25V4.664c0-.69-.56-1.25-1.25-1.25H11.5a.75.75 0 0 1-.53.22H2.75A1.75 1.75 0 0 1 1 1.75Z" /></svg>
+            <FileCode2 className="w-4 h-4" strokeWidth={1.5} />
             Code
           </button>
         </div>
@@ -136,7 +137,7 @@ function CodeTab({ repo, owner }: { repo: any; owner: string }) {
       {selectedFile && selectedFile.content && (
         <div className="Box">
           <div className="Box-header flex items-center gap-2" style={{ backgroundColor: 'var(--color-canvas-subtle)' }}>
-            <File className="w-4 h-4" style={{ color: 'var(--color-fg-muted)' }} />
+            <File className="w-4 h-4" strokeWidth={1.5} style={{ color: 'var(--color-fg-muted)' }} />
             <span className="text-sm font-semibold" style={{ color: 'var(--color-fg-default)' }}>README.md</span>
             <span className="text-xs" style={{ color: 'var(--color-fg-subtle)' }}>{selectedFile.size}</span>
           </div>
@@ -167,19 +168,19 @@ function QuestsTab({ owner, name }: { owner: string; name: string }) {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3 text-sm">
           <span className="flex items-center gap-1 font-semibold" style={{ color: 'var(--color-fg-default)' }}>
-            <AlertCircle className="w-4 h-4" style={{ color: 'var(--color-success-fg)' }} /> {openCount} Open
+            <AlertCircle className="w-4 h-4" strokeWidth={1.5} style={{ color: 'var(--color-success-fg)' }} /> {openCount} Open
           </span>
           <span className="flex items-center gap-1" style={{ color: 'var(--color-fg-muted)' }}>
-            <Check className="w-4 h-4" /> {closedCount} Closed
+            <Check className="w-4 h-4" strokeWidth={1.5} /> {closedCount} Closed
           </span>
         </div>
-        <button className="btn btn-sm btn-primary"><Plus className="w-3 h-3" /> New issue</button>
+        <button className="btn btn-sm btn-primary"><Plus className="w-3 h-3" strokeWidth={1.5} /> New issue</button>
       </div>
       <div className="Box">
         {issues.map((issue) => (
           <div key={issue._id} className="Box-row">
             <div className="flex items-start gap-3">
-              {issue.state === 'open' ? <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'var(--color-success-fg)' }} /> : <Check className="w-4 h-4 mt-0.5 shrink-0" style={{ color: 'var(--color-done-fg)' }} />}
+              {issue.state === 'open' ? <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" strokeWidth={1.5} style={{ color: 'var(--color-success-fg)' }} /> : <Check className="w-4 h-4 mt-0.5 shrink-0" strokeWidth={1.5} style={{ color: 'var(--color-done-fg)' }} />}
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="text-sm font-semibold" style={{ color: 'var(--color-fg-default)' }}>{issue.title}</h3>
@@ -221,16 +222,16 @@ function OfferingsTab({ owner, name }: { owner: string; name: string }) {
             <GitPullRequest className="w-4 h-4" style={{ color: 'var(--color-success-fg)' }} /> {openCount} Open
           </span>
           <span className="flex items-center gap-1" style={{ color: 'var(--color-fg-muted)' }}>
-            <Check className="w-4 h-4" /> {mergedCount} Bound
+            <Check className="w-4 h-4" strokeWidth={1.5} /> {mergedCount} Bound
           </span>
         </div>
-        <button className="btn btn-sm btn-primary"><Plus className="w-3 h-3" /> New pull request</button>
+        <button className="btn btn-sm btn-primary"><Plus className="w-3 h-3" strokeWidth={1.5} /> New pull request</button>
       </div>
       <div className="Box">
         {pulls.map((pr) => (
           <div key={pr._id} className="Box-row">
             <div className="flex items-start gap-3">
-              <GitPullRequest className="w-4 h-4 mt-0.5 shrink-0" style={{ color: pr.state === 'merged' ? 'var(--color-done-fg)' : pr.state === 'open' ? 'var(--color-success-fg)' : 'var(--color-fg-muted)' }} />
+              <GitPullRequest className="w-4 h-4 mt-0.5 shrink-0" strokeWidth={1.5} style={{ color: pr.state === 'merged' ? 'var(--color-done-fg)' : pr.state === 'open' ? 'var(--color-success-fg)' : 'var(--color-fg-muted)' }} />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="text-sm font-semibold" style={{ color: 'var(--color-fg-default)' }}>{pr.title}</h3>
@@ -244,7 +245,7 @@ function OfferingsTab({ owner, name }: { owner: string; name: string }) {
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0 text-xs" style={{ color: 'var(--color-fg-muted)' }}>
-                {pr.commentsCount > 0 && <span className="flex items-center gap-1"><MessageSquare className="w-3 h-3" />{pr.commentsCount}</span>}
+                {pr.commentsCount > 0 && <span className="flex items-center gap-1"><MessageSquare className="w-3 h-3" strokeWidth={1.5} />{pr.commentsCount}</span>}
               </div>
             </div>
           </div>
@@ -325,9 +326,9 @@ function CollaboratorsTab({ owner, name }: { owner: string; name: string }) {
               <div className="flex items-center gap-2">
                 <span className={`Label ${collab.role === 'admin' ? 'Label-purple' : collab.role === 'write' ? 'Label-blue' : 'Label-green'}`}>{collab.role}</span>
                 {isOwner && !collab.isOwner && (
-                  <button onClick={() => handleRemove(collab.user._id)} className="p-1 rounded transition-colors" style={{ color: 'var(--color-fg-muted)' }} title="Remove">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M11 1.75V3h2.25a.75.75 0 0 1 0 1.5H2.75a.75.75 0 0 1 0-1.5H5V1.75C5 .784 5.784 0 6.75 0h2.5C10.216 0 11 .784 11 1.75ZM4.496 6.675l.66 6.6a.25.25 0 0 0 .249.225h5.19a.25.25 0 0 0 .249-.225l.66-6.6a.75.75 0 0 1 1.492.15l-.66 6.6A1.748 1.748 0 0 1 10.595 15h-5.19a1.75 1.75 0 0 1-1.741-1.575l-.66-6.6a.75.75 0 1 1 1.492-.15ZM6.5 1.75V3h3V1.75a.25.25 0 0 0-.25-.25h-2.5a.25.25 0 0 0-.25.25Z" /></svg>
-                  </button>
+                  <motion.button whileTap={{ scale: 0.92 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }} onClick={() => handleRemove(collab.user._id)} className="p-1 rounded transition-colors" style={{ color: 'var(--color-fg-muted)' }} title="Remove">
+                    <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+                  </motion.button>
                 )}
               </div>
             </div>
@@ -384,31 +385,31 @@ function RepoSidebar({ repo, owner, languages }: { repo: any; owner: string; lan
         <p className="text-sm mb-3" style={{ color: 'var(--color-fg-muted)' }}>{repo.description || 'No description provided'}</p>
         {repo.homepage && (
           <a href={repo.homepage} target="_blank" rel="noopener noreferrer" className="text-xs flex items-center gap-1 mb-3" style={{ color: 'var(--color-accent-fg)' }}>
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z" /></svg>
+            <ExternalLink className="w-4 h-4" strokeWidth={1.5} />
             {repo.homepage.replace(/^https?:\/\//, '')}
           </a>
         )}
         <div className="space-y-2 text-sm">
           <div className="sidebar-item">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M2 2.5A2.5 2.5 0 0 1 4.5 0h8.75a.75.75 0 0 1 .75.75v12.5a.75.75 0 0 1-.75.75h-2.5a.75.75 0 0 1 0-1.5h1.75v-2h-8a1 1 0 0 0-.714 1.7.75.75 0 1 1-1.072 1.05A2.495 2.495 0 0 1 2 11.5Z" /></svg>
+            <BookOpen className="w-4 h-4" strokeWidth={1.5} style={{ color: 'var(--color-fg-muted)' }} />
             <span style={{ color: 'var(--color-fg-muted)' }}>Readme</span>
           </div>
           <div className="sidebar-item">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" /><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z" /></svg>
+            <Activity className="w-4 h-4" strokeWidth={1.5} style={{ color: 'var(--color-fg-muted)' }} />
             <span style={{ color: 'var(--color-fg-muted)' }}>Activity</span>
           </div>
           <div className="sidebar-item">
-            <Star className="w-4 h-4" style={{ color: 'var(--color-fg-muted)' }} />
+            <Star className="w-4 h-4" strokeWidth={1.5} style={{ color: 'var(--color-fg-muted)' }} />
             <span className="count">{repo.starsCount || 0}</span>
             <span style={{ color: 'var(--color-fg-muted)' }}>embers</span>
           </div>
           <div className="sidebar-item">
-            <Eye className="w-4 h-4" style={{ color: 'var(--color-fg-muted)' }} />
+            <Eye className="w-4 h-4" strokeWidth={1.5} style={{ color: 'var(--color-fg-muted)' }} />
             <span className="count">1</span>
             <span style={{ color: 'var(--color-fg-muted)' }}>watching</span>
           </div>
           <div className="sidebar-item">
-            <GitFork className="w-4 h-4" style={{ color: 'var(--color-fg-muted)' }} />
+            <GitFork className="w-4 h-4" strokeWidth={1.5} style={{ color: 'var(--color-fg-muted)' }} />
             <span className="count">{repo.forksCount || 0}</span>
             <span style={{ color: 'var(--color-fg-muted)' }}>echoes</span>
           </div>
@@ -495,11 +496,11 @@ export function RepoPage() {
   }
 
   const tabs: { id: RepoTab; label: string; icon: React.ReactNode; count?: number }[] = [
-    { id: 'code', label: 'Code', icon: <Code className="w-4 h-4" /> },
-    { id: 'issues', label: 'Quests', icon: <AlertCircle className="w-4 h-4" />, count: repo.openIssuesCount },
-    { id: 'pull-requests', label: 'Offerings', icon: <GitPullRequest className="w-4 h-4" />, count: repo.openPullRequestsCount },
-    { id: 'collaborators', label: 'Collaborators', icon: <Users className="w-4 h-4" /> },
-    { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> },
+    { id: 'code', label: 'Code', icon: <FileCode2 className="w-4 h-4" strokeWidth={1.5} /> },
+    { id: 'issues', label: 'Quests', icon: <AlertCircle className="w-4 h-4" strokeWidth={1.5} />, count: repo.openIssuesCount },
+    { id: 'pull-requests', label: 'Offerings', icon: <GitPullRequest className="w-4 h-4" strokeWidth={1.5} />, count: repo.openPullRequestsCount },
+    { id: 'collaborators', label: 'Collaborators', icon: <Users className="w-4 h-4" strokeWidth={1.5} /> },
+    { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" strokeWidth={1.5} /> },
   ]
 
   return (
@@ -509,20 +510,20 @@ export function RepoPage() {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2 text-sm">
             <Link to={`/${username}`} className="no-underline hover:underline" style={{ color: 'var(--color-accent-fg)' }}>{username}</Link>
-            <ChevronRight className="w-3 h-3" style={{ color: 'var(--color-fg-subtle)' }} />
+            <ChevronRight className="w-3 h-3" strokeWidth={1.5} style={{ color: 'var(--color-fg-subtle)' }} />
             <span className="font-semibold text-lg" style={{ color: 'var(--color-fg-default)' }}>{repo.name}</span>
             <span className="Label Label-muted">{repo.visibility}</span>
           </div>
           <div className="flex items-center gap-2">
-            <button className="btn btn-sm btn-default">
-              <Eye className="w-3 h-3" style={{ color: 'var(--color-fg-muted)' }} /> Watch <span className="Counter">0</span>
-            </button>
-            <button className="btn btn-sm btn-default">
-              <GitFork className="w-3 h-3" style={{ color: 'var(--color-fg-muted)' }} /> Echo <span className="Counter">{repo.forksCount || 0}</span>
-            </button>
-            <button className="btn btn-sm btn-default">
-              <Star className="w-3 h-3" style={{ color: 'var(--color-fg-muted)' }} /> Ember <span className="Counter">{repo.starsCount || 0}</span>
-            </button>
+            <motion.button whileTap={{ scale: 0.92 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }} className="btn btn-sm btn-default btn-flash">
+              <Eye className="w-3.5 h-3.5" strokeWidth={1.5} style={{ color: 'var(--color-fg-muted)' }} /> Watch <span className="Counter">0</span>
+            </motion.button>
+            <motion.button whileTap={{ scale: 0.92 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }} className="btn btn-sm btn-default btn-flash">
+              <GitFork className="w-3.5 h-3.5" strokeWidth={1.5} style={{ color: 'var(--color-fg-muted)' }} /> Echo <span className="Counter">{repo.forksCount || 0}</span>
+            </motion.button>
+            <motion.button whileTap={{ scale: 0.92 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }} className="btn btn-sm btn-default btn-flash">
+              <Star className="w-3.5 h-3.5" strokeWidth={1.5} style={{ color: 'var(--color-fg-muted)' }} /> Ember <span className="Counter">{repo.starsCount || 0}</span>
+            </motion.button>
           </div>
         </div>
 

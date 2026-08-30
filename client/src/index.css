@@ -706,6 +706,16 @@
   animation: fadeIn 150ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Action button flash effect — subtle 0.2s color pulse on click */
+@keyframes btn-flash {
+  0% { box-shadow: 0 0 0 0 var(--color-accent-muted); }
+  50% { box-shadow: 0 0 0 4px var(--color-accent-muted); }
+  100% { box-shadow: 0 0 0 0 var(--color-accent-muted); }
+}
+.btn-flash:active:not(:disabled) {
+  animation: btn-flash 200ms ease-out;
+}
+
 @media (prefers-contrast: more) {
   .Box {
     border-width: 2px;
