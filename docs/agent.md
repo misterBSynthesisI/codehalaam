@@ -264,3 +264,52 @@ agents:
     reminder_hours: 18
     timezone: UTC
 ```
+
+---
+
+## Upload Persistence (MANDATORY)
+
+> **All uploaded images must survive page refresh AND server restart.**
+> Never use `memoryStorage` or `URL.createObjectURL()` for persisted images.
+
+### Architecture
+
+| Component | Config | Path |
+|-----------|--------|------|
+| Multer | `multer.diskStorage()` | `server/uploads/avatars/`, `server/uploads/codexes/` |
+| Express | `express.static('uploads')` | `GET /uploads/*` |
+| DB | `User.avatarUrl`, `User.coverUrl`, `Repository.coverUrl/logoUrl` | Stores `/uploads/avatars/...` path |
+
+### Upload Endpoints
+
+| Endpoint | Saves To | DB Field |
+|----------|----------|----------|
+| `POST /api/auth/avatar` | `server/uploads/avatars/` | `User.avatarUrl` |
+| `POST /api/auth/cover` | `server/uploads/avatars/` | `User.coverUrl` |
+| `POST /api/codexes/:owner/:name/media` | `server/uploads/codexes/` | `Repository.coverUrl` or `Repository.logoUrl` |
+
+### Rules
+
+1. **Never use `multer.memoryStorage()`** — files must be written to persistent disk.
+2. **Never use `URL.createObjectURL()` for persisted images** — use the server-returned URL directly.
+3. **Always capture the server URL in a local variable** before passing to parent component:
+   ```js
+   let savedAvatarUrl = profile.avatarUrl
+   if (avatarFile) {
+     const res = await api.uploadAvatar(avatarFile)
+     savedAvatarUrl = res.avatarUrl  // capture server URL
+   }
+   onSave({ ...profile, avatarUrl: savedAvatarUrl })
+   ```
+4. **Ensure upload directories exist** — use `fs.mkdirSync(dir, { recursive: true })`.
+5. **Verify `express.static`** is registered BEFORE any catch-all route.
+6. **`server/uploads/`** must be in `.gitignore`.
+
+### Diagnostic Checklist (Vault)
+
+Before shipping any upload feature, verify all 5 links:
+1. Multer uses `diskStorage` (not `memoryStorage`)
+2. File exists on disk after upload (`fs.existsSync`)
+3. URL is saved to DB (not just returned in response)
+4. Frontend uses server URL (not blob URL)
+5. `express.static` returns HTTP 200 for the URL

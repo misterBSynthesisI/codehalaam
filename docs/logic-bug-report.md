@@ -89,6 +89,12 @@
 - **Description:** When deleting a codex, the code does `Comment.deleteMany({ targetType: { $in: ['Quest', 'Offering', 'Release'] } })` which deletes ALL comments of those types, not just ones belonging to this codex. This is a data loss bug.
 - **Status:** ⏳ DEFERRED — Fix by first finding all Quest/Offering/Release IDs for this codex, then deleting comments by targetId.
 
+### BUG-011: Frontend Upload Saves Blob URLs Instead of Persistent URLs
+- **File:** `client/src/pages/ProfilePage.tsx`, `client/src/pages/CodexHomePage.tsx`
+- **Severity:** HIGH
+- **Description:** After uploading an image, `handleSave` passed `avatarPreview`/`coverPreview` state variables to `onSave`. These held blob URLs from `URL.createObjectURL()`. React state updates are async — by the time `onSave` ran, the state still held the old blob URL, not the server-returned persistent URL. Images appeared to work on upload but would break on refresh.
+- **Status:** ✅ FIXED — Captured server-returned URLs into local variables and passed those to `onSave` instead of reading stale state.
+
 ---
 
 ## Summary
@@ -96,5 +102,7 @@
 | Category | Count | Fixed | Deferred |
 |----------|-------|-------|----------|
 | Critical | 4 | 4 | 0 |
-| Non-Critical | 6 | 1 | 5 |
-| **Total** | **10** | **5** | **5** |
+| High | 2 | 2 | 0 |
+| Medium | 2 | 0 | 2 |
+| Low | 3 | 1 | 2 |
+| **Total** | **11** | **7** | **4** |

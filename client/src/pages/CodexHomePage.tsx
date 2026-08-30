@@ -100,10 +100,22 @@ function CustomizeModal({ repo, owner, onSave, onClose }: { repo: any; owner: st
   const handleSave = async () => {
     setSaving(true)
     try {
-      if (coverFile) await api.uploadCodexMedia(owner, repo.name, coverFile, 'cover')
-      if (logoFile) await api.uploadCodexMedia(owner, repo.name, logoFile, 'logo')
+      // Upload cover — capture real URL from server
+      let savedCoverUrl = repo.coverUrl
+      if (coverFile) {
+        const coverRes = await api.uploadCodexMedia(owner, repo.name, coverFile, 'cover')
+        savedCoverUrl = coverRes.url
+        setCoverPreview(coverRes.url)
+      }
+      // Upload logo — capture real URL from server
+      let savedLogoUrl = repo.logoUrl
+      if (logoFile) {
+        const logoRes = await api.uploadCodexMedia(owner, repo.name, logoFile, 'logo')
+        savedLogoUrl = logoRes.url
+        setLogoPreview(logoRes.url)
+      }
       await api.updateCodex(owner, repo.name, { tagline, websiteUrl, technologies, accentColor })
-      onSave({ tagline, websiteUrl, technologies, accentColor, coverUrl: coverPreview, logoUrl: logoPreview })
+      onSave({ tagline, websiteUrl, technologies, accentColor, coverUrl: savedCoverUrl, logoUrl: savedLogoUrl })
       setToast({ msg: 'Storefront updated!', type: 'success' })
     } catch (err: any) { setToast({ msg: err.message, type: 'error' }) }
     finally { setSaving(false) }

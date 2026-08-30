@@ -255,19 +255,23 @@ function CustomizeProfileModal({ profile, onClose, onSave }: { profile: any; onC
   const handleSave = async () => {
     setSaving(true)
     try {
-      // Upload avatar if new file selected
+      // Upload avatar if new file selected — capture real URL from server
+      let savedAvatarUrl = profile.avatarUrl
       if (avatarFile) {
         const res = await api.uploadAvatar(avatarFile)
+        savedAvatarUrl = res.avatarUrl
         setAvatarPreview(res.avatarUrl)
       }
-      // Upload cover if new file selected
+      // Upload cover if new file selected — capture real URL from server
+      let savedCoverUrl = profile.coverUrl
       if (coverFile) {
         const res = await api.uploadCover(coverFile)
+        savedCoverUrl = res.coverUrl
         setCoverPreview(res.coverUrl)
       }
       // Update profile fields
       const res = await api.updateProfile({ displayName, bio, location, websiteUrl })
-      onSave({ ...profile, ...res.user, avatarUrl: avatarFile ? avatarPreview : profile.avatarUrl, coverUrl: coverFile ? coverPreview : profile.coverUrl })
+      onSave({ ...profile, ...res.user, avatarUrl: savedAvatarUrl, coverUrl: savedCoverUrl })
       toast.success('Profile updated!')
       onClose()
     } catch (err: any) {
