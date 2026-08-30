@@ -20,6 +20,7 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
+import { Zap } from 'lucide-react'
 
 type AuthMode = 'login' | 'signup'
 
@@ -56,6 +57,19 @@ export function AuthPage() {
     } catch (err: any) { setError(err.message || 'Something went wrong') } finally { setLoading(false) }
   }
 
+  const handleQuickLogin = async () => {
+    setError('')
+    setLoading(true)
+    try {
+      await login('kai@codehalaam.dev', 'kai12345')
+      navigate('/dashboard')
+    } catch (err: any) {
+      setError(err.message || 'Quick login failed. Make sure the database is seeded.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="flex items-center justify-center px-4 py-12" style={{ backgroundColor: 'var(--color-canvas-default)', color: 'var(--color-fg-default)', minHeight: 'calc(100vh - 50px)' }}>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', bounce: 0, duration: 0.5 }} className="w-full max-w-[340px]">
@@ -75,12 +89,44 @@ export function AuthPage() {
             </div>
           )}
 
+          {/* Quick login button */}
+          {mode === 'login' && (
+            <>
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                whileHover={{ scale: 1.01 }}
+                transition={{ type: 'spring', bounce: 0, duration: 0.2 }}
+                onClick={handleQuickLogin}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-md font-medium text-sm border transition-colors"
+                style={{
+                  backgroundColor: 'var(--color-success-subtle)',
+                  borderColor: 'var(--color-success-muted)',
+                  color: 'var(--color-success-fg)',
+                }}
+                data-testid="quick-login"
+              >
+                <Zap className="w-4 h-4" />
+                {loading ? 'Logging in...' : 'Try Demo Account'}
+              </motion.button>
+
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t" style={{ borderColor: 'var(--color-border-default)' }} />
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="px-2" style={{ backgroundColor: 'var(--color-canvas-default)', color: 'var(--color-fg-muted)' }}>or sign in with credentials</span>
+                </div>
+              </div>
+            </>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-3">
             {mode === 'signup' && (
               <>
                 <div>
                   <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-fg-default)' }}>Username</label>
-                  <input id="username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="octocat" className="form-control" autoFocus required />
+                  <input id="username" type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="e.g. kai" className="form-control" autoFocus required />
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-fg-default)' }}>Email address</label>
@@ -109,12 +155,6 @@ export function AuthPage() {
             <>New to CODEHALAAM? <button onClick={() => { setMode('signup'); setError('') }} style={{ color: 'var(--color-accent-fg)' }} className="hover:underline">Create an account</button></>
           )}
         </p>
-
-        <div className="mt-6 p-3 rounded-md text-center" style={{ backgroundColor: 'var(--color-canvas-subtle)', border: '1px solid var(--color-border-default)' }}>
-          <p className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>
-            Demo: <span style={{ color: 'var(--color-fg-default)', fontFamily: 'monospace' }}>neo@codehalaam.dev</span> / <span style={{ color: 'var(--color-fg-default)', fontFamily: 'monospace' }}>password123</span>
-          </p>
-        </div>
       </motion.div>
     </div>
   )
