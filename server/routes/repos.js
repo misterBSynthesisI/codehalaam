@@ -1,4 +1,23 @@
+/**
+ * CODEHALAAM — The Gamified Code Hosting Platform
+ * 
+ * © 2026 JustShipitAI. All rights reserved.
+ * 
+ * CONFIDENTIAL — TRADE SECRET
+ * 
+ * This file is proprietary and confidential. Unauthorized
+ * copying, distribution, modification, or reverse engineering
+ * of this file, via any medium, is strictly prohibited.
+ * 
+ * This code was developed with AI assistance under strict
+ * confidentiality protocols. All intellectual property rights
+ * are retained by the Owner.
+ * 
+ * For licensing inquiries: justshipitai@gmail.com
+ */
+
 import express from 'express'
+import User from '../models/User.js'
 import Repository from '../models/Repository.js'
 import Commit from '../models/Commit.js'
 import { protect } from '../middleware/auth.js'
@@ -32,7 +51,7 @@ router.get('/', protect, async (req, res) => {
 // GET /api/repos/:owner/:name - Get single repo
 router.get('/:owner/:name', async (req, res) => {
   try {
-    const owner = await (await import('../models/User.js')).default.findOne({ username: req.params.owner })
+    const owner = await User.findOne({ username: req.params.owner })
     if (!owner) {
       return res.status(404).json({ error: 'User not found' })
     }
@@ -146,7 +165,7 @@ router.post('/', protect, async (req, res) => {
 // PUT /api/repos/:owner/:name - Update repo
 router.put('/:owner/:name', protect, async (req, res) => {
   try {
-    const owner = await (await import('../models/User.js')).default.findOne({ username: req.params.owner })
+    const owner = await User.findOne({ username: req.params.owner })
     if (!owner || owner._id.toString() !== req.user._id.toString()) {
       return res.status(403).json({ error: 'Not authorized' })
     }
@@ -178,7 +197,7 @@ router.put('/:owner/:name', protect, async (req, res) => {
 // DELETE /api/repos/:owner/:name - Delete repo
 router.delete('/:owner/:name', protect, async (req, res) => {
   try {
-    const owner = await (await import('../models/User.js')).default.findOne({ username: req.params.owner })
+    const owner = await User.findOne({ username: req.params.owner })
     if (!owner || owner._id.toString() !== req.user._id.toString()) {
       return res.status(403).json({ error: 'Not authorized' })
     }
@@ -200,7 +219,7 @@ router.delete('/:owner/:name', protect, async (req, res) => {
 // POST /api/repos/:owner/:name/star - Toggle star
 router.post('/:owner/:name/star', protect, async (req, res) => {
   try {
-    const owner = await (await import('../models/User.js')).default.findOne({ username: req.params.owner })
+    const owner = await User.findOne({ username: req.params.owner })
     if (!owner) return res.status(404).json({ error: 'User not found' })
 
     const repo = await Repository.findOne({ owner: owner._id, name: req.params.name })
@@ -228,7 +247,7 @@ router.post('/:owner/:name/star', protect, async (req, res) => {
 // POST /api/repos/:owner/:name/fork - Fork repo
 router.post('/:owner/:name/fork', protect, async (req, res) => {
   try {
-    const owner = await (await import('../models/User.js')).default.findOne({ username: req.params.owner })
+    const owner = await User.findOne({ username: req.params.owner })
     if (!owner) return res.status(404).json({ error: 'User not found' })
 
     const original = await Repository.findOne({ owner: owner._id, name: req.params.name })
@@ -264,7 +283,7 @@ router.post('/:owner/:name/fork', protect, async (req, res) => {
 // GET /api/repos/:owner/:name/commits - Get commit history
 router.get('/:owner/:name/commits', async (req, res) => {
   try {
-    const owner = await (await import('../models/User.js')).default.findOne({ username: req.params.owner })
+    const owner = await User.findOne({ username: req.params.owner })
     if (!owner) return res.status(404).json({ error: 'User not found' })
 
     const repo = await Repository.findOne({ owner: owner._id, name: req.params.name })
@@ -287,7 +306,7 @@ router.get('/:owner/:name/file', async (req, res) => {
     const { path } = req.query
     if (!path) return res.status(400).json({ error: 'Path is required' })
 
-    const owner = await (await import('../models/User.js')).default.findOne({ username: req.params.owner })
+    const owner = await User.findOne({ username: req.params.owner })
     if (!owner) return res.status(404).json({ error: 'User not found' })
 
     const repo = await Repository.findOne({ owner: owner._id, name: req.params.name })

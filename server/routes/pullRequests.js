@@ -1,4 +1,23 @@
+/**
+ * CODEHALAAM — The Gamified Code Hosting Platform
+ * 
+ * © 2026 JustShipitAI. All rights reserved.
+ * 
+ * CONFIDENTIAL — TRADE SECRET
+ * 
+ * This file is proprietary and confidential. Unauthorized
+ * copying, distribution, modification, or reverse engineering
+ * of this file, via any medium, is strictly prohibited.
+ * 
+ * This code was developed with AI assistance under strict
+ * confidentiality protocols. All intellectual property rights
+ * are retained by the Owner.
+ * 
+ * For licensing inquiries: justshipitai@gmail.com
+ */
+
 import express from 'express'
+import User from '../models/User.js'
 import PullRequest from '../models/PullRequest.js'
 import Repository from '../models/Repository.js'
 import Issue from '../models/Issue.js'
@@ -11,7 +30,7 @@ router.get('/:owner/:name', async (req, res) => {
   try {
     const { state = 'all', sort = 'created', direction = 'desc' } = req.query
 
-    const owner = await (await import('../models/User.js')).default.findOne({ username: req.params.owner })
+    const owner = await User.findOne({ username: req.params.owner })
     if (!owner) return res.status(404).json({ error: 'User not found' })
 
     const repo = await Repository.findOne({ owner: owner._id, name: req.params.name })
@@ -42,7 +61,7 @@ router.get('/:owner/:name', async (req, res) => {
 // GET /api/pulls/:owner/:name/:number - Get single PR
 router.get('/:owner/:name/:number', async (req, res) => {
   try {
-    const owner = await (await import('../models/User.js')).default.findOne({ username: req.params.owner })
+    const owner = await User.findOne({ username: req.params.owner })
     if (!owner) return res.status(404).json({ error: 'User not found' })
 
     const repo = await Repository.findOne({ owner: owner._id, name: req.params.name })
@@ -73,7 +92,7 @@ router.post('/:owner/:name', protect, async (req, res) => {
       return res.status(400).json({ error: 'Title and head branch are required' })
     }
 
-    const owner = await (await import('../models/User.js')).default.findOne({ username: req.params.owner })
+    const owner = await User.findOne({ username: req.params.owner })
     if (!owner) return res.status(404).json({ error: 'User not found' })
 
     const repo = await Repository.findOne({ owner: owner._id, name: req.params.name })
@@ -130,7 +149,7 @@ router.post('/:owner/:name', protect, async (req, res) => {
 // PATCH /api/pulls/:owner/:name/:number - Update PR
 router.patch('/:owner/:name/:number', protect, async (req, res) => {
   try {
-    const owner = await (await import('../models/User.js')).default.findOne({ username: req.params.owner })
+    const owner = await User.findOne({ username: req.params.owner })
     if (!owner) return res.status(404).json({ error: 'User not found' })
 
     const repo = await Repository.findOne({ owner: owner._id, name: req.params.name })
@@ -167,7 +186,7 @@ router.patch('/:owner/:name/:number', protect, async (req, res) => {
 // POST /api/pulls/:owner/:name/:number/merge - Merge PR
 router.post('/:owner/:name/:number/merge', protect, async (req, res) => {
   try {
-    const owner = await (await import('../models/User.js')).default.findOne({ username: req.params.owner })
+    const owner = await User.findOne({ username: req.params.owner })
     if (!owner) return res.status(404).json({ error: 'User not found' })
 
     const repo = await Repository.findOne({ owner: owner._id, name: req.params.name })
@@ -213,7 +232,7 @@ router.post('/:owner/:name/:number/review', protect, async (req, res) => {
 
     if (!state) return res.status(400).json({ error: 'Review state is required' })
 
-    const owner = await (await import('../models/User.js')).default.findOne({ username: req.params.owner })
+    const owner = await User.findOne({ username: req.params.owner })
     if (!owner) return res.status(404).json({ error: 'User not found' })
 
     const repo = await Repository.findOne({ owner: owner._id, name: req.params.name })
@@ -245,7 +264,7 @@ router.post('/:owner/:name/:number/comment', protect, async (req, res) => {
     const { body, path, line } = req.body
     if (!body) return res.status(400).json({ error: 'Comment body is required' })
 
-    const owner = await (await import('../models/User.js')).default.findOne({ username: req.params.owner })
+    const owner = await User.findOne({ username: req.params.owner })
     if (!owner) return res.status(404).json({ error: 'User not found' })
 
     const repo = await Repository.findOne({ owner: owner._id, name: req.params.name })

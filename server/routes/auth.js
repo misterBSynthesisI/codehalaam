@@ -1,5 +1,22 @@
+/**
+ * CODEHALAAM — The Gamified Code Hosting Platform
+ * 
+ * © 2026 JustShipitAI. All rights reserved.
+ * 
+ * CONFIDENTIAL — TRADE SECRET
+ * 
+ * This file is proprietary and confidential. Unauthorized
+ * copying, distribution, modification, or reverse engineering
+ * of this file, via any medium, is strictly prohibited.
+ * 
+ * This code was developed with AI assistance under strict
+ * confidentiality protocols. All intellectual property rights
+ * are retained by the Owner.
+ * 
+ * For licensing inquiries: justshipitai@gmail.com
+ */
+
 import express from 'express'
-import jwt from 'jsonwebtoken'
 import User from '../models/User.js'
 import { generateToken, protect } from '../middleware/auth.js'
 
@@ -21,8 +38,7 @@ router.post('/signup', async (req, res) => {
     // Check if user exists
     const existingUser = await User.findOne({ $or: [{ email }, { username }] })
     if (existingUser) {
-      const field = existingUser.email === email ? 'email' : 'username'
-      return res.status(422).json({ error: `Username or email already taken` })
+      return res.status(422).json({ error: 'Username or email already taken' })
     }
 
     // Create user
