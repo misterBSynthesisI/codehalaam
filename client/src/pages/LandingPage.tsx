@@ -20,12 +20,16 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { GitBranch, Users, Lock, Zap, Globe, ArrowRight } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { api } from '@/lib/api'
 
 export function LandingPage() {
   const navigate = useNavigate()
   const { login } = useAuth()
   const [demoLoading, setDemoLoading] = useState(false)
+  const [stats, setStats] = useState<{ totalUsers: number; totalRepos: number } | null>(null)
+
+  useEffect(() => { api.getStats().then(setStats).catch(() => {}) }, [])
 
   return (
     <div style={{ backgroundColor: 'var(--color-canvas-default)', color: 'var(--color-fg-default)' }}>
@@ -61,16 +65,19 @@ export function LandingPage() {
               </div>
               <div className="flex items-center gap-6 text-sm" style={{ color: 'var(--color-fg-muted)' }}>
                 <div className="flex items-center gap-2">
-                  <div className="flex -space-x-2">
-                    {['NC', 'SC', 'MR', 'AK'].map((initials, i) => (
-                      <div key={i} className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium border-2" style={{ backgroundColor: 'var(--color-canvas-subtle)', borderColor: 'var(--color-canvas-default)', color: 'var(--color-fg-default)' }}>{initials}</div>
-                    ))}
-                  </div>
-                  <span>42,069 developers</span>
+                  {stats ? (
+                    <span>{stats.totalUsers.toLocaleString()} developers</span>
+                  ) : (
+                    <span>developers</span>
+                  )}
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span style={{ color: 'var(--color-attention-fg)' }}>★</span>
-                  <span>1.2M codexes</span>
+                  {stats ? (
+                    <span>{stats.totalRepos.toLocaleString()} codexes</span>
+                  ) : (
+                    <span>codexes</span>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -111,7 +118,7 @@ export function LandingPage() {
               { icon: <Lock className="w-5 h-5" />, title: 'Unlimited private codexes', desc: 'Keep your code private with unlimited codexes.', color: 'var(--color-success-fg)' },
               { icon: <Users className="w-5 h-5" />, title: 'Unlimited collaborators', desc: 'Invite your entire team. No per-seat pricing.', color: 'var(--color-accent-fg)' },
               { icon: <GitBranch className="w-5 h-5" />, title: 'Offerings & reviews', desc: 'Code review with inline comments and approvals.', color: 'var(--color-done-fg)' },
-              { icon: <Zap className="w-5 h-5" />, title: 'Earn XP for contributions', desc: 'Level up by committing, reviewing PRs, and closing issues.', color: 'var(--color-attention-fg)' },
+              { icon: <Zap className="w-5 h-5" />, title: 'Earn XP for contributions', desc: 'Level up by committing, reviewing offerings, and closing quests.', color: 'var(--color-attention-fg)' },
               { icon: <Globe className="w-5 h-5" />, title: 'Global leaderboard', desc: 'See how you rank against developers worldwide.', color: 'var(--color-danger-fg)' },
               { icon: <svg className="w-5 h-5" viewBox="0 0 16 16" fill="currentColor"><path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.743 3.743 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.06 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75Zm7.251 10.324.004-5.073-.002-2.253A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574ZM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25Z" /></svg>, title: 'Quests & bounties', desc: 'Track bugs, feature requests, and bounties.', color: 'var(--color-fg-muted)' },
             ].map((feature, i) => (

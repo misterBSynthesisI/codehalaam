@@ -30,6 +30,7 @@ interface User {
   website: string
   twitter: string
   avatarUrl: string
+  coverUrl: string | null
   level: number
   xp: number
   xpToNext: number
@@ -86,6 +87,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     refreshUser()
+
+    // Re-fetch user on window focus to sync admin/badge changes
+    const handleFocus = () => refreshUser()
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
   }, [refreshUser])
 
   const login = async (email: string, password: string) => {

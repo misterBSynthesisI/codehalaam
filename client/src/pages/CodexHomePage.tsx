@@ -28,6 +28,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { api } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
+import { VerifiedBadge } from '@/components/ui/VerifiedBadge'
 
 /* ===== MARKDOWN COMPONENTS ===== */
 const markdownComponents: Record<string, any> = {
@@ -219,19 +220,24 @@ export function CodexHomePage() {
   useEffect(() => {
     if (!owner || !name) return
     setLoading(true)
-    Promise.all([
+    Promise.allSettled([
       api.getCodex(owner, name),
       api.getReadme(owner, name),
-    ]).then(([codexData, readmeData]) => {
-      setRepo(codexData.repo)
-      setCounts(codexData.counts)
-      setIsEmbered(codexData.isEmbered)
-      setEmbersCount(codexData.counts.embers)
-      setIsWatching(codexData.isWatching)
-      setWatchersCount(codexData.counts.watchers)
-      setHasEchoed(codexData.hasEchoed)
-      setEchoesCount(codexData.counts.echoes)
-      setReadme(readmeData.readme)
+    ]).then(([codexResult, readmeResult]) => {
+      if (codexResult.status === 'fulfilled') {
+        const codexData = codexResult.value
+        setRepo(codexData.repo)
+        setCounts(codexData.counts)
+        setIsEmbered(codexData.isEmbered)
+        setEmbersCount(codexData.counts.embers)
+        setIsWatching(codexData.isWatching)
+        setWatchersCount(codexData.counts.watchers)
+        setHasEchoed(codexData.hasEchoed)
+        setEchoesCount(codexData.counts.echoes)
+      }
+      if (readmeResult.status === 'fulfilled') {
+        setReadme(readmeResult.value.readme)
+      }
     }).finally(() => setLoading(false))
 
     api.getQuests(owner, name).then(d => setQuests(d.quests?.slice(0, 5) || [])).catch(() => {})
@@ -320,29 +326,55 @@ export function CodexHomePage() {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }} className="flex items-center gap-2 mt-2 text-xs" style={{ color: 'var(--color-fg-muted)' }}>
                 <Link to={`/${owner}`} className="flex items-center gap-1.5 no-underline hover:underline" style={{ color: 'var(--color-accent-fg)' }}>
                   <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium" style={{ backgroundColor: 'var(--color-success-muted)', color: 'var(--color-success-fg)' }}>{owner?.charAt(0).toUpperCase()}</span>
-                  {owner}
+                  {repo.owner?.displayName || owner}
                 </Link>
+                <VerifiedBadge badgeColor={repo.owner?.badgeColor} />
                 <span className="Label Label-muted" style={{ fontSize: 10 }}>{repo.visibility}</span>
               </motion.div>
             </div>
 
-            {/* Action buttons */}
+            {/* Action buttons with sticker badges */}
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="flex items-center gap-2 shrink-0 pb-1">
               {user && (
                 <>
+                  {/* Watch button with sticker */}
                   <motion.button whileTap={{ scale: 0.92 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                    onClick={handleToggleWatch} className="btn btn-sm btn-flash"
-                    style={{ backgroundColor: isWatching ? 'var(--color-accent-muted)' : 'var(--color-btn-default-bg)', borderColor: isWatching ? 'var(--color-accent-fg)' : 'var(--color-btn-default-border)', color: isWatching ? 'var(--color-accent-fg)' : 'var(--color-fg-muted)' }}>
-                    <Eye className="w-3.5 h-3.5" strokeWidth={1.5} fill={isWatching ? 'currentColor' : 'none'} /> Watch <span className="Counter">{watchersCount}</span>
+                    onClick={handleToggleWatch} className="btn btn-sm btn-default relative">
+                    <Eye className="w-3.5 h-3.5" strokeWidth={1.5} /> Watch <span className="Counter">{watchersCount}</span>
+                    <AnimatePresence>
+                      {isWatching && (
+                        <motion.span initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={{ type: 'spring', bounce: 0.15, duration: 0.3 }}
+                          className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-accent-fg)', border: '1.5px solid var(--color-canvas-default)', zIndex: 10 }}>
+                          <Eye className="w-2.5 h-2.5" strokeWidth={2} style={{ color: '#fff' }} fill="currentColor" />
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
                   </motion.button>
+                  {/* Echo button with sticker */}
                   <motion.button whileTap={{ scale: 0.92 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                    onClick={handleToggleEcho} className="btn btn-sm btn-default btn-flash">
-                    <Radio className="w-3.5 h-3.5" strokeWidth={1.5} style={{ color: 'var(--color-done-fg)' }} /> Echo <span className="Counter">{echoesCount}</span>
+                    onClick={handleToggleEcho} className="btn btn-sm btn-default relative">
+                    <Radio className="w-3.5 h-3.5" strokeWidth={1.5} /> Echo <span className="Counter">{echoesCount}</span>
+                    <AnimatePresence>
+                      {hasEchoed && (
+                        <motion.span initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={{ type: 'spring', bounce: 0.15, duration: 0.3 }}
+                          className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-done-fg)', border: '1.5px solid var(--color-canvas-default)', zIndex: 10 }}>
+                          <Radio className="w-2.5 h-2.5" strokeWidth={2} style={{ color: '#fff' }} fill="currentColor" />
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
                   </motion.button>
+                  {/* Ember button with sticker */}
                   <motion.button whileTap={{ scale: 0.92 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                    onClick={handleToggleEmber} className="btn btn-sm btn-flash"
-                    style={{ backgroundColor: isEmbered ? 'rgba(249,115,22,0.1)' : 'var(--color-btn-default-bg)', borderColor: isEmbered ? '#f97316' : 'var(--color-btn-default-border)', color: isEmbered ? '#f97316' : 'var(--color-fg-muted)' }}>
-                    <Flame className="w-3.5 h-3.5" strokeWidth={1.5} fill={isEmbered ? 'currentColor' : 'none'} /> Ember <span className="Counter">{embersCount}</span>
+                    onClick={handleToggleEmber} className="btn btn-sm btn-default relative">
+                    <Flame className="w-3.5 h-3.5" strokeWidth={1.5} /> Ember <span className="Counter">{embersCount}</span>
+                    <AnimatePresence>
+                      {isEmbered && (
+                        <motion.span initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={{ type: 'spring', bounce: 0.15, duration: 0.3 }}
+                          className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: '#f97316', border: '1.5px solid var(--color-canvas-default)', zIndex: 10 }}>
+                          <Flame className="w-2.5 h-2.5" strokeWidth={2} style={{ color: '#fff' }} fill="currentColor" />
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
                   </motion.button>
                 </>
               )}
@@ -420,7 +452,7 @@ export function CodexHomePage() {
                     <AlertCircle className="w-4 h-4 shrink-0" strokeWidth={1.5} style={{ color: q.status === 'Closed' ? 'var(--color-done-fg)' : 'var(--color-success-fg)' }} />
                     <div className="min-w-0 flex-1">
                       <span className="text-sm font-semibold" style={{ color: 'var(--color-fg-default)' }}>{q.title}</span>
-                      <p className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>#{q.number} · opened by {q.author?.username} · {new Date(q.createdAt).toLocaleDateString()}</p>
+                      <p className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>#{q.number} · opened by {q.author?.displayName || q.author?.username} · {new Date(q.createdAt).toLocaleDateString()}</p>
                     </div>
                   </Link>
                 ))}
@@ -480,7 +512,7 @@ export function CodexHomePage() {
                   {collaborators.slice(0, 8).map((c: any) => (
                     <div key={c.user?._id || c._id} className="flex items-center gap-2">
                       <Link to={`/${c.user?.username}`} className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium no-underline hover:scale-110 transition-transform" style={{ backgroundColor: 'var(--color-success-muted)', color: 'var(--color-success-fg)' }}>{c.user?.username?.charAt(0).toUpperCase() || '?'}</Link>
-                      <Link to={`/${c.user?.username}`} className="text-sm no-underline hover:underline" style={{ color: 'var(--color-accent-fg)' }}>{c.user?.username}</Link>
+                      <Link to={`/${c.user?.username}`} className="text-sm no-underline hover:underline" style={{ color: 'var(--color-accent-fg)' }}>{c.user?.displayName || c.user?.username}</Link>
                       <span className="text-xs" style={{ color: 'var(--color-fg-subtle)' }}>{c.role}</span>
                     </div>
                   ))}
@@ -511,7 +543,7 @@ export function CodexHomePage() {
                   <Link to={`/codex/${owner}/${name}/releases`} className="flex items-center gap-2 text-sm no-underline" style={{ color: 'var(--color-accent-fg)', textDecoration: 'none' }}>
                     <Tag className="w-3.5 h-3.5" strokeWidth={1.5} />{releases[0].tagName} — {releases[0].title}
                   </Link>
-                  <p className="text-xs mt-1" style={{ color: 'var(--color-fg-muted)' }}>{new Date(releases[0].createdAt).toLocaleDateString()} by {releases[0].author?.username}</p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--color-fg-muted)' }}>{new Date(releases[0].createdAt).toLocaleDateString()} by {releases[0].author?.displayName || releases[0].author?.username}</p>
                 </div>
               </div>
             )}
@@ -522,7 +554,7 @@ export function CodexHomePage() {
                   <Eye className="w-4 h-4" strokeWidth={1.5} /> Open Code Workspace
                 </Link>
                 {isOwner && (
-                  <Link to="/settings" className="sidebar-item text-sm no-underline" style={{ color: 'var(--color-accent-fg)', textDecoration: 'none' }}>
+                  <Link to={`/codex/${owner}/${name}/settings`} className="sidebar-item text-sm no-underline" style={{ color: 'var(--color-accent-fg)', textDecoration: 'none' }}>
                     <Settings className="w-4 h-4" strokeWidth={1.5} /> Settings
                   </Link>
                 )}

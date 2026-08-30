@@ -17,6 +17,7 @@
  */
 
 import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom'
+import { Toaster } from 'sonner'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { XPProvider } from '@/components/gamification/XPToast'
@@ -30,6 +31,7 @@ import { CodeWorkspacePage } from '@/pages/CodeWorkspacePage'
 import { QuestDetailPage } from '@/pages/QuestDetailPage'
 import { OfferingDetailPage } from '@/pages/OfferingDetailPage'
 import { ReleaseListPage } from '@/pages/ReleaseListPage'
+import { CodexSettingsPage } from '@/pages/CodexSettingsPage'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { CreateRepoPage } from '@/pages/CreateRepoPage'
@@ -107,6 +109,7 @@ function AppRoutes() {
       <Route path="/codex/:owner/:name/quests/:number" element={<QuestDetailPage />} />
       <Route path="/codex/:owner/:name/offerings/:number" element={<OfferingDetailPage />} />
       <Route path="/codex/:owner/:name/releases" element={<ReleaseListPage />} />
+      <Route path="/codex/:owner/:name/settings" element={<CodexSettingsPage />} />
       <Route path="/codex/:owner/:name" element={<CodexHomePage />} />
 
       {/* Profile route */}
@@ -127,6 +130,7 @@ function App() {
             <CommandPalette />
             <Navbar />
             <AppRoutes />
+            <Toaster position="top-right" richColors closeButton />
           </div>
         </XPProvider>
         </ThemeProvider>

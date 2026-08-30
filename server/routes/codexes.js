@@ -27,7 +27,7 @@ import Release from '../models/Release.js'
 import Collaborator from '../models/Collaborator.js'
 import Invitation from '../models/Invitation.js'
 import Commit from '../models/Commit.js'
-import { protect } from '../middleware/auth.js'
+import { protect, optionalAuth } from '../middleware/auth.js'
 import * as gitService from '../services/gitService.js'
 import { uploadCodexMedia } from '../services/uploadService.js'
 
@@ -57,7 +57,7 @@ function canViewCodex(repo, user) {
 // ============================================================
 
 // GET /api/codexes/:owner/:name — Get single codex
-router.get('/:owner/:name', async (req, res) => {
+router.get('/:owner/:name', optionalAuth, async (req, res) => {
   try {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
@@ -104,7 +104,7 @@ router.get('/:owner/:name', async (req, res) => {
 })
 
 // GET /api/codexes/:owner/:name/readme — Get README content
-router.get('/:owner/:name/readme', async (req, res) => {
+router.get('/:owner/:name/readme', optionalAuth, async (req, res) => {
   try {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
@@ -306,12 +306,13 @@ router.patch('/:owner/:name', protect, async (req, res) => {
       return res.status(403).json({ error: 'Only the owner can edit this codex' })
     }
 
-    const { tagline, websiteUrl, technologies, accentColor, description } = req.body
+    const { tagline, websiteUrl, technologies, accentColor, description, visibility } = req.body
     if (tagline !== undefined) repo.tagline = tagline
     if (websiteUrl !== undefined) repo.websiteUrl = websiteUrl
     if (technologies !== undefined) repo.technologies = technologies
     if (accentColor !== undefined) repo.accentColor = accentColor
     if (description !== undefined) repo.description = description
+    if (visibility !== undefined) repo.visibility = visibility
 
     await repo.save()
 
@@ -319,6 +320,35 @@ router.patch('/:owner/:name', protect, async (req, res) => {
   } catch (err) {
     console.error('Update codex error:', err)
     res.status(500).json({ error: 'Failed to update codex' })
+  }
+})
+
+// DELETE /api/codexes/:owner/:name — Delete codex
+router.delete('/:owner/:name', protect, async (req, res) => {
+  try {
+    const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
+    if (error) return res.status(status).json({ error })
+
+    if (owner._id.toString() !== req.user._id.toString() && !req.user.isAdmin) {
+      return res.status(403).json({ error: 'Only the owner can delete this codex' })
+    }
+
+    // Delete related data
+    await Promise.all([
+      Quest.deleteMany({ codex: repo._id }),
+      Offering.deleteMany({ codex: repo._id }),
+      Path.deleteMany({ codex: repo._id }),
+      Comment.deleteMany({ targetType: { $in: ['Quest', 'Offering', 'Release'] } }),
+      Release.deleteMany({ codex: repo._id }),
+      Collaborator.deleteMany({ codex: repo._id }),
+      Invitation.deleteMany({ codex: repo._id }),
+    ])
+    await repo.deleteOne()
+
+    res.json({ message: 'Codex deleted' })
+  } catch (err) {
+    console.error('Delete codex error:', err)
+    res.status(500).json({ error: 'Failed to delete codex' })
   }
 })
 

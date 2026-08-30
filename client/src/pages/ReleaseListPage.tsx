@@ -136,7 +136,7 @@ export function ReleaseListPage() {
                   )}
                   <div className="mt-3 text-xs flex items-center gap-2" style={{ color: 'var(--color-fg-subtle)' }}>
                     <span>Published {new Date(r.createdAt).toLocaleDateString()}</span>
-                    {r.author && <span>by {r.author.username}</span>}
+                    {r.author && <span>by {r.author.displayName || r.author.username}</span>}
                   </div>
                 </div>
               </div>

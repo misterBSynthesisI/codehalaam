@@ -16,24 +16,31 @@
  * For licensing inquiries: justshipitai@gmail.com
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { MapPin, Building, LinkIcon, Calendar, TrendingUp, Flame, BookOpen } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { MapPin, Building, LinkIcon, Calendar, TrendingUp, Flame, BookOpen, Settings, Upload, X } from 'lucide-react'
 import { api } from '@/lib/api'
 import { StarMap } from '@/components/dashboard/StarMap'
 import { VerifiedBadge } from '@/components/ui/VerifiedBadge'
+import { useAuth } from '@/contexts/AuthContext'
+import { toast } from 'sonner'
 
 export function ProfilePage() {
   const { username } = useParams()
+  const { user: currentUser, refreshUser } = useAuth()
   const [profile, setProfile] = useState<any>(null)
   const [repos, setRepos] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'overview' | 'repositories' | 'achievements'>('overview')
+  const [showCustomize, setShowCustomize] = useState(false)
 
   useEffect(() => {
+    setLoading(true)
     api.getUser(username!).then(data => { setProfile(data.user); setRepos(data.repos) }).finally(() => setLoading(false))
   }, [username])
+
+  const isOwnProfile = currentUser && profile && currentUser.username === profile.username
 
   if (loading) return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-canvas-default)' }}><div style={{ color: 'var(--color-fg-muted)' }}>Loading profile...</div></div>
   if (!profile) return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-canvas-default)' }}><div className="text-center"><h2 className="text-xl font-semibold mb-2" style={{ color: 'var(--color-fg-default)' }}>User not found</h2></div></div>
@@ -46,17 +53,21 @@ export function ProfilePage() {
 
   return (
     <div style={{ backgroundColor: 'var(--color-canvas-default)', color: 'var(--color-fg-default)', minHeight: '100vh' }}>
-      {/* Power Photo — Cover Image Banner */}
+      {/* Cover Image Banner */}
       <div className="relative" style={{ height: 200 }}>
-        {/* Galaxy/space gradient background */}
-        <div className="absolute inset-0" style={{
-          background: 'linear-gradient(135deg, #0a0a2e 0%, #1a1a3e 25%, #0d1117 50%, #1a0a2e 75%, #0a1a2e 100%)',
-        }} />
+        {profile.coverUrl ? (
+          <img src={profile.coverUrl} alt="Profile banner" className="absolute inset-0 w-full h-full object-cover" />
+        ) : (
+          <div className="absolute inset-0" style={{
+            background: 'linear-gradient(135deg, #0a0a2e 0%, #1a1a3e 25%, #0d1117 50%, #1a0a2e 75%, #0a1a2e 100%)',
+          }} />
+        )}
         {/* Subtle star dots on the cover */}
-        <div className="absolute inset-0" style={{
-          backgroundImage: 'radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.4), transparent), radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,0.3), transparent), radial-gradient(1px 1px at 60% 20%, rgba(255,255,255,0.5), transparent), radial-gradient(1px 1px at 80% 60%, rgba(255,255,255,0.2), transparent), radial-gradient(1.5px 1.5px at 15% 80%, rgba(251,191,36,0.4), transparent), radial-gradient(1.5px 1.5px at 70% 40%, rgba(251,191,36,0.3), transparent), radial-gradient(1px 1px at 90% 15%, rgba(255,255,255,0.3), transparent)',
-        }} />
-        {/* Gradient fade at bottom */}
+        {!profile.coverUrl && (
+          <div className="absolute inset-0" style={{
+            backgroundImage: 'radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.4), transparent), radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,0.3), transparent), radial-gradient(1px 1px at 60% 20%, rgba(255,255,255,0.5), transparent), radial-gradient(1px 1px at 80% 60%, rgba(255,255,255,0.2), transparent), radial-gradient(1.5px 1.5px at 15% 80%, rgba(251,191,36,0.4), transparent), radial-gradient(1.5px 1.5px at 70% 40%, rgba(251,191,36,0.3), transparent), radial-gradient(1px 1px at 90% 15%, rgba(255,255,255,0.3), transparent)',
+          }} />
+        )}
         <div className="absolute bottom-0 left-0 right-0 h-16" style={{
           background: 'linear-gradient(to top, var(--color-canvas-default), transparent)',
         }} />
@@ -67,14 +78,14 @@ export function ProfilePage() {
           {/* Sidebar */}
           <div>
             <div className="sticky top-24">
-              {/* Avatar — overlaps the cover image */}
+              {/* Avatar */}
               <div className="w-[180px] h-[180px] rounded-full flex items-center justify-center text-6xl font-semibold mb-4 overflow-hidden" style={{
                 backgroundColor: 'var(--color-canvas-subtle)',
                 border: '4px solid var(--color-canvas-default)',
                 color: 'var(--color-fg-default)',
                 boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
               }}>
-                {profile.avatarUrl ? <img src={profile.avatarUrl} className="w-full h-full object-cover" /> : profile.username.charAt(0).toUpperCase()}
+                {profile.avatarUrl ? <img src={profile.avatarUrl} className="w-full h-full object-cover" alt={profile.username} /> : profile.username.charAt(0).toUpperCase()}
               </div>
 
               <div className="mb-4">
@@ -98,6 +109,17 @@ export function ProfilePage() {
                 <div className="flex items-center gap-2"><Calendar className="w-4 h-4" />Joined {new Date(profile.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</div>
               </div>
 
+              {isOwnProfile && (
+                <button
+                  onClick={() => setShowCustomize(true)}
+                  className="btn btn-sm w-full mb-4"
+                  style={{ backgroundColor: 'var(--color-canvas-subtle)', border: '1px solid var(--color-border-default)', color: 'var(--color-fg-default)' }}
+                >
+                  <Settings className="w-4 h-4" strokeWidth={1.5} />
+                  Customize Profile
+                </button>
+              )}
+
               <div className="Box p-4 mb-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium" style={{ color: 'var(--color-fg-default)' }}>Level {profile.level}</span>
@@ -117,7 +139,7 @@ export function ProfilePage() {
                 <div className="space-y-1 text-sm">
                   {[
                     ['Public codexes', repos.length],
-                    ['Embers received', repos.reduce((s, r) => s + (r.starsCount || 0), 0).toLocaleString()],
+                    ['Embers received', repos.reduce((s: number, r: any) => s + (r.starsCount || r.embers?.length || 0), 0).toLocaleString()],
                     ['Inscriptions', profile.stats?.commits?.toLocaleString() || 0],
                   ].map(([label, val]) => (
                     <div key={label} className="flex items-center justify-between">
@@ -133,23 +155,21 @@ export function ProfilePage() {
           {/* Main */}
           <div>
             <div className="UnderlineNav mb-4">
-              {(['overview', 'repositories', 'achievements'] as const).map(tab => (
-                <button key={tab} onClick={() => setActiveTab(tab)} className="UnderlineNav-item capitalize" aria-selected={activeTab === tab}>{tab}</button>
+              {([['overview', 'Overview'], ['repositories', 'Codexes'], ['achievements', 'Achievements']] as const).map(([key, label]) => (
+                <button key={key} onClick={() => setActiveTab(key)} className="UnderlineNav-item" aria-selected={activeTab === key}>{label}</button>
               ))}
             </div>
 
             {activeTab === 'overview' && (
               <div className="space-y-6">
-                {/* Star Map — replaces the old green squares */}
                 {contributionHeatmap.length > 0 && (
                   <StarMap contributions={contributionHeatmap} totalContributions={profile.stats?.contributions || 0} />
                 )}
 
-                {/* Pinned Codexes */}
                 <div>
                   <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--color-fg-default)' }}>Pinned</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {repos.slice(0, 6).map(repo => (
+                    {repos.slice(0, 6).map((repo: any) => (
                       <Link key={repo._id} to={`/codex/${profile.username}/${repo.name}`} className="Box p-4 no-underline" style={{ textDecoration: 'none' }}>
                         <div className="flex items-center gap-2 mb-1">
                           <BookOpen className="w-4 h-4" strokeWidth={1.5} style={{ color: 'var(--color-accent-fg)' }} />
@@ -159,7 +179,7 @@ export function ProfilePage() {
                         <p className="text-xs line-clamp-2" style={{ color: 'var(--color-fg-muted)' }}>{repo.description}</p>
                         <div className="flex items-center gap-3 mt-2 text-xs" style={{ color: 'var(--color-fg-muted)' }}>
                           {repo.language && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--color-accent-fg)' }} />{repo.language}</span>}
-                          {repo.starsCount > 0 && <span>🔥 {repo.starsCount.toLocaleString()}</span>}
+                          {(repo.starsCount > 0 || repo.embers?.length > 0) && <span>🔥 {repo.starsCount || repo.embers?.length || 0}</span>}
                         </div>
                       </Link>
                     ))}
@@ -170,7 +190,7 @@ export function ProfilePage() {
 
             {activeTab === 'repositories' && (
               <div className="Box" data-testid="repo-list">
-                {repos.map(repo => (
+                {repos.map((repo: any) => (
                   <div key={repo._id} className="Box-row">
                     <Link to={`/codex/${profile.username}/${repo.name}`} className="flex items-center gap-2 text-sm font-semibold no-underline hover:underline" style={{ color: 'var(--color-accent-fg)' }}>
                       <BookOpen className="w-4 h-4" strokeWidth={1.5} />
@@ -200,6 +220,162 @@ export function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Customize Profile Modal */}
+      <AnimatePresence>
+        {showCustomize && (
+          <CustomizeProfileModal
+            profile={profile}
+            onClose={() => setShowCustomize(false)}
+            onSave={(updated) => { setProfile(updated); refreshUser() }}
+          />
+        )}
+      </AnimatePresence>
     </div>
+  )
+}
+
+function CustomizeProfileModal({ profile, onClose, onSave }: { profile: any; onClose: () => void; onSave: (u: any) => void }) {
+  const [displayName, setDisplayName] = useState(profile.displayName || '')
+  const [bio, setBio] = useState(profile.bio || '')
+  const [location, setLocation] = useState(profile.location || '')
+  const [websiteUrl, setWebsiteUrl] = useState(profile.website || '')
+  const [avatarPreview, setAvatarPreview] = useState(profile.avatarUrl || '')
+  const [coverPreview, setCoverPreview] = useState(profile.coverUrl || '')
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [coverFile, setCoverFile] = useState<File | null>(null)
+  const [saving, setSaving] = useState(false)
+  const avatarInput = useRef<HTMLInputElement>(null)
+  const coverInput = useRef<HTMLInputElement>(null)
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      // Upload avatar if new file selected
+      if (avatarFile) {
+        const res = await api.uploadAvatar(avatarFile)
+        setAvatarPreview(res.avatarUrl)
+      }
+      // Upload cover if new file selected
+      if (coverFile) {
+        const res = await api.uploadCover(coverFile)
+        setCoverPreview(res.coverUrl)
+      }
+      // Update profile fields
+      const res = await api.updateProfile({ displayName, bio, location, websiteUrl })
+      onSave({ ...profile, ...res.user, avatarUrl: avatarFile ? avatarPreview : profile.avatarUrl, coverUrl: coverFile ? coverPreview : profile.coverUrl })
+      toast.success('Profile updated!')
+      onClose()
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update profile')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        transition={{ type: 'spring', bounce: 0.15, duration: 0.4 }}
+        className="w-full max-w-lg rounded-xl p-6 overflow-y-auto max-h-[85vh]"
+        style={{ backgroundColor: 'var(--color-canvas-default)', border: '1px solid var(--color-border-default)', boxShadow: '0 16px 48px rgba(0,0,0,0.3)' }}
+      >
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-semibold" style={{ color: 'var(--color-fg-default)' }}>Customize Profile</h2>
+          <button onClick={onClose} className="btn btn-sm" style={{ color: 'var(--color-fg-muted)' }}><X className="w-4 h-4" /></button>
+        </div>
+
+        {/* Cover preview */}
+        <div className="mb-4">
+          <label className="text-sm font-medium mb-1 block" style={{ color: 'var(--color-fg-default)' }}>Banner</label>
+          <div
+            className="relative rounded-lg overflow-hidden cursor-pointer group"
+            style={{ height: 120, backgroundColor: 'var(--color-canvas-subtle)' }}
+            onClick={() => coverInput.current?.click()}
+          >
+            {coverPreview ? (
+              <img src={coverPreview} className="w-full h-full object-cover" alt="Cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center" style={{ color: 'var(--color-fg-muted)' }}>
+                <Upload className="w-6 h-6" strokeWidth={1.5} /> <span className="ml-2 text-sm">Click to upload banner</span>
+              </div>
+            )}
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+              <Upload className="w-6 h-6 text-white" strokeWidth={1.5} />
+            </div>
+          </div>
+          <input ref={coverInput} type="file" accept="image/*" className="hidden" onChange={e => {
+            const f = e.target.files?.[0]
+            if (f) { setCoverFile(f); setCoverPreview(URL.createObjectURL(f)) }
+          }} />
+        </div>
+
+        {/* Avatar preview */}
+        <div className="mb-4 flex items-center gap-4">
+          <div
+            className="relative w-20 h-20 rounded-full overflow-hidden cursor-pointer group flex-shrink-0"
+            style={{ backgroundColor: 'var(--color-canvas-subtle)', border: '3px solid var(--color-border-default)' }}
+            onClick={() => avatarInput.current?.click()}
+          >
+            {avatarPreview ? (
+              <img src={avatarPreview} className="w-full h-full object-cover" alt="Avatar" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-2xl font-bold" style={{ color: 'var(--color-fg-muted)' }}>
+                {profile.username.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-full">
+              <Upload className="w-5 h-5 text-white" strokeWidth={1.5} />
+            </div>
+          </div>
+          <input ref={avatarInput} type="file" accept="image/*" className="hidden" onChange={e => {
+            const f = e.target.files?.[0]
+            if (f) { setAvatarFile(f); setAvatarPreview(URL.createObjectURL(f)) }
+          }} />
+          <div>
+            <div className="text-sm font-medium" style={{ color: 'var(--color-fg-default)' }}>Profile Photo</div>
+            <div className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>Click image to upload</div>
+          </div>
+        </div>
+
+        {/* Fields */}
+        <div className="space-y-3">
+          <div>
+            <label className="text-sm font-medium mb-1 block" style={{ color: 'var(--color-fg-default)' }}>Display Name</label>
+            <input type="text" value={displayName} onChange={e => setDisplayName(e.target.value)} placeholder="Your display name" className="form-control w-full" style={{ backgroundColor: 'var(--color-canvas-subtle)', border: '1px solid var(--color-border-default)', color: 'var(--color-fg-default)', padding: '8px 12px', borderRadius: 6 }} />
+          </div>
+          <div>
+            <label className="text-sm font-medium mb-1 block" style={{ color: 'var(--color-fg-default)' }}>Bio</label>
+            <textarea value={bio} onChange={e => setBio(e.target.value)} placeholder="Tell us about yourself" rows={3} maxLength={160} className="form-control w-full" style={{ backgroundColor: 'var(--color-canvas-subtle)', border: '1px solid var(--color-border-default)', color: 'var(--color-fg-default)', padding: '8px 12px', borderRadius: 6, resize: 'none' }} />
+            <div className="text-xs mt-1" style={{ color: 'var(--color-fg-muted)' }}>{bio.length}/160</div>
+          </div>
+          <div>
+            <label className="text-sm font-medium mb-1 block" style={{ color: 'var(--color-fg-default)' }}>Location</label>
+            <input type="text" value={location} onChange={e => setLocation(e.target.value)} placeholder="City, Country" className="form-control w-full" style={{ backgroundColor: 'var(--color-canvas-subtle)', border: '1px solid var(--color-border-default)', color: 'var(--color-fg-default)', padding: '8px 12px', borderRadius: 6 }} />
+          </div>
+          <div>
+            <label className="text-sm font-medium mb-1 block" style={{ color: 'var(--color-fg-default)' }}>Website</label>
+            <input type="url" value={websiteUrl} onChange={e => setWebsiteUrl(e.target.value)} placeholder="https://..." className="form-control w-full" style={{ backgroundColor: 'var(--color-canvas-subtle)', border: '1px solid var(--color-border-default)', color: 'var(--color-fg-default)', padding: '8px 12px', borderRadius: 6 }} />
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2 mt-6">
+          <button onClick={onClose} className="btn btn-sm" style={{ border: '1px solid var(--color-border-default)', color: 'var(--color-fg-default)' }}>Cancel</button>
+          <button onClick={handleSave} disabled={saving} className="btn btn-sm btn-primary">
+            {saving ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
   )
 }

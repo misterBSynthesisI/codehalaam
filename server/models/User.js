@@ -57,6 +57,7 @@ const userSchema = new mongoose.Schema({
   website: { type: String, default: '' },
   twitter: { type: String, default: '' },
   avatarUrl: { type: String, default: '' },
+  coverUrl: { type: String, default: null },
 
   // Gamification
   level: { type: Number, default: 1 },

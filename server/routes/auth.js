@@ -210,4 +210,50 @@ router.post('/avatar', protect, uploadAvatar.single('avatar'), async (req, res) 
   }
 })
 
+// PATCH /api/auth/me — Update profile fields
+router.patch('/me', protect, async (req, res) => {
+  try {
+    const { displayName, bio, location, websiteUrl, company, twitter } = req.body
+    const updates = {}
+    if (displayName !== undefined) updates.displayName = displayName
+    if (bio !== undefined) updates.bio = bio
+    if (location !== undefined) updates.location = location
+    if (websiteUrl !== undefined) updates.website = websiteUrl
+    if (company !== undefined) updates.company = company
+    if (twitter !== undefined) updates.twitter = twitter
+
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      updates,
+      { new: true, runValidators: true }
+    ).select('-password')
+
+    res.json({ user })
+  } catch (err) {
+    console.error('Profile update error:', err)
+    res.status(500).json({ error: 'Failed to update profile' })
+  }
+})
+
+// POST /api/auth/cover — Upload profile cover/banner
+router.post('/cover', protect, uploadAvatar.single('cover'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' })
+    }
+
+    const coverUrl = `/uploads/avatars/${req.file.filename}`
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { coverUrl },
+      { new: true }
+    ).select('-password')
+
+    res.json({ coverUrl, user })
+  } catch (err) {
+    console.error('Cover upload error:', err)
+    res.status(500).json({ error: 'Failed to upload cover' })
+  }
+})
+
 export default router

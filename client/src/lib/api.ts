@@ -127,6 +127,28 @@ class ApiClient {
     return data
   }
 
+  async uploadCover(file: File) {
+    const formData = new FormData()
+    formData.append('cover', file)
+    const headers: Record<string, string> = {}
+    if (this.token) headers['Authorization'] = `Bearer ${this.token}`
+    const res = await fetch(`${API_BASE}/auth/cover`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Upload failed')
+    return data
+  }
+
+  async updateProfile(data: { displayName?: string; bio?: string; location?: string; websiteUrl?: string; company?: string; twitter?: string }) {
+    return this.request<{ user: any }>('/auth/me', {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    })
+  }
+
   // Users
   async getUser(username: string) {
     return this.request<{ user: any; repos: any[]; pinnedRepos: any[] }>(`/users/${username}`)
@@ -138,6 +160,10 @@ class ApiClient {
 
   async getLeaderboard() {
     return this.request<{ leaderboard: any[] }>('/users/leaderboard/top')
+  }
+
+  async getStats() {
+    return this.request<{ totalUsers: number; totalRepos: number }>('/users/stats')
   }
 
   async awardXP(amount: number, reason?: string) {
