@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-31T00:00:00.000Z",
+  "title": "Design System: CODEHALAAM",
+  "extensions": {
+    "colorMeta": {
+      "canvas-default": { "role": "neutral", "displayName": "Deep Canvas", "canonical": "#0d1117", "tonalRamp": ["#010409", "#0d1117", "#161b22", "#1c2128", "#21262d", "#282e36", "#30363d", "#3a424b"] },
+      "canvas-subtle": { "role": "neutral", "displayName": "Subtle Surface", "canonical": "#161b22", "tonalRamp": ["#0d1117", "#161b22", "#1c2128", "#21262d", "#282e36", "#30363d", "#3a424b", "#454d58"] },
+      "fg-default": { "role": "neutral", "displayName": "Primary Text", "canonical": "#e6edf3", "tonalRamp": ["#6e7681", "#8b949e", "#b1bac4", "#c9d1d9", "#e6edf3", "#f0f3f6", "#f6f8fa", "#ffffff"] },
+      "fg-muted": { "role": "neutral", "displayName": "Secondary Text", "canonical": "#8b949e", "tonalRamp": ["#484f58", "#6e7681", "#8b949e", "#a4adb8", "#b1bac4", "#c0c8d0", "#d0d8e0", "#e0e6ec"] },
+      "accent-fg": { "role": "primary", "displayName": "Accent Blue", "canonical": "#58a6ff", "tonalRamp": ["#1f6feb", "#388bfd", "#58a6ff", "#79c0ff", "#a5d6ff", "#cce5ff", "#ddf4ff", "#f0f8ff"] },
+      "success-fg": { "role": "secondary", "displayName": "Success Green", "canonical": "#3fb950", "tonalRamp": ["#238636", "#2ea043", "#3fb950", "#56d364", "#7ee787", "#aff5b4", "#d4fcd6", "#dafbe1"] },
+      "danger-fg": { "role": "secondary", "displayName": "Danger Red", "canonical": "#f85149", "tonalRamp": ["#a40e26", "#cf222e", "#f85149", "#ff7b72", "#ffa198", "#ffd7d5", "#ffebe9", "#fff1f0"] },
+      "done-fg": { "role": "tertiary", "displayName": "Done Purple", "canonical": "#a371f7", "tonalRamp": ["#6639ba", "#8957e5", "#a371f7", "#bc8cff", "#d2a8ff", "#e2cbff", "#f0e6ff", "#f8f0ff"] },
+      "attention-fg": { "role": "tertiary", "displayName": "Attention Amber", "canonical": "#d29922", "tonalRamp": ["#7d4e0e", "#9e6a03", "#d29922", "#e3b341", "#f0c75e", "#f8e3a1", "#fcf4d6", "#fef8e8"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Page titles, hero headings. Tight tracking at large sizes." },
+      "headline": { "displayName": "Headline", "purpose": "Section headings, card titles." },
+      "body": { "displayName": "Body", "purpose": "Default text, descriptions, content." },
+      "label": { "displayName": "Label", "purpose": "Buttons, tabs, navigation. Slightly positive tracking." }
+    },
+    "shadows": [
+      { "name": "subtle-lift", "value": "0 1px 0 rgba(31,35,40,0.04)", "purpose": "Card edges, subtle separation at rest." },
+      { "name": "medium-elevation", "value": "0 3px 6px rgba(140,149,159,0.15)", "purpose": "Dropdown menus, popovers on hover." },
+      { "name": "large-elevation", "value": "0 8px 24px rgba(140,149,159,0.2)", "purpose": "Modals, overlays." }
+    ],
+    "motion": [
+      { "name": "spring-standard", "value": "type: spring, bounce: 0, duration: 0.4", "purpose": "Critically damped spring for UI transitions. No overshoot." },
+      { "name": "spring-bounce", "value": "type: spring, bounce: 0.15, duration: 0.4", "purpose": "Momentum-driven spring for gesture interactions." },
+      { "name": "ease-response", "value": "80ms cubic-bezier(0.33, 1, 0.68, 1)", "purpose": "Button press, instant tactile feedback." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Green action button for positive actions: create, save, submit.",
+      "html": "<button class=\"ds-btn-primary\">Save Changes</button>",
+      "css": ".ds-btn-primary { background: #238636; color: #ffffff; padding: 5px 16px; font-size: 14px; font-weight: 500; border: 1px solid rgba(63,185,80,0.4); border-radius: 6px; cursor: pointer; transition: 80ms cubic-bezier(0.33,1,0.68,1); } .ds-btn-primary:hover { background: #2ea043; } .ds-btn-primary:active { transform: scale(0.97); } .ds-btn-primary:focus-visible { outline: 2px solid #58a6ff; outline-offset: -2px; }"
+    },
+    {
+      "name": "Default Button",
+      "kind": "button",
+      "refersTo": "button-default",
+      "description": "Dark background button for secondary actions.",
+      "html": "<button class=\"ds-btn-default\">Cancel</button>",
+      "css": ".ds-btn-default { background: #21262d; color: #c9d1d9; padding: 5px 16px; font-size: 14px; font-weight: 500; border: 1px solid #363b42; border-radius: 6px; cursor: pointer; transition: 80ms cubic-bezier(0.33,1,0.68,1); } .ds-btn-default:hover { background: #30363d; border-color: #8b949e; } .ds-btn-default:active { transform: scale(0.97); } .ds-btn-default:focus-visible { outline: 2px solid #58a6ff; outline-offset: -2px; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Transparent button with blue text for tertiary actions.",
+      "html": "<button class=\"ds-btn-outline\">View All</button>",
+      "css": ".ds-btn-outline { background: transparent; color: #58a6ff; padding: 5px 16px; font-size: 14px; font-weight: 500; border: 1px solid #30363d; border-radius: 6px; cursor: pointer; transition: 80ms cubic-bezier(0.33,1,0.68,1); } .ds-btn-outline:hover { background: rgba(56,139,253,0.1); border-color: #58a6ff; } .ds-btn-outline:active { transform: scale(0.97); }"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "form-control",
+      "description": "Text input with 6px radius, dark background, blue focus ring.",
+      "html": "<input class=\"ds-input\" placeholder=\"Search...\" />",
+      "css": ".ds-input { width: 100%; padding: 5px 12px; font-size: 14px; color: #e6edf3; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; outline: none; transition: border-color 80ms, box-shadow 80ms; } .ds-input::placeholder { color: #6e7681; } .ds-input:focus { border-color: #58a6ff; box-shadow: 0 0 0 3px rgba(56,139,253,0.1); }"
+    },
+    {
+      "name": "Card (Box)",
+      "kind": "card",
+      "refersTo": "box",
+      "description": "Standard card container with border, no shadow at rest.",
+      "html": "<div class=\"ds-card\"><div class=\"ds-card-header\">Title</div><div class=\"ds-card-body\">Content</div></div>",
+      "css": ".ds-card { border: 1px solid #30363d; border-radius: 6px; background: #0d1117; } .ds-card-header { padding: 16px; font-size: 14px; font-weight: 600; color: #e6edf3; border-bottom: 1px solid #30363d; background: #161b22; border-radius: 5px 5px 0 0; } .ds-card-body { padding: 16px; color: #e6edf3; }"
+    },
+    {
+      "name": "Label (Chip)",
+      "kind": "chip",
+      "refersTo": "label",
+      "description": "Pill-shaped status label with color variants.",
+      "html": "<span class=\"ds-label ds-label-green\">Success</span>",
+      "css": ".ds-label { display: inline-flex; align-items: center; padding: 0 7px; font-size: 12px; font-weight: 500; line-height: 18px; border-radius: 2em; border: 1px solid transparent; white-space: nowrap; } .ds-label-green { background: rgba(46,160,67,0.1); color: #3fb950; border-color: rgba(46,160,67,0.4); } .ds-label-blue { background: rgba(56,139,253,0.1); color: #58a6ff; border-color: rgba(56,139,253,0.4); } .ds-label-red { background: rgba(248,81,73,0.1); color: #f85149; border-color: rgba(248,81,73,0.4); }"
+    },
+    {
+      "name": "Navigation Tabs",
+      "kind": "nav",
+      "refersTo": "underlinenav",
+      "description": "Horizontal tab bar with solid background and accent underline on active.",
+      "html": "<nav class=\"ds-nav\"><button class=\"ds-nav-item\" aria-selected=\"true\">Overview</button><button class=\"ds-nav-item\">Codexes</button><button class=\"ds-nav-item\">Achievements</button></nav>",
+      "css": ".ds-nav { display: flex; gap: 0; border-bottom: 1px solid #30363d; background: #0d1117; } .ds-nav-item { padding: 8px 16px; font-size: 14px; font-weight: 500; color: #e6edf3; border-bottom: 2px solid transparent; background: none; border-top: none; border-left: none; border-right: none; cursor: pointer; opacity: 0.7; transition: color 80ms, border-color 80ms; } .ds-nav-item:hover { opacity: 1; border-bottom-color: #30363d; } .ds-nav-item[aria-selected='true'] { opacity: 1; font-weight: 600; border-bottom-color: #58a6ff; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Developer's Forge",
+    "overview": "CODEHALAAM's visual identity merges GitHub's battle-tested Primer design system with Apple's fluid interface philosophy. The result is a dark-first, high-contrast environment where every interaction feels precise and responsive. Content scrolls under translucent chrome, buttons compress on press, and depth is conveyed through subtle tonal layering rather than heavy shadows.",
+    "keyCharacteristics": [
+      "Dark-first with full light theme support",
+      "Apple fluid motion (Framer Motion springs, not CSS transitions)",
+      "Translucent material toolbar with backdrop blur",
+      "High-contrast text on dark backgrounds (WCAG AA compliant)",
+      "GitHub Primer component vocabulary (Buttons, Labels, Boxes, UnderlineNav)"
+    ],
+    "rules": [
+      { "name": "The Contrast Floor Rule", "body": "Body text must meet WCAG AA (4.5:1). Large text must meet 3:1. No exception for aesthetic preference.", "section": "colors" },
+      { "name": "The Accent Rarity Rule", "body": "The primary accent appears on ≤15% of any given screen. Its rarity is what makes it meaningful.", "section": "colors" },
+      { "name": "The Optical Sizing Rule", "body": "Tracking is size-specific: tightened for display text, relaxed for small text.", "section": "typography" },
+      { "name": "The Flat-By-Default Rule", "body": "Surfaces are flat at rest. Shadows appear only as a response to state.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use var(--color-text-primary) for all body text",
+      "Do use scale(0.97) on button press for instant tactile feedback",
+      "Do use translucent material treatment only on the toolbar",
+      "Do use the UnderlineNav component for tab navigation",
+      "Do ensure every text color meets WCAG AA contrast"
+    ],
+    "donts": [
+      "Don't use gradient text — emphasis comes from weight or size",
+      "Don't use heavy drop shadows on cards",
+      "Don't place text over cover images without a solid background",
+      "Don't use var(--color-fg-subtle) for body text",
+      "Don't add decorative borders above 1px on cards"
+    ]
+  }
+}

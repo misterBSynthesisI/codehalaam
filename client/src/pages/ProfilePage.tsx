@@ -79,7 +79,7 @@ export function ProfilePage() {
         <div className="grid grid-cols-1 lg:grid-cols-[296px_1fr] gap-6">
           {/* Sidebar */}
           <div>
-            <div className="sticky top-24">
+            <div className="sticky top-24" style={{ backgroundColor: 'var(--color-surface-default)', zIndex: 2 }}>
               {/* Avatar */}
               <div className="w-[180px] h-[180px] rounded-full flex items-center justify-center text-6xl font-semibold mb-4 overflow-hidden" style={{
                 backgroundColor: 'var(--color-canvas-subtle)',
@@ -154,7 +154,7 @@ export function ProfilePage() {
           </div>
 
           {/* Main */}
-          <div>
+          <div style={{ position: 'relative', zIndex: 2 }}>
             <div className="UnderlineNav mb-4">
               {([['overview', 'Overview'], ['repositories', 'Codexes'], ['achievements', 'Achievements']] as const).map(([key, label]) => (
                 <button key={key} onClick={() => setActiveTab(key)} className="UnderlineNav-item" aria-selected={activeTab === key}>{label}</button>

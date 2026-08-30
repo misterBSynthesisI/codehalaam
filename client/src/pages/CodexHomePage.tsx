@@ -42,7 +42,7 @@ const markdownComponents: Record<string, any> = {
   ol: ({ children, ...props }: any) => <ol className="mb-3 ml-6 list-decimal space-y-1" style={{ color: 'var(--color-fg-default)' }} {...props}>{children}</ol>,
   li: ({ children, ...props }: any) => <li className="leading-relaxed" {...props}>{children}</li>,
   blockquote: ({ children, ...props }: any) => (
-    <blockquote className="border-l-4 pl-4 my-4 italic" style={{ borderColor: 'var(--color-accent-fg)', color: 'var(--color-fg-muted)' }} {...props}>{children}</blockquote>
+    <blockquote className="border-l pl-4 my-4 italic" style={{ borderColor: 'var(--color-border-default)', color: 'var(--color-fg-muted)' }} {...props}>{children}</blockquote>
   ),
   code: ({ inline, className, children, ...props }: any) => {
     if (inline) {
