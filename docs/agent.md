@@ -112,7 +112,52 @@ Never write: `update`, `fix stuff`, `changes`, `wip`, `misc`, `asdf`. Every comm
 
 ## Overview
 
-CODEHALAAM is a gamified, collaborative code hosting platform. This document describes the AI agent architecture and how automated agents interact with the platform.
+CODEHALAAM is a gamified, collaborative code hosting platform. This document describes the AI agent architecture, permission system, and how automated agents interact with the platform.
+
+---
+
+## Permission System (MANDATORY)
+
+> **All access control is centralized in `server/utils/permissions.js`.**
+> Never implement inline visibility checks — always use the exported helpers.
+
+### Exported Functions
+
+| Function | Checks | Use Case |
+|----------|--------|----------|
+| `canViewCodex(user, codex)` | visibility, owner, admin, collaborator | All read routes |
+| `canEditCodex(user, codex)` | owner, admin collab, site admin | PATCH, media upload |
+| `canDeleteCodex(user, codex)` | owner, site admin | DELETE codex |
+| `canManageCollaborators(user, codex)` | owner, admin collab, site admin | Add/remove collaborators |
+
+### Auth Middleware
+
+| Middleware | Behavior |
+|-----------|----------|
+| `protect` (requireAuth) | Returns 401 if no valid JWT |
+| `optionalAuth` | Attaches `req.user` if JWT present, continues with `req.user = null` if not |
+| `requireAdmin` | Returns 403 if `req.user.isAdmin` is false |
+
+### Private Codex Rules
+
+- Private codexes return **404** (not 403) to avoid leaking existence.
+- All GET routes use `optionalAuth` + `canViewCodex()`.
+- The owner can ALWAYS see their own codex (public or private).
+- Admins and collaborators can view private codexes.
+- Anonymous visitors cannot see private codexes at all.
+
+### Verified Badges
+
+Users have a `badgeColor` field: `none`, `blue`, `red`, `black`.
+
+| Color | Meaning |
+|-------|---------|
+| `blue` | Verified user |
+| `red` | Admin |
+| `black` | Stealth verified |
+| `none` | No badge (default) |
+
+Badges are assigned via `PATCH /api/admin/users/:userId/badge` and returned in all user-populating endpoints.
 
 ## Agent Types
 
@@ -164,6 +209,25 @@ POST   /api/agents/trigger          - Trigger agent action
 GET    /api/agents/status           - Get agent health status
 POST   /api/agents/review           - Submit automated review
 POST   /api/agents/triage           - Triage an issue
+```
+
+### Codex Read Endpoints (use optionalAuth)
+
+```
+GET    /api/codexes/:owner/:name              - Get codex (returns 404 if unauthorized)
+GET    /api/codexes/:owner/:name/readme       - Get README
+GET    /api/codexes/:owner/:name/tree         - Get file tree
+GET    /api/codexes/:owner/:name/quests       - List quests
+GET    /api/codexes/:owner/:name/offerings    - List offerings
+GET    /api/codexes/:owner/:name/collaborators - List collaborators
+```
+
+### Admin Endpoints (requireAdmin)
+
+```
+PATCH  /api/admin/users/:userId/badge         - Set verified badge
+GET    /api/admin/stats                       - Platform stats
+GET    /api/admin/users                       - List all users
 ```
 
 ## Authentication
