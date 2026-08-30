@@ -1,10 +1,28 @@
+/**
+ * CODEHALAAM — The Gamified Code Hosting Platform
+ * 
+ * © 2026 JustShipitAI. All rights reserved.
+ * 
+ * CONFIDENTIAL — TRADE SECRET
+ * 
+ * This file is proprietary and confidential. Unauthorized
+ * copying, distribution, modification, or reverse engineering
+ * of this file, via any medium, is strictly prohibited.
+ * 
+ * This code was developed with AI assistance under strict
+ * confidentiality protocols. All intellectual property rights
+ * are retained by the Owner.
+ * 
+ * For licensing inquiries: justshipitai@gmail.com
+ */
+
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  ChevronRight, ChevronDown, File, Folder, FolderOpen,
+  ChevronRight, File, Folder, FolderOpen,
   Star, GitFork, Code, MessageSquare, GitPullRequest,
-  Settings, Lock, Check, Plus, AlertCircle, Users, Eye
+  Settings, Check, Plus, AlertCircle, Users, Eye
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
@@ -527,7 +545,7 @@ export function RepoPage() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_296px] gap-6">
             <AnimatePresence mode="wait">
-              <motion.div key={activeTab} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.15 }}>
+              <motion.div key={activeTab} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ type: 'spring', bounce: 0, duration: 0.3 }}>
                 {activeTab === 'issues' && <IssuesTab owner={username!} name={repo.name} />}
                 {activeTab === 'pull-requests' && <PullRequestsTab owner={username!} name={repo.name} />}
                 {activeTab === 'collaborators' && <CollaboratorsTab owner={username!} name={repo.name} />}

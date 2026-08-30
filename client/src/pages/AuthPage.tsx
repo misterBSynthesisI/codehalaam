@@ -1,3 +1,21 @@
+/**
+ * CODEHALAAM — The Gamified Code Hosting Platform
+ * 
+ * © 2026 JustShipitAI. All rights reserved.
+ * 
+ * CONFIDENTIAL — TRADE SECRET
+ * 
+ * This file is proprietary and confidential. Unauthorized
+ * copying, distribution, modification, or reverse engineering
+ * of this file, via any medium, is strictly prohibited.
+ * 
+ * This code was developed with AI assistance under strict
+ * confidentiality protocols. All intellectual property rights
+ * are retained by the Owner.
+ * 
+ * For licensing inquiries: justshipitai@gmail.com
+ */
+
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
@@ -36,7 +54,7 @@ export function AuthPage() {
 
   return (
     <div className="flex items-center justify-center px-4 py-12" style={{ backgroundColor: 'var(--color-canvas-default)', color: 'var(--color-fg-default)', minHeight: 'calc(100vh - 50px)' }}>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="w-full max-w-[340px]">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', bounce: 0, duration: 0.5 }} className="w-full max-w-[340px]">
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4" style={{ backgroundColor: 'var(--color-canvas-subtle)', border: '1px solid var(--color-border-default)', color: 'var(--color-fg-default)' }}>
             <CodeLogo />

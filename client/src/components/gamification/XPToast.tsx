@@ -1,3 +1,21 @@
+/**
+ * CODEHALAAM — The Gamified Code Hosting Platform
+ * 
+ * © 2026 JustShipitAI. All rights reserved.
+ * 
+ * CONFIDENTIAL — TRADE SECRET
+ * 
+ * This file is proprietary and confidential. Unauthorized
+ * copying, distribution, modification, or reverse engineering
+ * of this file, via any medium, is strictly prohibited.
+ * 
+ * This code was developed with AI assistance under strict
+ * confidentiality protocols. All intellectual property rights
+ * are retained by the Owner.
+ * 
+ * For licensing inquiries: justshipitai@gmail.com
+ */
+
 import { useState, useCallback, createContext, useContext } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Zap } from 'lucide-react'
@@ -52,7 +70,7 @@ export function XPProvider({ children }: { children: React.ReactNode }) {
               initial={{ opacity: 0, x: 20, scale: 0.95 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: 20, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
+              transition={{ type: 'spring', bounce: 0.15, duration: 0.4 }}
               className="flex items-center gap-2 px-3 py-2 bg-canvas-subtle border border-border rounded-md shadow-md text-sm"
             >
               <Zap className="w-4 h-4 text-attention fill-attention" />

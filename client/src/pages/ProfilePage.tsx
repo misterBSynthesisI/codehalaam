@@ -1,3 +1,21 @@
+/**
+ * CODEHALAAM — The Gamified Code Hosting Platform
+ * 
+ * © 2026 JustShipitAI. All rights reserved.
+ * 
+ * CONFIDENTIAL — TRADE SECRET
+ * 
+ * This file is proprietary and confidential. Unauthorized
+ * copying, distribution, modification, or reverse engineering
+ * of this file, via any medium, is strictly prohibited.
+ * 
+ * This code was developed with AI assistance under strict
+ * confidentiality protocols. All intellectual property rights
+ * are retained by the Owner.
+ * 
+ * For licensing inquiries: justshipitai@gmail.com
+ */
+
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
@@ -55,7 +73,7 @@ export function ProfilePage() {
                   <span className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>{profile.xp.toLocaleString()} / {profile.xpToNext.toLocaleString()} XP</span>
                 </div>
                 <div className="h-2 rounded-full overflow-hidden mb-3" style={{ backgroundColor: 'var(--color-counter-bg)' }}>
-                  <motion.div initial={{ width: 0 }} animate={{ width: `${Math.round((profile.xp / profile.xpToNext) * 100)}%` }} transition={{ duration: 1 }} className="h-full rounded-full" style={{ backgroundColor: 'var(--color-success-fg)' }} />
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${Math.round((profile.xp / profile.xpToNext) * 100)}%` }} transition={{ type: 'spring', bounce: 0, duration: 0.8 }} className="h-full rounded-full" style={{ backgroundColor: 'var(--color-success-fg)' }} />
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-xs" style={{ color: 'var(--color-fg-muted)' }}>
                   <div className="flex items-center gap-1"><TrendingUp className="w-3 h-3" style={{ color: 'var(--color-success-fg)' }} />{profile.stats?.contributions?.toLocaleString() || 0} contributions</div>

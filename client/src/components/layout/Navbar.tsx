@@ -1,3 +1,21 @@
+/**
+ * CODEHALAAM — The Gamified Code Hosting Platform
+ * 
+ * © 2026 JustShipitAI. All rights reserved.
+ * 
+ * CONFIDENTIAL — TRADE SECRET
+ * 
+ * This file is proprietary and confidential. Unauthorized
+ * copying, distribution, modification, or reverse engineering
+ * of this file, via any medium, is strictly prohibited.
+ * 
+ * This code was developed with AI assistance under strict
+ * confidentiality protocols. All intellectual property rights
+ * are retained by the Owner.
+ * 
+ * For licensing inquiries: justshipitai@gmail.com
+ */
+
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Search, Bell, Plus, ChevronDown, Sun, Moon } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
@@ -33,7 +51,7 @@ export function Navbar() {
   }, [])
 
   return (
-    <header className="sticky top-0 z-50 border-b" style={{ backgroundColor: 'var(--color-header-bg)', borderColor: 'var(--color-header-border)' }}>
+    <header className="sticky top-0 z-50 border-b material-toolbar" style={{ borderColor: 'var(--color-header-border)' }}>
       <div className="container-lg flex items-center h-[50px] gap-4">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 no-underline shrink-0" style={{ color: 'var(--color-fg-default)' }}>
@@ -118,7 +136,7 @@ export function Navbar() {
                 </button>
 
                 {showUserMenu && (
-                  <div className="absolute right-0 top-full mt-1 w-56 rounded-md py-1 animate-fade-in" style={{ backgroundColor: 'var(--color-canvas-overlay)', border: '1px solid var(--color-border-default)', boxShadow: 'var(--color-shadow-large)' }}>
+                  <div className="absolute right-0 top-full mt-1 w-56 rounded-md py-1 animate-fade-in material-toolbar" style={{ border: '1px solid var(--color-border-default)', boxShadow: 'var(--color-shadow-large)' }}>
                     <div className="px-3 py-2 border-b" style={{ borderColor: 'var(--color-border-default)' }}>
                       <p className="text-sm font-medium" style={{ color: 'var(--color-fg-default)' }}>{user.displayName || user.username}</p>
                       <p className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>@{user.username}</p>

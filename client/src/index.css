@@ -1,3 +1,21 @@
+/**
+ * CODEHALAAM — The Gamified Code Hosting Platform
+ * 
+ * © 2026 JustShipitAI. All rights reserved.
+ * 
+ * CONFIDENTIAL — TRADE SECRET
+ * 
+ * This file is proprietary and confidential. Unauthorized
+ * copying, distribution, modification, or reverse engineering
+ * of this file, via any medium, is strictly prohibited.
+ * 
+ * This code was developed with AI assistance under strict
+ * confidentiality protocols. All intellectual property rights
+ * are retained by the Owner.
+ * 
+ * For licensing inquiries: justshipitai@gmail.com
+ */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -108,6 +126,7 @@
     font-size: 16px;
     scrollbar-width: thin;
     scrollbar-color: var(--color-border-muted) var(--color-canvas-default);
+    scroll-padding-top: 50px; /* Account for sticky translucent toolbar */
   }
 
   body {
@@ -115,6 +134,30 @@
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-optical-sizing: auto;
+  }
+
+  /* Apple typography: tracking is size-specific, never one value for all */
+  h1, .text-4xl, .text-5xl, .text-6xl {
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+  h2, .text-3xl {
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+  }
+  h3, .text-2xl {
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+  }
+  .text-xl, .text-lg {
+    letter-spacing: -0.005em;
+    line-height: 1.35;
+  }
+  /* Small text: slightly positive tracking for legibility */
+  .text-xs, .text-sm {
+    letter-spacing: 0.01em;
   }
 
   ::selection {
@@ -176,6 +219,16 @@
   .btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+  }
+
+  /* Apple Principle 1: Response — feedback on pointer-down, instant, continuous */
+  .btn:active:not(:disabled) {
+    transform: scale(0.97);
+    transition: transform 80ms ease-out;
+  }
+
+  .btn:active:not(:disabled) .btn-primary {
+    background-color: var(--color-btn-primary-bg-hover);
   }
 
   .btn-primary {
@@ -528,6 +581,36 @@
     color: var(--color-fg-default);
   }
 
+  .theme-toggle:active {
+    transform: scale(0.92);
+    transition: transform 80ms ease-out;
+  }
+
+  /* Apple Principle 12: Translucent materials — content scrolls under chrome */
+  .material-toolbar {
+    background: rgba(22, 27, 34, 0.72);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+
+  html.light .material-toolbar {
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+  }
+
+  /* Box-row press feedback */
+  .Box-row:active, .file-row:active {
+    background-color: var(--color-accent-muted);
+    transition: background-color 40ms ease-out;
+  }
+
+  /* UnderlineNav-item press feedback */
+  .UnderlineNav-item:active {
+    transform: scale(0.97);
+    transition: transform 80ms ease-out;
+  }
+
   /* Container */
   .container-lg {
     max-width: 1280px;
@@ -557,5 +640,73 @@
       padding-left: 32px;
       padding-right: 32px;
     }
+  }
+}
+
+/* ===== APPLE PRINCIPLE 12: SCROLL EDGE EFFECTS ===== */
+/* Fade where content meets floating chrome — not a hard 1px border */
+.scroll-edge-bottom::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: linear-gradient(to bottom, var(--color-header-bg), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ===== APPLE PRINCIPLE 9: RUBBER-BANDING ===== */
+@keyframes rubberband-x {
+  0% { transform: translateX(0); }
+  30% { transform: translateX(var(--rubberband-overshoot, 0px)); }
+  100% { transform: translateX(0); }
+}
+
+.rubberband {
+  overscroll-behavior-x: contain;
+}
+
+/* ===== APPLE PRINCIPLE 14: REDUCED MOTION & ACCESSIBILITY ===== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .btn:active:not(:disabled) {
+    transform: none;
+  }
+
+  .theme-toggle:active {
+    transform: none;
+  }
+
+  .UnderlineNav-item:active {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .material-toolbar {
+    background: var(--color-header-bg);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .Box {
+    border-width: 2px;
+  }
+
+  .btn {
+    border-width: 2px;
+  }
+
+  .form-control {
+    border-width: 2px;
   }
 }

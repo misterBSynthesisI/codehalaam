@@ -1,3 +1,21 @@
+/**
+ * CODEHALAAM — The Gamified Code Hosting Platform
+ * 
+ * © 2026 JustShipitAI. All rights reserved.
+ * 
+ * CONFIDENTIAL — TRADE SECRET
+ * 
+ * This file is proprietary and confidential. Unauthorized
+ * copying, distribution, modification, or reverse engineering
+ * of this file, via any medium, is strictly prohibited.
+ * 
+ * This code was developed with AI assistance under strict
+ * confidentiality protocols. All intellectual property rights
+ * are retained by the Owner.
+ * 
+ * For licensing inquiries: justshipitai@gmail.com
+ */
+
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { GitBranch, Users, Lock, Zap, Globe, ArrowRight } from 'lucide-react'
@@ -11,7 +29,7 @@ export function LandingPage() {
       <section className="relative overflow-hidden border-b" style={{ borderColor: 'var(--color-border-default)' }}>
         <div className="relative container-lg py-16 md:py-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', bounce: 0, duration: 0.6 }}>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6" style={{ color: 'var(--color-fg-default)' }}>
                 Build software <span style={{ color: 'var(--color-accent-fg)' }}>better</span>, <span style={{ color: 'var(--color-success-fg)' }}>together</span>
               </h1>
@@ -40,7 +58,7 @@ export function LandingPage() {
               </div>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }} className="lg:ml-auto">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', bounce: 0, duration: 0.6, delay: 0.15 }} className="lg:ml-auto">
               <div className="Box p-6 w-full max-w-md" style={{ boxShadow: 'var(--color-shadow-large)' }}>
                 <h2 className="text-xl font-semibold mb-1" style={{ color: 'var(--color-fg-default)' }}>Create your free account</h2>
                 <p className="text-sm mb-4" style={{ color: 'var(--color-fg-muted)' }}>Unlimited public and private repos and collaborators.</p>
@@ -80,7 +98,7 @@ export function LandingPage() {
               { icon: <Globe className="w-5 h-5" />, title: 'Global leaderboard', desc: 'See how you rank against developers worldwide.', color: 'var(--color-danger-fg)' },
               { icon: <svg className="w-5 h-5" viewBox="0 0 16 16" fill="currentColor"><path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.743 3.743 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.06 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75Zm7.251 10.324.004-5.073-.002-2.253A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574ZM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25Z" /></svg>, title: 'Issues & project boards', desc: 'Track bugs, feature requests, and bounties.', color: 'var(--color-fg-muted)' },
             ].map((feature, i) => (
-              <motion.div key={feature.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: i * 0.1 }}
+              <motion.div key={feature.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', bounce: 0, duration: 0.5, delay: i * 0.08 }}
                 className="Box p-6" style={{ borderColor: 'var(--color-border-default)' }}>
                 <div className="w-10 h-10 rounded-md flex items-center justify-center mb-3" style={{ backgroundColor: 'var(--color-canvas-subtle)', color: feature.color }}>{feature.icon}</div>
                 <h3 className="text-base font-semibold mb-1" style={{ color: 'var(--color-fg-default)' }}>{feature.title}</h3>

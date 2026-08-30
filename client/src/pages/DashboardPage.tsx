@@ -1,3 +1,21 @@
+/**
+ * CODEHALAAM — The Gamified Code Hosting Platform
+ * 
+ * © 2026 JustShipitAI. All rights reserved.
+ * 
+ * CONFIDENTIAL — TRADE SECRET
+ * 
+ * This file is proprietary and confidential. Unauthorized
+ * copying, distribution, modification, or reverse engineering
+ * of this file, via any medium, is strictly prohibited.
+ * 
+ * This code was developed with AI assistance under strict
+ * confidentiality protocols. All intellectual property rights
+ * are retained by the Owner.
+ * 
+ * For licensing inquiries: justshipitai@gmail.com
+ */
+
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
@@ -54,7 +72,7 @@ export function DashboardPage() {
             ) : (
               <div className="Box">
                 {filteredRepos.map((repo, i) => (
-                  <motion.div key={repo._id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
+                  <motion.div key={repo._id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', bounce: 0, duration: 0.3, delay: i * 0.03 }}>
                     <Link to={`/${user?.username}/${repo.name}`} className="Box-row flex items-start justify-between gap-4 no-underline" style={{ textDecoration: 'none' }}>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
@@ -114,7 +132,7 @@ export function DashboardPage() {
                       <span>{user.xp.toLocaleString()} / {user.xpToNext.toLocaleString()} XP</span>
                     </div>
                     <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-counter-bg)' }}>
-                      <motion.div initial={{ width: 0 }} animate={{ width: `${xpPercent}%` }} transition={{ duration: 1, ease: 'easeOut' }}
+                      <motion.div initial={{ width: 0 }} animate={{ width: `${xpPercent}%` }} transition={{ type: 'spring', bounce: 0, duration: 0.8 }}
                         className="h-full rounded-full" style={{ backgroundColor: 'var(--color-success-fg)' }} />
                     </div>
                   </div>
