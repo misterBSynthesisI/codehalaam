@@ -17,7 +17,7 @@
  */
 
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Search, Bell, Plus, ChevronDown, Sun, Moon } from 'lucide-react'
+import { Search, Bell, ChevronDown, Sun, Moon } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useState, useRef, useEffect, useCallback } from 'react'
@@ -25,7 +25,7 @@ import { api } from '@/lib/api'
 
 function CodeLogo() {
   return (
-    <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+    <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
       <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z" />
     </svg>
   )
@@ -50,9 +50,7 @@ export function Navbar() {
       const data = await api.getNotifications()
       setNotifications(data.notifications || [])
       setUnreadCount(data.unreadCount || 0)
-    } catch {
-      // Silent fail — notifications are non-critical
-    }
+    } catch { /* silent */ }
   }, [])
 
   const markAllRead = useCallback(async () => {
@@ -69,75 +67,32 @@ export function Navbar() {
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setShowUserMenu(false)
-      }
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
-        setShowNotifMenu(false)
-      }
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setShowUserMenu(false)
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setShowNotifMenu(false)
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  // Open command palette from search trigger
+  const openCmdK = () => {
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }))
+  }
+
   return (
     <header className="sticky top-0 z-50 border-b material-toolbar" style={{ borderColor: 'var(--color-header-border)' }}>
-      <div className="container-lg flex items-center h-[50px] gap-4">
+      <div className="flex items-center h-[48px] px-4 gap-3" style={{ maxWidth: 1400, margin: '0 auto' }}>
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 no-underline shrink-0" style={{ color: 'var(--color-fg-default)' }}>
           <CodeLogo />
-          <span className="font-semibold text-lg hidden sm:inline tracking-tight">CODEHALAAM</span>
+          <span className="font-semibold text-base hidden sm:inline tracking-tight">CODEHALAAM</span>
         </Link>
 
-        {/* Search */}
-        {!isLanding && user && (
-          <div className="flex-1 max-w-[320px]">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--color-fg-subtle)' }} />
-              <input
-                type="text"
-                placeholder="Type / to search"
-                className="form-control pl-9"
-                style={{ backgroundColor: 'var(--color-canvas-default)', color: 'var(--color-fg-default)', borderColor: 'var(--color-border-default)' }}
-              />
-            </div>
-          </div>
-        )}
+        {/* Spacer */}
+        <div className="flex-1" />
 
-        {/* Center nav */}
-        {!isLanding && user && (
-          <nav className="hidden md:flex items-center gap-1">
-            {[
-              { to: '/dashboard', label: 'Dashboard' },
-              { to: '/dashboard', label: 'Offerings' },
-              { to: '/dashboard', label: 'Quests' },
-            ].map(({ to, label }) => (
-              <Link
-                key={label}
-                to={to}
-                className="px-3 py-1.5 text-sm font-medium rounded-md no-underline transition-colors"
-                style={{
-                  color: location.pathname === to ? 'var(--color-fg-default)' : 'var(--color-fg-muted)',
-                  backgroundColor: location.pathname === to ? 'var(--color-canvas-subtle)' : 'transparent',
-                }}
-              >
-                {label}
-              </Link>
-            ))}
-          </nav>
-        )}
-
-        {/* Right side */}
-        <div className="flex items-center gap-2 ml-auto">
-          {/* Theme toggle */}
-          <button
-            onClick={toggleTheme}
-            className="theme-toggle"
-            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-          >
-            {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
-
+        {/* Right side only: Search trigger, Bell, Avatar */}
+        <div className="flex items-center gap-1.5">
           {isLanding ? (
             <div className="flex items-center gap-3">
               <Link to="/auth?mode=login" className="btn-link text-sm no-underline hover:underline">Sign in</Link>
@@ -145,18 +100,27 @@ export function Navbar() {
             </div>
           ) : user ? (
             <>
-              <Link to="/new" className="p-1.5 rounded-md transition-colors" style={{ color: 'var(--color-fg-muted)' }}>
-                <Plus className="w-4 h-4" />
-              </Link>
+              {/* Search trigger (Cmd+K) */}
+              <button
+                onClick={openCmdK}
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-sm transition-colors"
+                style={{
+                  backgroundColor: 'var(--color-canvas-subtle)',
+                  border: '1px solid var(--color-border-default)',
+                  color: 'var(--color-fg-muted)',
+                }}
+                data-testid="search-trigger"
+              >
+                <Search className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Search</span>
+                <kbd className="text-[10px] px-1 py-0.5 rounded ml-1 hidden sm:inline" style={{ backgroundColor: 'var(--color-canvas-default)', color: 'var(--color-fg-subtle)', border: '1px solid var(--color-border-default)' }}>⌘K</kbd>
+              </button>
 
               {/* Notification Bell */}
               <div className="relative" ref={notifRef}>
                 <button
-                  onClick={() => {
-                    setShowNotifMenu(!showNotifMenu)
-                    if (!showNotifMenu) fetchNotifications()
-                  }}
-                  className="relative p-1.5 rounded-md transition-colors"
+                  onClick={() => { setShowNotifMenu(!showNotifMenu); if (!showNotifMenu) fetchNotifications() }}
+                  className="relative p-2 rounded-md transition-colors"
                   style={{ color: 'var(--color-fg-muted)' }}
                   data-testid="notification-bell"
                 >
@@ -181,17 +145,11 @@ export function Navbar() {
                     <div className="px-3 py-2 border-b flex items-center justify-between" style={{ borderColor: 'var(--color-border-default)' }}>
                       <span className="text-sm font-medium" style={{ color: 'var(--color-fg-default)' }}>Notifications</span>
                       {unreadCount > 0 && (
-                        <button
-                          onClick={markAllRead}
-                          className="text-xs"
-                          style={{ color: 'var(--color-accent-fg)' }}
-                          data-testid="mark-all-read"
-                        >
+                        <button onClick={markAllRead} className="text-xs" style={{ color: 'var(--color-accent-fg)' }} data-testid="mark-all-read">
                           Mark all as read
                         </button>
                       )}
                     </div>
-
                     {notifications.length === 0 ? (
                       <div className="px-3 py-6 text-center">
                         <p className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>No notifications yet</p>
@@ -201,35 +159,19 @@ export function Navbar() {
                         const actorName = notif.actor?.username || 'Someone'
                         let text = ''
                         switch (notif.type) {
-                          case 'EMBER_RECEIVED':
-                            text = `${actorName} gave an Ember to your Codex`
-                            break
-                          case 'OFFERING_MADE':
-                            text = `${actorName} submitted an Offering`
-                            break
-                          case 'QUEST_COMPLETED':
-                            text = `${actorName} completed a Quest on your Codex`
-                            break
-                          case 'ECHO_CREATED':
-                            text = `${actorName} created an Echo of your Codex`
-                            break
-                          default:
-                            text = `${actorName} did something`
+                          case 'EMBER_RECEIVED': text = `${actorName} gave an Ember to your Codex`; break
+                          case 'OFFERING_MADE': text = `${actorName} submitted an Offering`; break
+                          case 'QUEST_COMPLETED': text = `${actorName} completed a Quest on your Codex`; break
+                          case 'ECHO_CREATED': text = `${actorName} created an Echo of your Codex`; break
+                          default: text = `${actorName} did something`
                         }
                         return (
-                          <div
-                            key={notif._id}
-                            className="px-3 py-2 text-sm flex items-start gap-2 transition-colors"
-                            style={{
-                              backgroundColor: notif.read ? 'transparent' : 'var(--color-canvas-subtle)',
-                              color: 'var(--color-fg-default)',
-                            }}
+                          <div key={notif._id} className="px-3 py-2 text-sm flex items-start gap-2 transition-colors"
+                            style={{ backgroundColor: notif.read ? 'transparent' : 'var(--color-canvas-subtle)', color: 'var(--color-fg-default)' }}
                             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-canvas-subtle)'}
                             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = notif.read ? 'transparent' : 'var(--color-canvas-subtle)'}
                           >
-                            {!notif.read && (
-                              <span className="mt-1.5 w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: 'var(--color-accent-fg)' }} />
-                            )}
+                            {!notif.read && <span className="mt-1.5 w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: 'var(--color-accent-fg)' }} />}
                             <span className={!notif.read ? '' : 'ml-4'}>{text}</span>
                           </div>
                         )
@@ -239,53 +181,47 @@ export function Navbar() {
                 )}
               </div>
 
+              {/* User avatar */}
               <div className="relative" ref={menuRef}>
-                <button
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center gap-1 p-1 rounded-md transition-colors"
-                >
-                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium" style={{ backgroundColor: 'var(--color-success-muted)', color: 'var(--color-success-fg)', border: '1px solid rgba(46,160,67,0.4)' }}>
+                <button onClick={() => setShowUserMenu(!showUserMenu)} className="flex items-center gap-1 p-0.5 rounded-full transition-colors">
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium"
+                    style={{ backgroundColor: 'var(--color-success-muted)', color: 'var(--color-success-fg)', border: '1px solid rgba(46,160,67,0.4)' }}>
                     {user.username.charAt(0).toUpperCase()}
                   </div>
                   <ChevronDown className="w-3 h-3" style={{ color: 'var(--color-fg-muted)' }} />
                 </button>
 
                 {showUserMenu && (
-                  <div className="absolute right-0 top-full mt-1 w-56 rounded-md py-1 animate-fade-in material-toolbar" style={{ border: '1px solid var(--color-border-default)', boxShadow: 'var(--color-shadow-large)' }}>
+                  <div className="absolute right-0 top-full mt-1 w-52 rounded-md py-1 animate-fade-in material-toolbar"
+                    style={{ border: '1px solid var(--color-border-default)', boxShadow: 'var(--color-shadow-large)' }}>
                     <div className="px-3 py-2 border-b" style={{ borderColor: 'var(--color-border-default)' }}>
                       <p className="text-sm font-medium" style={{ color: 'var(--color-fg-default)' }}>{user.displayName || user.username}</p>
                       <p className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>@{user.username}</p>
+                      <div className="flex items-center gap-1.5 mt-1.5">
+                        <div className="h-1.5 flex-1 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-counter-bg)' }}>
+                          <div className="h-full rounded-full" style={{ width: `${Math.round((user.xp / user.xpToNext) * 100)}%`, backgroundColor: 'var(--color-success-fg)' }} />
+                        </div>
+                        <span className="text-[10px]" style={{ color: 'var(--color-fg-muted)' }}>L{user.level}</span>
+                      </div>
                     </div>
-
                     {[
-                      { to: `/${user.username}`, label: 'Your profile' },
+                      { to: `/${user.username}`, label: 'Profile' },
                       { to: '/settings', label: 'Settings' },
                       { to: '/new', label: 'New Codex' },
-                      { to: '/admin', label: 'Admin dashboard' },
+                      { to: '/admin', label: 'Admin' },
                     ].map(({ to, label }) => (
-                      <Link
-                        key={to}
-                        to={to}
-                        className="block px-3 py-1.5 text-sm no-underline"
-                        style={{ color: 'var(--color-fg-default)' }}
+                      <Link key={to} to={to} className="block px-3 py-1.5 text-sm no-underline" style={{ color: 'var(--color-fg-default)' }}
                         onClick={() => setShowUserMenu(false)}
                         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-canvas-subtle)'}
                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                      >
-                        {label}
-                      </Link>
+                      >{label}</Link>
                     ))}
-
                     <div className="border-t mt-1 pt-1" style={{ borderColor: 'var(--color-border-default)' }}>
-                      <button
-                        onClick={() => { logout(); setShowUserMenu(false); navigate('/') }}
-                        className="w-full text-left px-3 py-1.5 text-sm"
+                      <button onClick={() => { logout(); setShowUserMenu(false); navigate('/') }} className="w-full text-left px-3 py-1.5 text-sm"
                         style={{ color: 'var(--color-fg-default)' }}
                         onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-canvas-subtle)'}
                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                      >
-                        Sign out
-                      </button>
+                      >Sign out</button>
                     </div>
                   </div>
                 )}
