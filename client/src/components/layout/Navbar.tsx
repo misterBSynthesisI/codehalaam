@@ -17,7 +17,7 @@
  */
 
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Search, Bell, ChevronDown, ShieldAlert, Sun, Moon } from 'lucide-react'
+import { Search, Bell, ChevronDown, ShieldAlert, Sun, Moon, BadgeCheck } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useState, useRef, useEffect, useCallback } from 'react'
@@ -213,7 +213,18 @@ export function Navbar() {
                   <div className="absolute right-0 top-full mt-1 w-52 rounded-md py-1 animate-fade-in material-toolbar"
                     style={{ border: '1px solid var(--color-border-default)', boxShadow: 'var(--color-shadow-large)' }}>
                     <div className="px-3 py-2 border-b" style={{ borderColor: 'var(--color-border-default)' }}>
-                      <p className="text-sm font-medium" style={{ color: 'var(--color-fg-default)' }}>{user.displayName || user.username}</p>
+                      <p className="text-sm font-medium flex items-center gap-1.5" style={{ color: 'var(--color-fg-default)' }}>
+                        {user.displayName || user.username}
+                        {user.badgeColor && user.badgeColor !== 'none' && (
+                          <BadgeCheck
+                            width={14}
+                            height={14}
+                            strokeWidth={1.5}
+                            fill={user.badgeColor === 'red' ? '#f85149' : user.badgeColor === 'black' ? '#1f2328' : '#58a6ff'}
+                            stroke="var(--color-canvas-default)"
+                          />
+                        )}
+                      </p>
                       <p className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>@{user.username}</p>
                       <div className="flex items-center gap-1.5 mt-1.5">
                         <div className="h-1.5 flex-1 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-counter-bg)' }}>

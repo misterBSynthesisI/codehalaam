@@ -22,13 +22,14 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronRight, GitFork, FileCode2, GitPullRequest,
   AlertCircle, Eye, GitBranch, BookOpen, Users, Flame, Radio,
-  Plus, Tag, ExternalLink, Settings, X, Upload, Globe
+  Plus, Tag, ExternalLink, Settings, X, Upload, Globe, Lock
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { api } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
-import { VerifiedBadge } from '@/components/ui/VerifiedBadge'
+import { VerificationBadge } from '@/components/ui/UserBadge'
+import { PrivateCodexPage } from '@/pages/PrivateCodexPage'
 
 /* ===== MARKDOWN COMPONENTS ===== */
 const markdownComponents: Record<string, any> = {
@@ -201,6 +202,8 @@ export function CodexHomePage() {
   const [loading, setLoading] = useState(true)
   const [counts, setCounts] = useState<any>({})
   const [showCustomize, setShowCustomize] = useState(false)
+  const [notFound, setNotFound] = useState(false)
+  const [isPrivate, setIsPrivate] = useState(false)
 
   // Social states
   const [isEmbered, setIsEmbered] = useState(false)
@@ -234,6 +237,9 @@ export function CodexHomePage() {
         setWatchersCount(codexData.counts.watchers)
         setHasEchoed(codexData.hasEchoed)
         setEchoesCount(codexData.counts.echoes)
+      } else {
+        setNotFound(true)
+        setIsPrivate(true)
       }
       if (readmeResult.status === 'fulfilled') {
         setReadme(readmeResult.value.readme)
@@ -281,6 +287,9 @@ export function CodexHomePage() {
   }
 
   if (!repo) {
+    if (isPrivate || notFound) {
+      return <PrivateCodexPage />
+    }
     return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-canvas-default)' }}><div style={{ color: 'var(--color-fg-muted)' }}>Codex not found</div></div>
   }
 
@@ -328,8 +337,8 @@ export function CodexHomePage() {
                   <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium" style={{ backgroundColor: 'var(--color-success-muted)', color: 'var(--color-success-fg)' }}>{owner?.charAt(0).toUpperCase()}</span>
                   {repo.owner?.displayName || owner}
                 </Link>
-                <VerifiedBadge badgeColor={repo.owner?.badgeColor} />
-                <span className="Label Label-muted" style={{ fontSize: 10 }}>{repo.visibility}</span>
+                <VerificationBadge badgeColor={repo.owner?.badgeColor} size={14} />
+                <span className="Label Label-muted flex items-center gap-1" style={{ fontSize: 10 }}>{repo.visibility === 'private' && <Lock className="w-3 h-3" strokeWidth={2} />}{repo.visibility}</span>
               </motion.div>
             </div>
 

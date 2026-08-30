@@ -83,6 +83,7 @@ const seedUsers = [
     streak: 14,
     longestStreak: 47,
     isAdmin: false,
+    badgeColor: 'blue',
     characterClass: 'Rogue',
   },
   {
@@ -95,6 +96,8 @@ const seedUsers = [
     xp: 3420,
     xpToNext: 5000,
     stats: { commits: 1284, pullRequests: 347, reviews: 892, issues: 156, contributions: 3120 },
+    isAdmin: false,
+    badgeColor: 'blue',
     streak: 23,
     longestStreak: 47,
     achievements: [
@@ -116,12 +119,14 @@ const seedUsers = [
     stats: { commits: 892, pullRequests: 234, reviews: 567, issues: 89, contributions: 2100 },
     streak: 15,
     longestStreak: 32,
+    badgeColor: 'black',
   },
   {
     username: 'mike-reviewer',
     email: 'mike@codehalaam.dev',
     password: 'password123',
     displayName: 'Mike Ross',
+    badgeColor: 'blue',
     bio: 'Backend engineer. Go, Rust, distributed systems.',
     level: 9,
     xp: 1500,

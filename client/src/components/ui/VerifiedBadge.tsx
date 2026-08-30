@@ -16,7 +16,7 @@
  * For licensing inquiries: justshipitai@gmail.com
  */
 
-import { ShieldCheck } from 'lucide-react'
+import { BadgeCheck } from 'lucide-react'
 
 const BADGE_COLORS: Record<string, string> = {
   blue: '#58a6ff',
@@ -42,7 +42,12 @@ export function VerifiedBadge({ badgeColor, className = '' }: { badgeColor?: str
       title={label}
       style={{ color }}
     >
-      <ShieldCheck className="w-4 h-4" strokeWidth={2} />
+      <BadgeCheck
+        className="w-4 h-4"
+        strokeWidth={1.5}
+        fill={color}
+        stroke="var(--color-canvas-default)"
+      />
     </span>
   )
 }

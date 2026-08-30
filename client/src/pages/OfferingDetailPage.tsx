@@ -24,6 +24,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { api } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
+import { VerificationBadge } from '@/components/ui/UserBadge'
 
 export function OfferingDetailPage() {
   const { owner: ownerParam, name, number } = useParams()
@@ -126,8 +127,8 @@ export function OfferingDetailPage() {
                 {offering.status}
               </span>
             </h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--color-fg-muted)' }}>
-              #{offering.number} opened by {offering.author?.displayName || offering.author?.username} · {new Date(offering.createdAt).toLocaleDateString()}
+            <p className="text-sm mt-1 flex items-center gap-1" style={{ color: 'var(--color-fg-muted)' }}>
+              #{offering.number} opened by <span className="flex items-center gap-1">{offering.author?.displayName || offering.author?.username}<VerificationBadge badgeColor={offering.author?.badgeColor} size={13} /></span> · {new Date(offering.createdAt).toLocaleDateString()}
             </p>
           </div>
           {user && isOpen && (
@@ -179,7 +180,7 @@ export function OfferingDetailPage() {
                       <Link to={`/${c.author?.username}`} className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium no-underline" style={{ backgroundColor: 'var(--color-success-muted)', color: 'var(--color-success-fg)' }}>
                         {c.author?.username?.charAt(0).toUpperCase()}
                       </Link>
-                      <Link to={`/${c.author?.username}`} className="no-underline hover:underline font-semibold" style={{ color: 'var(--color-accent-fg)' }}>{c.author?.displayName || c.author?.username}</Link>
+                      <Link to={`/${c.author?.username}`} className="no-underline hover:underline font-semibold flex items-center gap-1" style={{ color: 'var(--color-accent-fg)' }}>{c.author?.displayName || c.author?.username}<VerificationBadge badgeColor={c.author?.badgeColor} size={12} /></Link>
                       <span style={{ color: 'var(--color-fg-subtle)' }}>· {new Date(c.createdAt).toLocaleDateString()}</span>
                     </div>
                     <div className="Box-body markdown-body text-sm">
@@ -214,7 +215,7 @@ export function OfferingDetailPage() {
               </div>
               <div className="Box-body text-xs space-y-2" style={{ color: 'var(--color-fg-muted)' }}>
                 <p><strong>Status:</strong> {offering.status}</p>
-                <p><strong>Author:</strong> {offering.author?.displayName || offering.author?.username}</p>
+                <p><strong>Author:</strong> <span className="flex items-center gap-1 inline-flex">{offering.author?.displayName || offering.author?.username}<VerificationBadge badgeColor={offering.author?.badgeColor} size={12} /></span></p>
                 <p><strong>Source:</strong> <code style={{ backgroundColor: 'var(--color-canvas-subtle)', padding: '1px 4px', borderRadius: 3 }}>{offering.sourcePath}</code></p>
                 <p><strong>Target:</strong> <code style={{ backgroundColor: 'var(--color-canvas-subtle)', padding: '1px 4px', borderRadius: 3 }}>{offering.targetPath}</code></p>
                 <p><strong>Created:</strong> {new Date(offering.createdAt).toLocaleDateString()}</p>

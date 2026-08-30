@@ -44,9 +44,9 @@ router.get('/:owner/:name', async (req, res) => {
 
     const pulls = await PullRequest.find(query)
       .sort(sortObj)
-      .populate('author', 'username avatarUrl')
-      .populate('requestedReviewers', 'username avatarUrl')
-      .populate('mergedBy', 'username avatarUrl')
+      .populate('author', 'username avatarUrl badgeColor')
+      .populate('requestedReviewers', 'username avatarUrl badgeColor')
+      .populate('mergedBy', 'username avatarUrl badgeColor')
 
     const openCount = await PullRequest.countDocuments({ repository: repo._id, state: 'open' })
     const closedCount = await PullRequest.countDocuments({ repository: repo._id, state: 'closed' })
@@ -68,11 +68,11 @@ router.get('/:owner/:name/:number', async (req, res) => {
     if (!repo) return res.status(404).json({ error: 'Repository not found' })
 
     const pull = await PullRequest.findOne({ repository: repo._id, number: req.params.number })
-      .populate('author', 'username displayName avatarUrl')
-      .populate('requestedReviewers', 'username displayName avatarUrl')
-      .populate('reviews.reviewer', 'username displayName avatarUrl')
-      .populate('comments.author', 'username displayName avatarUrl')
-      .populate('mergedBy', 'username displayName avatarUrl')
+      .populate('author', 'username displayName avatarUrl badgeColor')
+      .populate('requestedReviewers', 'username displayName avatarUrl badgeColor')
+      .populate('reviews.reviewer', 'username displayName avatarUrl badgeColor')
+      .populate('comments.author', 'username displayName avatarUrl badgeColor')
+      .populate('mergedBy', 'username displayName avatarUrl badgeColor')
       .populate('closesIssues', 'number title state')
 
     if (!pull) return res.status(404).json({ error: 'Pull request not found' })
@@ -137,7 +137,7 @@ router.post('/:owner/:name', protect, async (req, res) => {
 
     await req.user.awardXP(10, `Opened pull request #${number}`)
 
-    const populated = await pull.populate('author', 'username avatarUrl')
+    const populated = await pull.populate('author', 'username avatarUrl badgeColor')
 
     res.status(201).json({ pull: populated })
   } catch (err) {

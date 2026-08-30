@@ -28,6 +28,7 @@ import Collaborator from '../models/Collaborator.js'
 import Invitation from '../models/Invitation.js'
 import Commit from '../models/Commit.js'
 import { protect, optionalAuth } from '../middleware/auth.js'
+import { canViewCodex, canEditCodex, canDeleteCodex, canManageCollaborators } from '../utils/permissions.js'
 import * as gitService from '../services/gitService.js'
 import { uploadCodexMedia } from '../services/uploadService.js'
 
@@ -38,18 +39,9 @@ async function findCodex(ownerUsername, codexName) {
   const owner = await User.findOne({ username: ownerUsername })
   if (!owner) return { error: 'User not found', status: 404 }
   const repo = await Repository.findOne({ owner: owner._id, name: codexName })
-    .populate('owner', 'username displayName avatarUrl')
+    .populate('owner', 'username displayName avatarUrl badgeColor')
   if (!repo) return { error: 'Codex not found', status: 404 }
   return { owner, repo }
-}
-
-// --- Helper: check authorization for private codexes ---
-function canViewCodex(repo, user) {
-  if (repo.visibility === 'public') return true
-  if (!user) return false
-  if (repo.owner._id.toString() === user._id.toString()) return true
-  if (user.isAdmin) return true
-  return false // simplified — full check would query Collaborator
 }
 
 // ============================================================
@@ -62,7 +54,7 @@ router.get('/:owner/:name', optionalAuth, async (req, res) => {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
 
-    if (!canViewCodex(repo, req.user)) {
+    if (!(await canViewCodex(req.user, repo))) {
       return res.status(404).json({ error: 'Codex not found' })
     }
 
@@ -109,7 +101,7 @@ router.get('/:owner/:name/readme', optionalAuth, async (req, res) => {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
 
-    if (!canViewCodex(repo, req.user)) {
+    if (!(await canViewCodex(req.user, repo))) {
       return res.status(404).json({ error: 'Codex not found' })
     }
 
@@ -145,10 +137,14 @@ router.get('/:owner/:name/readme', optionalAuth, async (req, res) => {
 })
 
 // GET /api/codexes/:owner/:name/tree — Get file tree
-router.get('/:owner/:name/tree', async (req, res) => {
+router.get('/:owner/:name/tree', optionalAuth, async (req, res) => {
   try {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
+
+    if (!(await canViewCodex(req.user, repo))) {
+      return res.status(404).json({ error: 'Codex not found' })
+    }
 
     res.json({ tree: repo.fileTree || [] })
   } catch (err) {
@@ -157,13 +153,17 @@ router.get('/:owner/:name/tree', async (req, res) => {
 })
 
 // GET /api/codexes/:owner/:name/blob — Get file content
-router.get('/:owner/:name/blob', async (req, res) => {
+router.get('/:owner/:name/blob', optionalAuth, async (req, res) => {
   try {
     const { path: filePath } = req.query
     if (!filePath) return res.status(400).json({ error: 'Path is required' })
 
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
+
+    if (!(await canViewCodex(req.user, repo))) {
+      return res.status(404).json({ error: 'Codex not found' })
+    }
 
     // Navigate file tree
     const parts = filePath.split('/')
@@ -198,6 +198,10 @@ router.post('/:owner/:name/ember', protect, async (req, res) => {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
 
+    if (!(await canViewCodex(req.user, repo))) {
+      return res.status(404).json({ error: 'Codex not found' })
+    }
+
     const isEmbered = repo.embers.some(u => u.toString() === req.user._id.toString())
     if (isEmbered) {
       repo.embers.pull(req.user._id)
@@ -220,6 +224,10 @@ router.post('/:owner/:name/watch', protect, async (req, res) => {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
 
+    if (!(await canViewCodex(req.user, repo))) {
+      return res.status(404).json({ error: 'Codex not found' })
+    }
+
     const isWatching = repo.watchers.some(u => u.toString() === req.user._id.toString())
     if (isWatching) {
       repo.watchers.pull(req.user._id)
@@ -240,6 +248,10 @@ router.post('/:owner/:name/echo', protect, async (req, res) => {
   try {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
+
+    if (!(await canViewCodex(req.user, repo))) {
+      return res.status(404).json({ error: 'Codex not found' })
+    }
 
     const hasEchoed = repo.echoes.some(u => u.toString() === req.user._id.toString())
     if (hasEchoed) {
@@ -267,10 +279,8 @@ router.post('/:owner/:name/media', protect, uploadCodexMedia.single('file'), asy
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
 
-    // Only owner or admin/write collaborator
-    const isOwner = owner._id.toString() === req.user._id.toString()
-    if (!isOwner && !req.user.isAdmin) {
-      return res.status(403).json({ error: 'Only the owner can upload media' })
+    if (!(await canEditCodex(req.user, repo))) {
+      return res.status(403).json({ error: 'Only the owner or admin collaborator can upload media' })
     }
 
     if (!req.file) {
@@ -300,10 +310,8 @@ router.patch('/:owner/:name', protect, async (req, res) => {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
 
-    // Only owner or admin
-    const isOwner = owner._id.toString() === req.user._id.toString()
-    if (!isOwner && !req.user.isAdmin) {
-      return res.status(403).json({ error: 'Only the owner can edit this codex' })
+    if (!(await canEditCodex(req.user, repo))) {
+      return res.status(403).json({ error: 'Only the owner or admin collaborator can edit this codex' })
     }
 
     const { tagline, websiteUrl, technologies, accentColor, description, visibility } = req.body
@@ -329,8 +337,8 @@ router.delete('/:owner/:name', protect, async (req, res) => {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
 
-    if (owner._id.toString() !== req.user._id.toString() && !req.user.isAdmin) {
-      return res.status(403).json({ error: 'Only the owner can delete this codex' })
+    if (!(await canDeleteCodex(req.user, repo))) {
+      return res.status(403).json({ error: 'Only the owner or site admin can delete this codex' })
     }
 
     // Delete related data
@@ -357,10 +365,14 @@ router.delete('/:owner/:name', protect, async (req, res) => {
 // ============================================================
 
 // GET /api/codexes/:owner/:name/quests — List quests
-router.get('/:owner/:name/quests', async (req, res) => {
+router.get('/:owner/:name/quests', optionalAuth, async (req, res) => {
   try {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
+
+    if (!(await canViewCodex(req.user, repo))) {
+      return res.status(404).json({ error: 'Codex not found' })
+    }
 
     const { state } = req.query
     const query = { codex: repo._id }
@@ -369,8 +381,8 @@ router.get('/:owner/:name/quests', async (req, res) => {
 
     const quests = await Quest.find(query)
       .sort({ createdAt: -1 })
-      .populate('author', 'username displayName avatarUrl')
-      .populate('assignees', 'username displayName avatarUrl')
+      .populate('author', 'username displayName avatarUrl badgeColor')
+      .populate('assignees', 'username displayName avatarUrl badgeColor')
 
     const openCount = await Quest.countDocuments({ codex: repo._id, status: { $ne: 'Closed' } })
     const closedCount = await Quest.countDocuments({ codex: repo._id, status: 'Closed' })
@@ -387,6 +399,10 @@ router.post('/:owner/:name/quests', protect, async (req, res) => {
   try {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
+
+    if (!(await canViewCodex(req.user, repo))) {
+      return res.status(404).json({ error: 'Codex not found' })
+    }
 
     const { title, body, bountyXp, assignees, labels } = req.body
     if (!title) return res.status(400).json({ error: 'Title is required' })
@@ -409,7 +425,7 @@ router.post('/:owner/:name/quests', protect, async (req, res) => {
 
     await req.user.awardXP(5, `Opened quest #${number}`)
 
-    const populated = await quest.populate('author', 'username displayName avatarUrl')
+    const populated = await quest.populate('author', 'username displayName avatarUrl badgeColor')
     res.status(201).json({ quest: populated })
   } catch (err) {
     console.error('Create quest error:', err)
@@ -418,22 +434,26 @@ router.post('/:owner/:name/quests', protect, async (req, res) => {
 })
 
 // GET /api/codexes/:owner/:name/quests/:number — Get quest by number
-router.get('/:owner/:name/quests/:number', async (req, res) => {
+router.get('/:owner/:name/quests/:number', optionalAuth, async (req, res) => {
   try {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
 
+    if (!(await canViewCodex(req.user, repo))) {
+      return res.status(404).json({ error: 'Codex not found' })
+    }
+
     const quest = await Quest.findOne({ codex: repo._id, number: parseInt(req.params.number) })
-      .populate('author', 'username displayName avatarUrl')
-      .populate('assignees', 'username displayName avatarUrl')
-      .populate('closedBy', 'username avatarUrl')
+      .populate('author', 'username displayName avatarUrl badgeColor')
+      .populate('assignees', 'username displayName avatarUrl badgeColor')
+      .populate('closedBy', 'username avatarUrl badgeColor')
 
     if (!quest) return res.status(404).json({ error: 'Quest not found' })
 
     // Get comments
     const comments = await Comment.find({ targetType: 'Quest', targetId: quest._id })
       .sort({ createdAt: 1 })
-      .populate('author', 'username displayName avatarUrl')
+      .populate('author', 'username displayName avatarUrl badgeColor')
 
     res.json({ quest, comments })
   } catch (err) {
@@ -482,6 +502,10 @@ router.post('/:owner/:name/quests/:number/comments', protect, async (req, res) =
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
 
+    if (!(await canViewCodex(req.user, repo))) {
+      return res.status(404).json({ error: 'Codex not found' })
+    }
+
     const quest = await Quest.findOne({ codex: repo._id, number: parseInt(req.params.number) })
     if (!quest) return res.status(404).json({ error: 'Quest not found' })
 
@@ -497,7 +521,7 @@ router.post('/:owner/:name/quests/:number/comments', protect, async (req, res) =
 
     await req.user.awardXP(2, 'Commented on quest')
 
-    const populated = await comment.populate('author', 'username displayName avatarUrl')
+    const populated = await comment.populate('author', 'username displayName avatarUrl badgeColor')
     res.status(201).json({ comment: populated })
   } catch (err) {
     console.error('Add quest comment error:', err)
@@ -510,10 +534,14 @@ router.post('/:owner/:name/quests/:number/comments', protect, async (req, res) =
 // ============================================================
 
 // GET /api/codexes/:owner/:name/offerings — List offerings
-router.get('/:owner/:name/offerings', async (req, res) => {
+router.get('/:owner/:name/offerings', optionalAuth, async (req, res) => {
   try {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
+
+    if (!(await canViewCodex(req.user, repo))) {
+      return res.status(404).json({ error: 'Codex not found' })
+    }
 
     const { state } = req.query
     const query = { codex: repo._id }
@@ -523,7 +551,7 @@ router.get('/:owner/:name/offerings', async (req, res) => {
 
     const offerings = await Offering.find(query)
       .sort({ createdAt: -1 })
-      .populate('author', 'username displayName avatarUrl')
+      .populate('author', 'username displayName avatarUrl badgeColor')
 
     const openCount = await Offering.countDocuments({ codex: repo._id, status: 'Open' })
     const boundCount = await Offering.countDocuments({ codex: repo._id, status: 'Bound' })
@@ -541,6 +569,10 @@ router.post('/:owner/:name/offerings', protect, async (req, res) => {
   try {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
+
+    if (!(await canViewCodex(req.user, repo))) {
+      return res.status(404).json({ error: 'Codex not found' })
+    }
 
     const { title, body, sourcePath, targetPath } = req.body
     if (!title) return res.status(400).json({ error: 'Title is required' })
@@ -562,7 +594,7 @@ router.post('/:owner/:name/offerings', protect, async (req, res) => {
 
     await req.user.awardXP(10, `Opened offering #${number}`)
 
-    const populated = await offering.populate('author', 'username displayName avatarUrl')
+    const populated = await offering.populate('author', 'username displayName avatarUrl badgeColor')
     res.status(201).json({ offering: populated })
   } catch (err) {
     console.error('Create offering error:', err)
@@ -571,20 +603,24 @@ router.post('/:owner/:name/offerings', protect, async (req, res) => {
 })
 
 // GET /api/codexes/:owner/:name/offerings/:number — Get offering by number
-router.get('/:owner/:name/offerings/:number', async (req, res) => {
+router.get('/:owner/:name/offerings/:number', optionalAuth, async (req, res) => {
   try {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
 
+    if (!(await canViewCodex(req.user, repo))) {
+      return res.status(404).json({ error: 'Codex not found' })
+    }
+
     const offering = await Offering.findOne({ codex: repo._id, number: parseInt(req.params.number) })
-      .populate('author', 'username displayName avatarUrl')
-      .populate('closedBy', 'username avatarUrl')
+      .populate('author', 'username displayName avatarUrl badgeColor')
+      .populate('closedBy', 'username avatarUrl badgeColor')
 
     if (!offering) return res.status(404).json({ error: 'Offering not found' })
 
     const comments = await Comment.find({ targetType: 'Offering', targetId: offering._id })
       .sort({ createdAt: 1 })
-      .populate('author', 'username displayName avatarUrl')
+      .populate('author', 'username displayName avatarUrl badgeColor')
 
     res.json({ offering, comments })
   } catch (err) {
@@ -628,6 +664,10 @@ router.post('/:owner/:name/offerings/:number/comments', protect, async (req, res
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
 
+    if (!(await canViewCodex(req.user, repo))) {
+      return res.status(404).json({ error: 'Codex not found' })
+    }
+
     const offering = await Offering.findOne({ codex: repo._id, number: parseInt(req.params.number) })
     if (!offering) return res.status(404).json({ error: 'Offering not found' })
 
@@ -643,7 +683,7 @@ router.post('/:owner/:name/offerings/:number/comments', protect, async (req, res
 
     await req.user.awardXP(2, 'Commented on offering')
 
-    const populated = await comment.populate('author', 'username displayName avatarUrl')
+    const populated = await comment.populate('author', 'username displayName avatarUrl badgeColor')
     res.status(201).json({ comment: populated })
   } catch (err) {
     console.error('Add offering comment error:', err)
@@ -695,14 +735,18 @@ router.post('/:owner/:name/offerings/:number/bind', protect, async (req, res) =>
 // ============================================================
 
 // GET /api/codexes/:owner/:name/paths — List paths
-router.get('/:owner/:name/paths', async (req, res) => {
+router.get('/:owner/:name/paths', optionalAuth, async (req, res) => {
   try {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
 
+    if (!(await canViewCodex(req.user, repo))) {
+      return res.status(404).json({ error: 'Codex not found' })
+    }
+
     const paths = await Path.find({ codex: repo._id })
       .sort({ isDefault: -1, createdAt: -1 })
-      .populate('createdBy', 'username displayName avatarUrl')
+      .populate('createdBy', 'username displayName avatarUrl badgeColor')
 
     res.json({ paths })
   } catch (err) {
@@ -742,7 +786,7 @@ router.post('/:owner/:name/paths', protect, async (req, res) => {
       }
     } catch { /* git service unavailable */ }
 
-    const populated = await path.populate('createdBy', 'username displayName avatarUrl')
+    const populated = await path.populate('createdBy', 'username displayName avatarUrl badgeColor')
     res.status(201).json({ path: populated })
   } catch (err) {
     console.error('Create path error:', err)
@@ -755,21 +799,25 @@ router.post('/:owner/:name/paths', protect, async (req, res) => {
 // ============================================================
 
 // GET /api/codexes/:owner/:name/releases — List releases
-router.get('/:owner/:name/releases', async (req, res) => {
+router.get('/:owner/:name/releases', optionalAuth, async (req, res) => {
   try {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
 
+    if (!(await canViewCodex(req.user, repo))) {
+      return res.status(404).json({ error: 'Codex not found' })
+    }
+
     const releases = await Release.find({ codex: repo._id })
       .sort({ createdAt: -1 })
-      .populate('author', 'username displayName avatarUrl')
+      .populate('author', 'username displayName avatarUrl badgeColor')
 
     // Get comments for each release
     const releasesWithComments = await Promise.all(
       releases.map(async (r) => {
         const comments = await Comment.find({ targetType: 'Release', targetId: r._id })
           .sort({ createdAt: 1 })
-          .populate('author', 'username displayName avatarUrl')
+          .populate('author', 'username displayName avatarUrl badgeColor')
         return { ...r.toObject(), comments }
       })
     )
@@ -812,7 +860,7 @@ router.post('/:owner/:name/releases', protect, async (req, res) => {
 
     await req.user.awardXP(10, `Created release ${tagName}`)
 
-    const populated = await release.populate('author', 'username displayName avatarUrl')
+    const populated = await release.populate('author', 'username displayName avatarUrl badgeColor')
     res.status(201).json({ release: populated })
   } catch (err) {
     console.error('Create release error:', err)
@@ -825,14 +873,18 @@ router.post('/:owner/:name/releases', protect, async (req, res) => {
 // ============================================================
 
 // GET /api/codexes/:owner/:name/collaborators — List collaborators
-router.get('/:owner/:name/collaborators', async (req, res) => {
+router.get('/:owner/:name/collaborators', optionalAuth, async (req, res) => {
   try {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
 
+    if (!(await canViewCodex(req.user, repo))) {
+      return res.status(404).json({ error: 'Codex not found' })
+    }
+
     const collaborators = await Collaborator.find({ codex: repo._id })
-      .populate('user', 'username displayName avatarUrl')
-      .populate('addedBy', 'username avatarUrl')
+      .populate('user', 'username displayName avatarUrl badgeColor')
+      .populate('addedBy', 'username avatarUrl badgeColor')
 
     // Add owner as first collaborator
     const allCollabs = [
@@ -858,9 +910,8 @@ router.post('/:owner/:name/collaborators', protect, async (req, res) => {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
 
-    // Only owner or admin can add
-    if (owner._id.toString() !== req.user._id.toString() && !req.user.isAdmin) {
-      return res.status(403).json({ error: 'Only the owner can manage collaborators' })
+    if (!(await canManageCollaborators(req.user, repo))) {
+      return res.status(403).json({ error: 'Only the owner or admin collaborator can manage collaborators' })
     }
 
     const { username, email, role } = req.body
@@ -893,7 +944,7 @@ router.post('/:owner/:name/collaborators', protect, async (req, res) => {
         acceptedAt: new Date(),
       })
 
-      const populated = await collaborator.populate('user', 'username displayName avatarUrl')
+      const populated = await collaborator.populate('user', 'username displayName avatarUrl badgeColor')
       return res.status(201).json({ collaborator: populated, invited: false })
     } else {
       // User not found — create invitation
@@ -923,8 +974,8 @@ router.delete('/:owner/:name/collaborators/:userId', protect, async (req, res) =
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
 
-    if (owner._id.toString() !== req.user._id.toString() && !req.user.isAdmin) {
-      return res.status(403).json({ error: 'Only the owner can remove collaborators' })
+    if (!(await canManageCollaborators(req.user, repo))) {
+      return res.status(403).json({ error: 'Only the owner or admin collaborator can remove collaborators' })
     }
 
     const result = await Collaborator.findOneAndDelete({
@@ -951,8 +1002,8 @@ router.post('/:owner/:name/invitations', protect, async (req, res) => {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
 
-    if (owner._id.toString() !== req.user._id.toString() && !req.user.isAdmin) {
-      return res.status(403).json({ error: 'Only the owner can send invitations' })
+    if (!(await canManageCollaborators(req.user, repo))) {
+      return res.status(403).json({ error: 'Only the owner or admin collaborator can send invitations' })
     }
 
     const { email, role } = req.body

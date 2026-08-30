@@ -24,6 +24,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { api } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
+import { VerificationBadge } from '@/components/ui/UserBadge'
 
 export function QuestDetailPage() {
   const { owner: ownerParam, name, number } = useParams()
@@ -96,8 +97,8 @@ export function QuestDetailPage() {
                 {quest.status}
               </span>
             </h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--color-fg-muted)' }}>
-              #{quest.number} opened by {quest.author?.displayName || quest.author?.username} · {new Date(quest.createdAt).toLocaleDateString()}
+            <p className="text-sm mt-1 flex items-center gap-1" style={{ color: 'var(--color-fg-muted)' }}>
+              #{quest.number} opened by <span className="flex items-center gap-1">{quest.author?.displayName || quest.author?.username}<VerificationBadge badgeColor={quest.author?.badgeColor} size={13} /></span> · {new Date(quest.createdAt).toLocaleDateString()}
               {quest.bountyXp > 0 && <span className="ml-2">⚡ {quest.bountyXp} XP bounty</span>}
             </p>
           </div>
@@ -133,7 +134,7 @@ export function QuestDetailPage() {
                       <Link to={`/${c.author?.username}`} className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium no-underline" style={{ backgroundColor: 'var(--color-success-muted)', color: 'var(--color-success-fg)' }}>
                         {c.author?.username?.charAt(0).toUpperCase()}
                       </Link>
-                      <Link to={`/${c.author?.username}`} className="no-underline hover:underline font-semibold" style={{ color: 'var(--color-accent-fg)' }}>{c.author?.displayName || c.author?.username}</Link>
+                      <Link to={`/${c.author?.username}`} className="no-underline hover:underline font-semibold flex items-center gap-1" style={{ color: 'var(--color-accent-fg)' }}>{c.author?.displayName || c.author?.username}<VerificationBadge badgeColor={c.author?.badgeColor} size={12} /></Link>
                       <span style={{ color: 'var(--color-fg-subtle)' }}>· {new Date(c.createdAt).toLocaleDateString()}</span>
                     </div>
                     <div className="Box-body markdown-body text-sm">
@@ -174,7 +175,7 @@ export function QuestDetailPage() {
               </div>
               <div className="Box-body text-xs space-y-2" style={{ color: 'var(--color-fg-muted)' }}>
                 <p><strong>Status:</strong> {quest.status}</p>
-                <p><strong>Author:</strong> {quest.author?.displayName || quest.author?.username}</p>
+                <p><strong>Author:</strong> <span className="flex items-center gap-1 inline-flex">{quest.author?.displayName || quest.author?.username}<VerificationBadge badgeColor={quest.author?.badgeColor} size={12} /></span></p>
                 {quest.bountyXp > 0 && <p><strong>Bounty:</strong> ⚡ {quest.bountyXp} XP</p>}
                 <p><strong>Created:</strong> {new Date(quest.createdAt).toLocaleDateString()}</p>
                 {quest.closedAt && <p><strong>Closed:</strong> {new Date(quest.closedAt).toLocaleDateString()}</p>}

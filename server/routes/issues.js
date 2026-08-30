@@ -45,8 +45,8 @@ router.get('/:owner/:name', async (req, res) => {
 
     const issues = await Issue.find(query)
       .sort(sortObj)
-      .populate('author', 'username avatarUrl')
-      .populate('assignees', 'username avatarUrl')
+      .populate('author', 'username avatarUrl badgeColor')
+      .populate('assignees', 'username avatarUrl badgeColor')
 
     const openCount = await Issue.countDocuments({ repository: repo._id, state: 'open' })
     const closedCount = await Issue.countDocuments({ repository: repo._id, state: 'closed' })
@@ -67,10 +67,10 @@ router.get('/:owner/:name/:number', async (req, res) => {
     if (!repo) return res.status(404).json({ error: 'Repository not found' })
 
     const issue = await Issue.findOne({ repository: repo._id, number: req.params.number })
-      .populate('author', 'username displayName avatarUrl')
-      .populate('assignees', 'username displayName avatarUrl')
-      .populate('comments.author', 'username displayName avatarUrl')
-      .populate('closedBy', 'username avatarUrl')
+      .populate('author', 'username displayName avatarUrl badgeColor')
+      .populate('assignees', 'username displayName avatarUrl badgeColor')
+      .populate('comments.author', 'username displayName avatarUrl badgeColor')
+      .populate('closedBy', 'username avatarUrl badgeColor')
 
     if (!issue) return res.status(404).json({ error: 'Issue not found' })
 
@@ -113,7 +113,7 @@ router.post('/:owner/:name', protect, async (req, res) => {
 
     await req.user.awardXP(5, `Opened issue #${number}`)
 
-    const populated = await issue.populate('author', 'username avatarUrl')
+    const populated = await issue.populate('author', 'username avatarUrl badgeColor')
 
     res.status(201).json({ issue: populated })
   } catch (err) {

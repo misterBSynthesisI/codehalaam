@@ -20,11 +20,12 @@ import express from 'express'
 import User from '../models/User.js'
 import Repository from '../models/Repository.js'
 import Commit from '../models/Commit.js'
-import { protect } from '../middleware/auth.js'
+import { protect, optionalAuth } from '../middleware/auth.js'
+import { canViewCodex } from '../utils/permissions.js'
 
 const router = express.Router()
 
-// GET /api/repos - Get user's repos
+// GET /api/repos - Get user's repos (dashboard: includes ALL user's repos)
 router.get('/', protect, async (req, res) => {
   try {
     const { sort = 'updated', direction = 'desc', type = 'all' } = req.query
@@ -40,7 +41,7 @@ router.get('/', protect, async (req, res) => {
 
     const repos = await Repository.find(query)
       .sort(sortObj)
-      .populate('owner', 'username avatarUrl')
+      .populate('owner', 'username avatarUrl badgeColor')
 
     res.json({ repos, total: repos.length })
   } catch (err) {
@@ -49,7 +50,7 @@ router.get('/', protect, async (req, res) => {
 })
 
 // GET /api/repos/:owner/:name - Get single repo
-router.get('/:owner/:name', async (req, res) => {
+router.get('/:owner/:name', optionalAuth, async (req, res) => {
   try {
     const owner = await User.findOne({ username: req.params.owner })
     if (!owner) {
@@ -57,11 +58,16 @@ router.get('/:owner/:name', async (req, res) => {
     }
 
     const repo = await Repository.findOne({ owner: owner._id, name: req.params.name })
-      .populate('owner', 'username displayName avatarUrl')
-      .populate('embers', 'username displayName avatarUrl')
-      .populate('watchers', 'username displayName avatarUrl')
+      .populate('owner', 'username displayName avatarUrl badgeColor')
+      .populate('embers', 'username displayName avatarUrl badgeColor')
+      .populate('watchers', 'username displayName avatarUrl badgeColor')
 
     if (!repo) {
+      return res.status(404).json({ error: 'Repository not found' })
+    }
+
+    // Check visibility — return 404 for unauthorized access
+    if (!(await canViewCodex(req.user, repo))) {
       return res.status(404).json({ error: 'Repository not found' })
     }
 
@@ -127,26 +133,19 @@ router.post('/', protect, async (req, res) => {
       branches: [{ name: 'main', isDefault: true }],
       fileTree: [
         {
-          name: 'README.md',
-          type: 'file',
+          name: 'README.md', type: 'file',
           content: `# ${name}\n\n${description || 'A new repository'}\n\n## Getting Started\n\n\`\`\`bash\ngit clone https://github.com/${req.user.username}/${name}.git\ncd ${name}\nnpm install\n\`\`\`\n\n## Usage\n\nAdd usage instructions here.\n\n## Contributing\n\nContributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md).\n\n## License\n\n${license || 'MIT'}`,
-          size: '1.2 KB',
-          language: 'Markdown',
+          size: '1.2 KB', language: 'Markdown',
         },
         { name: '.gitignore', type: 'file', content: 'node_modules/\n.env\n.DS_Store\ndist/', size: '0.1 KB' },
         {
-          name: 'package.json',
-          type: 'file',
+          name: 'package.json', type: 'file',
           content: JSON.stringify({
-            name,
-            version: '1.0.0',
-            description: description || '',
-            main: 'index.js',
-            scripts: { test: 'echo "Error: no test specified" && exit 1' },
+            name, version: '1.0.0', description: description || '',
+            main: 'index.js', scripts: { test: 'echo "Error: no test specified" && exit 1' },
             license: license || 'MIT',
           }, null, 2),
-          size: '0.4 KB',
-          language: 'JSON',
+          size: '0.4 KB', language: 'JSON',
         },
       ],
     })
@@ -304,7 +303,7 @@ router.get('/:owner/:name/commits', async (req, res) => {
     const commits = await Commit.find({ repository: repo._id })
       .sort({ createdAt: -1 })
       .limit(50)
-      .populate('author', 'username avatarUrl')
+      .populate('author', 'username avatarUrl badgeColor')
 
     res.json({ commits })
   } catch (err) {

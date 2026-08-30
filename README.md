@@ -73,6 +73,13 @@ CODEHALAAM is a gamified code hosting platform that combines the best of GitHub 
 - **Dark & Light Themes** — comfortable for any environment
 - **Responsive** — works on desktop, tablet, and mobile
 - **Accessible** — WCAG 2.1 AA compliant
+- **Verified Badges** — blue/red/black verified seals on user names
+
+### 🔒 Privacy & Security
+- **Private Codexes** — hide codexes from unauthorized viewers (returns 404)
+- **Centralized Permissions** — single reusable permission layer (`canViewCodex`, `canEditCodex`, etc.)
+- **Optional Auth** — public routes recognize logged-in users without requiring tokens
+- **Viewer-Aware Profiles** — profile pages show private codexes only to owners and collaborators
 
 ## 🚀 Quick Start
 
@@ -164,12 +171,15 @@ codehalaam/
 ├── server/                 # Express backend
 │   ├── models/             # Mongoose models
 │   ├── routes/             # API routes
-│   ├── middleware/          # Auth middleware
+│   ├── middleware/          # Auth middleware (protect, optionalAuth)
+│   ├── utils/              # Utilities (permissions.js)
+│   ├── services/           # Git, upload services
 │   ├── seed.js             # Database seeder
 │   └── index.js            # Server entry
 ├── docs/                   # Documentation
-│   ├── agent.md            # Agent architecture
-│   └── design.md           # Design system
+│   ├── agent.md            # Agent architecture & copyright policy
+│   ├── design.md           # Design system
+│   └── logic-bug-report.md # Bug audit report
 ├── CONTRIBUTING.md         # Contribution guide
 └── README.md               # This file
 ```
@@ -260,6 +270,24 @@ POST   /api/pulls/:owner/:name/:number/merge - Merge PR
 POST   /api/pulls/:owner/:name/:number/review - Submit review
 ```
 
+### Codexes (Barry/Storefront)
+```
+GET    /api/codexes/:owner/:name              - Get codex (requires optionalAuth)
+GET    /api/codexes/:owner/:name/readme       - Get README
+GET    /api/codexes/:owner/:name/tree         - Get file tree
+GET    /api/codexes/:owner/:name/blob         - Get file content
+GET    /api/codexes/:owner/:name/quests       - List quests
+GET    /api/codexes/:owner/:name/offerings    - List offerings
+GET    /api/codexes/:owner/:name/paths        - List paths
+GET    /api/codexes/:owner/:name/releases     - List releases
+GET    /api/codexes/:owner/:name/collaborators - List collaborators
+POST   /api/codexes/:owner/:name/ember        - Toggle ember (auth)
+POST   /api/codexes/:owner/:name/watch        - Toggle watch (auth)
+POST   /api/codexes/:owner/:name/echo         - Toggle echo (auth)
+PATCH  /api/codexes/:owner/:name              - Update codex (auth + canEditCodex)
+DELETE /api/codexes/:owner/:name              - Delete codex (auth + canDeleteCodex)
+```
+
 ### Collaborators
 ```
 GET    /api/collaborators/:owner/:name          - List collaborators
@@ -293,6 +321,9 @@ GET    /api/health                   - Server & database health status
 
 - **RBAC**: Admin routes protected by `requireAdmin` middleware (backend) and `<AdminRoute>` guard (frontend)
 - **JWT Auth**: All protected routes require `Bearer` token in `Authorization` header
+- **Optional Auth**: Public routes use `optionalAuth` to recognize logged-in users without requiring tokens
+- **Private Codex Guard**: All read routes check `canViewCodex()` — returns 404 (not 403) for unauthorized access
+- **Centralized Permissions**: Single `server/utils/permissions.js` module for all authorization logic
 - **Global Error Handler**: Every endpoint returns valid JSON, even on failure (no HTML error pages, no empty responses)
 - **404 Catch-all**: Unknown routes return `{ error: 'Route not found', path, method }`
 

@@ -19,7 +19,8 @@
 import express from 'express'
 import User from '../models/User.js'
 import Repository from '../models/Repository.js'
-import { protect } from '../middleware/auth.js'
+import Collaborator from '../models/Collaborator.js'
+import { protect, optionalAuth } from '../middleware/auth.js'
 
 const router = express.Router()
 
@@ -40,7 +41,7 @@ router.get('/stats', async (req, res) => {
 router.get('/leaderboard/top', async (req, res) => {
   try {
     const users = await User.find({ isActive: true })
-      .select('username displayName level xp avatarUrl streak longestStreak stats.contributions')
+      .select('username displayName level xp avatarUrl badgeUrl streak longestStreak stats.contributions badgeColor isAdmin')
       .sort({ level: -1, xp: -1 })
       .limit(50)
 
@@ -50,8 +51,24 @@ router.get('/leaderboard/top', async (req, res) => {
   }
 })
 
-// GET /api/users/:username - Public profile
-router.get('/:username', async (req, res) => {
+// GET /api/users/me — Get current user (requires auth)
+router.get('/me', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id)
+      .select('-password')
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    res.json({ user })
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch user' })
+  }
+})
+
+// GET /api/users/:username - Public profile (viewer-aware)
+router.get('/:username', optionalAuth, async (req, res) => {
   try {
     const user = await User.findOne({ username: req.params.username })
       .select('-password -email -emailNotifications')
@@ -60,9 +77,42 @@ router.get('/:username', async (req, res) => {
       return res.status(404).json({ error: 'User not found' })
     }
 
-    const repos = await Repository.find({ owner: user._id })
+    // Determine if the viewer can see private codexes for this user
+    const isOwner = req.user && req.user._id.toString() === user._id.toString()
+    const isAdmin = req.user && req.user.isAdmin
+
+    // If viewer is the owner or admin, show all codexes (public + private)
+    // If viewer is a logged-in user, show public + private codexes where viewer is collaborator
+    // If viewer is anonymous, show only public codexes
+    let codexQuery = { owner: user._id }
+
+    if (isOwner || isAdmin) {
+      // Show all codexes — no filter needed
+    } else if (req.user) {
+      // Show public codexes + private codexes where this user is a collaborator
+      const collabRepoIds = await Collaborator.find({ user: req.user._id }).distinct('codex')
+      const collabCodexIds = await Collaborator.find({ user: user._id }).distinct('codex')
+      
+      // Get repo IDs where the viewer is a collaborator
+      const viewablePrivateRepoIds = collabRepoIds.filter(id => 
+        collabCodexIds.some(cid => cid.toString() === id.toString())
+      )
+
+      codexQuery = {
+        $or: [
+          { owner: user._id, visibility: 'public' },
+          { _id: { $in: viewablePrivateRepoIds } },
+        ],
+      }
+    } else {
+      // Anonymous — only public
+      codexQuery = { owner: user._id, visibility: 'public' }
+    }
+
+    const repos = await Repository.find(codexQuery)
       .sort({ starsCount: -1 })
       .limit(20)
+      .populate('owner', 'username displayName avatarUrl')
 
     res.json({ user, repos })
   } catch (err) {

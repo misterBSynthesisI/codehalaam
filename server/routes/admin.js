@@ -115,7 +115,7 @@ router.get('/users', async (req, res) => {
       .sort(sort)
       .skip((page - 1) * limit)
       .limit(parseInt(limit))
-      .select('-contributionDays')
+      .select('-contributionDays -password')
 
     const total = await User.countDocuments(query)
 
@@ -143,7 +143,7 @@ router.get('/repos', async (req, res) => {
       .sort(sort)
       .skip((page - 1) * limit)
       .limit(parseInt(limit))
-      .populate('owner', 'username displayName avatarUrl')
+      .populate('owner', 'username displayName avatarUrl badgeColor')
 
     const total = await Repository.countDocuments(query)
 
@@ -157,7 +157,7 @@ router.get('/repos', async (req, res) => {
 router.get('/activity', async (req, res) => {
   try {
     const [recentUsers, recentRepos, recentIssues, recentPRs] = await Promise.all([
-      User.find().sort({ createdAt: -1 }).limit(10).select('username displayName createdAt'),
+      User.find().sort({ createdAt: -1 }).limit(10).select('username displayName badgeColor createdAt'),
       Repository.find().sort({ createdAt: -1 }).limit(10).select('name visibility createdAt owner').populate('owner', 'username'),
       Issue.find().sort({ createdAt: -1 }).limit(10).select('number title state createdAt').populate('author', 'username'),
       PullRequest.find().sort({ createdAt: -1 }).limit(10).select('number title state createdAt').populate('author', 'username'),

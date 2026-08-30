@@ -23,6 +23,8 @@ import { MapPin, Building, LinkIcon, Calendar, TrendingUp, Flame, BookOpen, Sett
 import { api } from '@/lib/api'
 import { StarMap } from '@/components/dashboard/StarMap'
 import { VerifiedBadge } from '@/components/ui/VerifiedBadge'
+import { VerificationBadge } from '@/components/ui/UserBadge'
+import { Lock } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from 'sonner'
 
@@ -88,10 +90,9 @@ export function ProfilePage() {
                 {profile.avatarUrl ? <img src={profile.avatarUrl} className="w-full h-full object-cover" alt={profile.username} /> : profile.username.charAt(0).toUpperCase()}
               </div>
 
-              <div className="mb-4">
-                <h1 className="text-2xl font-semibold leading-tight flex items-center gap-2" style={{ color: 'var(--color-fg-default)' }}>
+              <div className="mb-4">                  <h1 className="text-2xl font-semibold leading-tight flex items-center gap-2" style={{ color: 'var(--color-fg-default)' }}>
                   {profile.displayName || profile.username}
-                  <VerifiedBadge badgeColor={profile.badgeColor} />
+                  <VerificationBadge badgeColor={profile.badgeColor} size={22} />
                 </h1>
                 <p className="text-xl" style={{ color: 'var(--color-fg-muted)' }}>{profile.username}</p>
                 {profile.bio && <p className="text-sm mt-2" style={{ color: 'var(--color-fg-default)' }}>{profile.bio}</p>}
@@ -173,7 +174,10 @@ export function ProfilePage() {
                       <Link key={repo._id} to={`/codex/${profile.username}/${repo.name}`} className="Box p-4 no-underline" style={{ textDecoration: 'none' }}>
                         <div className="flex items-center gap-2 mb-1">
                           <BookOpen className="w-4 h-4" strokeWidth={1.5} style={{ color: 'var(--color-accent-fg)' }} />
-                          <span className="text-sm font-semibold" style={{ color: 'var(--color-accent-fg)' }}>{repo.name}</span>
+                          <span className="text-sm font-semibold flex items-center gap-1.5" style={{ color: 'var(--color-accent-fg)' }}>
+                            {repo.visibility === 'private' && <Lock className="w-3 h-3 shrink-0" strokeWidth={2} style={{ color: 'var(--color-fg-muted)' }} />}
+                            {repo.name}
+                          </span>
                           <span className="Label" style={{ fontSize: 10, padding: '0 6px', backgroundColor: repo.visibility === 'private' ? 'var(--color-counter-bg)' : 'var(--color-success-muted)', color: repo.visibility === 'private' ? 'var(--color-fg-muted)' : 'var(--color-success-fg)' }}>{repo.visibility}</span>
                         </div>
                         <p className="text-xs line-clamp-2" style={{ color: 'var(--color-fg-muted)' }}>{repo.description}</p>

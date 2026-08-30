@@ -20,7 +20,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  GitPullRequest, AlertCircle, Check, Clock, ArrowUpRight, Plus, Zap
+  GitPullRequest, AlertCircle, Check, Clock, ArrowUpRight, Plus, Zap, Lock
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
@@ -213,7 +213,10 @@ export function DashboardPage() {
                       style={{ borderBottom: i < Math.min(repos.length, 6) - 1 ? '1px solid var(--color-border-default)' : undefined, color: 'var(--color-fg-default)' }}
                     >
                       <div className="min-w-0">
-                        <div className="text-sm font-medium truncate" style={{ color: 'var(--color-accent-fg)' }}>{repo.name}</div>
+                        <div className="text-sm font-medium truncate flex items-center gap-1.5" style={{ color: 'var(--color-accent-fg)' }}>
+                          {repo.visibility === 'private' && <Lock className="w-3 h-3 shrink-0" strokeWidth={2} style={{ color: 'var(--color-fg-muted)' }} />}
+                          {repo.name}
+                        </div>
                         {repo.description && (
                           <div className="text-xs truncate mt-0.5" style={{ color: 'var(--color-fg-muted)' }}>{repo.description}</div>
                         )}
