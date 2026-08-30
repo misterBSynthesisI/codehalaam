@@ -277,6 +277,17 @@ class ApiClient {
   logout() {
     this.clearToken()
   }
+
+  // Notifications
+  async getNotifications() {
+    return this.request<{ notifications: any[]; unreadCount: number }>('/notifications')
+  }
+
+  async markNotificationsRead() {
+    return this.request<{ success: boolean }>('/notifications/read', {
+      method: 'PATCH',
+    })
+  }
 }
 
 export const api = new ApiClient()

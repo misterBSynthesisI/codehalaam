@@ -31,6 +31,7 @@ import prRoutes from './routes/pullRequests.js'
 import collaboratorRoutes from './routes/collaborators.js'
 import adminRoutes from './routes/admin.js'
 import gitRoutes from './routes/git.js'
+import notificationRoutes from './routes/notifications.js'
 
 dotenv.config()
 
@@ -64,6 +65,7 @@ app.use('/api/issues', issueRoutes)
 app.use('/api/pulls', prRoutes)
 app.use('/api/collaborators', collaboratorRoutes)
 app.use('/api/admin', adminRoutes)
+app.use('/api/notifications', notificationRoutes)
 
 // Git Smart HTTP routes (must come after API routes, before health check)
 // Match any URL containing .git/ and delegate to git handler
