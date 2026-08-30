@@ -20,7 +20,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  Star, GitFork, Clock, Plus, Search, Lock
+  Star, GitFork, Clock, Plus, Search, Lock, Flame
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
@@ -58,7 +58,7 @@ export function DashboardPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Find a repository…"
+                  placeholder="Find a Codex…"
                   className="form-control pl-9"
                   data-testid="repo-search"
                 />
@@ -69,7 +69,7 @@ export function DashboardPage() {
             </div>
 
             {loading ? (
-              <div className="Box"><div className="Box-body text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>Loading repositories...</div></div>
+              <div className="Box"><div className="Box-body text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>Loading codexes...</div></div>
             ) : (
               <div className="Box" data-testid="repo-list">
                 {filteredRepos.map((repo, i) => (
@@ -95,7 +95,7 @@ export function DashboardPage() {
                         </div>
                       </div>
                       <button className="btn btn-sm btn-outline shrink-0" onClick={(e) => { e.preventDefault(); api.toggleStar(user!.username, repo.name) }}>
-                        <Star className="w-3 h-3" /> Star
+                        <Star className="w-3 h-3" /> Ember
                         {repo.starsCount > 0 && <span style={{ color: 'var(--color-fg-muted)' }}>{repo.starsCount}</span>}
                       </button>
                     </Link>
@@ -103,7 +103,7 @@ export function DashboardPage() {
                 ))}
                 {filteredRepos.length === 0 && (
                   <div className="Box-body text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>
-                    {searchQuery ? 'No repositories match your search' : 'No repositories yet. Create your first one!'}
+                    {searchQuery ? 'No codexes match your search' : 'No codexes yet. Create your first one!'}
                   </div>
                 )}
               </div>
@@ -139,8 +139,8 @@ export function DashboardPage() {
                   </div>
 
                   <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--color-fg-muted)' }}>
-                    <span>{user.stats?.commits?.toLocaleString() || 0} commits</span>
-                    <span>{user.stats?.pullRequests || 0} PRs</span>
+                    <span>{user.stats?.commits?.toLocaleString() || 0} inscriptions</span>
+                    <span>{user.stats?.pullRequests || 0} offerings</span>
                     <span>{user.streak || 0} day streak</span>
                   </div>
                 </div>

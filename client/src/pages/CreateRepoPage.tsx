@@ -42,13 +42,13 @@ export function CreateRepoPage() {
   return (
     <div style={s}>
       <div className="container-md py-6">
-        <h1 className="text-2xl font-semibold mb-2" style={{ color: 'var(--color-fg-default)' }}>Create a new repository</h1>
-        <p className="text-sm mb-6" style={{ color: 'var(--color-fg-muted)' }}>A repository contains all your project's files and revision history.</p>
+        <h1 className="text-2xl font-semibold mb-2" style={{ color: 'var(--color-fg-default)' }}>Create a new Codex</h1>
+        <p className="text-sm mb-6" style={{ color: 'var(--color-fg-muted)' }}>A Codex holds all your project's files and revision history.</p>
         <div className="Box p-6">
           <form onSubmit={handleSubmit}>
             {error && <div className="mb-4 p-3 rounded-md text-sm" style={{ backgroundColor: 'var(--color-danger-muted)', color: 'var(--color-danger-fg)' }}>{error}</div>}
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-fg-default)' }}>Repository name <span style={{ color: 'var(--color-danger-fg)' }}>*</span></label>
+              <label className="block text-sm font-medium mb-1" style={{ color: 'var(--color-fg-default)' }}>Codex name <span style={{ color: 'var(--color-danger-fg)' }}>*</span></label>
               <div className="flex items-center gap-2">
                 <span className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>{user?.username} /</span>
                 <input type="text" value={name} onChange={e => setName(e.target.value.replace(/\s/g, '-'))} placeholder="my-project" className="form-control flex-1" autoFocus required />
@@ -61,7 +61,7 @@ export function CreateRepoPage() {
             <div className="mb-4">
               <label className="block text-sm font-medium mb-3" style={{ color: 'var(--color-fg-default)' }}>Visibility</label>
               <div className="space-y-3">
-                {[{ val: 'public', icon: <Globe className="w-4 h-4" />, label: 'Public', desc: 'Anyone on the internet can see this repository.' }, { val: 'private', icon: <Lock className="w-4 h-4" />, label: 'Private', desc: 'You choose who can see and commit to this repository.' }].map(opt => (
+                {[{ val: 'public', icon: <Globe className="w-4 h-4" />, label: 'Public', desc: 'Anyone on the internet can see this Codex.' }, { val: 'private', icon: <Lock className="w-4 h-4" />, label: 'Private', desc: 'You choose who can see and inscribe to this Codex.' }].map(opt => (
                   <label key={opt.val} className="flex items-start gap-3 p-3 rounded-md cursor-pointer transition-colors"
                     style={{ border: `1px solid ${visibility === opt.val ? 'var(--color-accent-fg)' : 'var(--color-border-default)'}`, backgroundColor: visibility === opt.val ? 'var(--color-accent-muted)' : 'transparent' }}>
                     <input type="radio" checked={visibility === opt.val} onChange={() => setVisibility(opt.val as any)} className="mt-0.5" />
@@ -74,7 +74,7 @@ export function CreateRepoPage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <button type="submit" disabled={loading || !name.trim()} className="btn btn-primary">{loading ? 'Creating...' : 'Create repository'}</button>
+              <button type="submit" disabled={loading || !name.trim()} className="btn btn-primary">{loading ? 'Creating...' : 'Create Codex'}</button>
               <button type="button" onClick={() => navigate(-1)} className="btn btn-default">Cancel</button>
             </div>
           </form>

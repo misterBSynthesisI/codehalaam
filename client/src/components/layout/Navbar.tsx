@@ -20,7 +20,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Search, Bell, Plus, ChevronDown, Sun, Moon } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { api } from '@/lib/api'
 
 function CodeLogo() {
   return (
@@ -36,14 +37,43 @@ export function Navbar() {
   const { user, logout } = useAuth()
   const { theme, toggleTheme } = useTheme()
   const [showUserMenu, setShowUserMenu] = useState(false)
+  const [showNotifMenu, setShowNotifMenu] = useState(false)
+  const [notifications, setNotifications] = useState<any[]>([])
+  const [unreadCount, setUnreadCount] = useState(0)
   const menuRef = useRef<HTMLDivElement>(null)
+  const notifRef = useRef<HTMLDivElement>(null)
 
   const isLanding = location.pathname === '/'
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const data = await api.getNotifications()
+      setNotifications(data.notifications || [])
+      setUnreadCount(data.unreadCount || 0)
+    } catch {
+      // Silent fail — notifications are non-critical
+    }
+  }, [])
+
+  const markAllRead = useCallback(async () => {
+    try {
+      await api.markNotificationsRead()
+      setUnreadCount(0)
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+    } catch { /* silent */ }
+  }, [])
+
+  useEffect(() => {
+    if (user) fetchNotifications()
+  }, [user, fetchNotifications])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setShowUserMenu(false)
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setShowNotifMenu(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -79,8 +109,8 @@ export function Navbar() {
           <nav className="hidden md:flex items-center gap-1">
             {[
               { to: '/dashboard', label: 'Dashboard' },
-              { to: '/dashboard', label: 'Pull Requests' },
-              { to: '/dashboard', label: 'Issues' },
+              { to: '/dashboard', label: 'Offerings' },
+              { to: '/dashboard', label: 'Quests' },
             ].map(({ to, label }) => (
               <Link
                 key={label}
@@ -119,10 +149,95 @@ export function Navbar() {
                 <Plus className="w-4 h-4" />
               </Link>
 
-              <button className="relative p-1.5 rounded-md transition-colors" style={{ color: 'var(--color-fg-muted)' }}>
-                <Bell className="w-4 h-4" />
-                <span className="absolute top-1 right-1 w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--color-accent-fg)' }} />
-              </button>
+              {/* Notification Bell */}
+              <div className="relative" ref={notifRef}>
+                <button
+                  onClick={() => {
+                    setShowNotifMenu(!showNotifMenu)
+                    if (!showNotifMenu) fetchNotifications()
+                  }}
+                  className="relative p-1.5 rounded-md transition-colors"
+                  style={{ color: 'var(--color-fg-muted)' }}
+                  data-testid="notification-bell"
+                >
+                  <Bell className="w-4 h-4" />
+                  {unreadCount > 0 && (
+                    <span
+                      className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full text-[10px] font-bold flex items-center justify-center text-white"
+                      style={{ backgroundColor: 'var(--color-danger-fg)' }}
+                      data-testid="notification-badge"
+                    >
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {showNotifMenu && (
+                  <div
+                    className="absolute right-0 top-full mt-1 w-80 max-h-96 overflow-y-auto rounded-md py-1 animate-fade-in material-toolbar"
+                    style={{ border: '1px solid var(--color-border-default)', boxShadow: 'var(--color-shadow-large)' }}
+                    data-testid="notification-dropdown"
+                  >
+                    <div className="px-3 py-2 border-b flex items-center justify-between" style={{ borderColor: 'var(--color-border-default)' }}>
+                      <span className="text-sm font-medium" style={{ color: 'var(--color-fg-default)' }}>Notifications</span>
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={markAllRead}
+                          className="text-xs"
+                          style={{ color: 'var(--color-accent-fg)' }}
+                          data-testid="mark-all-read"
+                        >
+                          Mark all as read
+                        </button>
+                      )}
+                    </div>
+
+                    {notifications.length === 0 ? (
+                      <div className="px-3 py-6 text-center">
+                        <p className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>No notifications yet</p>
+                      </div>
+                    ) : (
+                      notifications.map((notif) => {
+                        const actorName = notif.actor?.username || 'Someone'
+                        let text = ''
+                        switch (notif.type) {
+                          case 'EMBER_RECEIVED':
+                            text = `${actorName} gave an Ember to your Codex`
+                            break
+                          case 'OFFERING_MADE':
+                            text = `${actorName} submitted an Offering`
+                            break
+                          case 'QUEST_COMPLETED':
+                            text = `${actorName} completed a Quest on your Codex`
+                            break
+                          case 'ECHO_CREATED':
+                            text = `${actorName} created an Echo of your Codex`
+                            break
+                          default:
+                            text = `${actorName} did something`
+                        }
+                        return (
+                          <div
+                            key={notif._id}
+                            className="px-3 py-2 text-sm flex items-start gap-2 transition-colors"
+                            style={{
+                              backgroundColor: notif.read ? 'transparent' : 'var(--color-canvas-subtle)',
+                              color: 'var(--color-fg-default)',
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-canvas-subtle)'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = notif.read ? 'transparent' : 'var(--color-canvas-subtle)'}
+                          >
+                            {!notif.read && (
+                              <span className="mt-1.5 w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: 'var(--color-accent-fg)' }} />
+                            )}
+                            <span className={!notif.read ? '' : 'ml-4'}>{text}</span>
+                          </div>
+                        )
+                      })
+                    )}
+                  </div>
+                )}
+              </div>
 
               <div className="relative" ref={menuRef}>
                 <button
@@ -145,7 +260,7 @@ export function Navbar() {
                     {[
                       { to: `/${user.username}`, label: 'Your profile' },
                       { to: '/settings', label: 'Settings' },
-                      { to: '/new', label: 'New repository' },
+                      { to: '/new', label: 'New Codex' },
                       { to: '/admin', label: 'Admin dashboard' },
                     ].map(({ to, label }) => (
                       <Link

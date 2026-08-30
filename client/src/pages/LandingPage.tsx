@@ -34,7 +34,7 @@ export function LandingPage() {
                 Build software <span style={{ color: 'var(--color-accent-fg)' }}>better</span>, <span style={{ color: 'var(--color-success-fg)' }}>together</span>
               </h1>
               <p className="text-xl mb-8 max-w-lg" style={{ color: 'var(--color-fg-muted)' }}>
-                The development platform where teams ship faster. Free private repos, unlimited collaborators, and rewards for every contribution.
+                The development platform where teams ship faster. Free private codexes, unlimited collaborators, and rewards for every contribution.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
                 <button onClick={() => navigate('/auth')} className="btn btn-primary text-base px-6 py-2">
@@ -53,7 +53,7 @@ export function LandingPage() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span style={{ color: 'var(--color-attention-fg)' }}>★</span>
-                  <span>1.2M repos</span>
+                  <span>1.2M codexes</span>
                 </div>
               </div>
             </motion.div>
@@ -61,7 +61,7 @@ export function LandingPage() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', bounce: 0, duration: 0.6, delay: 0.15 }} className="lg:ml-auto">
               <div className="Box p-6 w-full max-w-md" style={{ boxShadow: 'var(--color-shadow-large)' }}>
                 <h2 className="text-xl font-semibold mb-1" style={{ color: 'var(--color-fg-default)' }}>Create your free account</h2>
-                <p className="text-sm mb-4" style={{ color: 'var(--color-fg-muted)' }}>Unlimited public and private repos and collaborators.</p>
+                <p className="text-sm mb-4" style={{ color: 'var(--color-fg-muted)' }}>Unlimited public and private codexes and collaborators.</p>
                 <form onSubmit={(e) => { e.preventDefault(); navigate('/auth') }} className="space-y-3">
                   <input type="text" placeholder="Username" className="form-control" />
                   <input type="email" placeholder="Email address" className="form-control" />
@@ -86,17 +86,17 @@ export function LandingPage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4" style={{ color: 'var(--color-fg-default)' }}>Everything you need to ship</h2>
             <p className="text-lg max-w-2xl mx-auto" style={{ color: 'var(--color-fg-muted)' }}>
-              Free private repos, unlimited collaborators, and rewards for every contribution. Everything GitHub charges for, free.
+              Free private codexes, unlimited collaborators, and rewards for every contribution. Everything GitHub charges for, free.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { icon: <Lock className="w-5 h-5" />, title: 'Unlimited private repos', desc: 'Keep your code private with unlimited repositories.', color: 'var(--color-success-fg)' },
+              { icon: <Lock className="w-5 h-5" />, title: 'Unlimited private codexes', desc: 'Keep your code private with unlimited codexes.', color: 'var(--color-success-fg)' },
               { icon: <Users className="w-5 h-5" />, title: 'Unlimited collaborators', desc: 'Invite your entire team. No per-seat pricing.', color: 'var(--color-accent-fg)' },
-              { icon: <GitBranch className="w-5 h-5" />, title: 'Pull requests & reviews', desc: 'Code review with inline comments and approvals.', color: 'var(--color-done-fg)' },
+              { icon: <GitBranch className="w-5 h-5" />, title: 'Offerings & reviews', desc: 'Code review with inline comments and approvals.', color: 'var(--color-done-fg)' },
               { icon: <Zap className="w-5 h-5" />, title: 'Earn XP for contributions', desc: 'Level up by committing, reviewing PRs, and closing issues.', color: 'var(--color-attention-fg)' },
               { icon: <Globe className="w-5 h-5" />, title: 'Global leaderboard', desc: 'See how you rank against developers worldwide.', color: 'var(--color-danger-fg)' },
-              { icon: <svg className="w-5 h-5" viewBox="0 0 16 16" fill="currentColor"><path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.743 3.743 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.06 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75Zm7.251 10.324.004-5.073-.002-2.253A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574ZM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25Z" /></svg>, title: 'Issues & project boards', desc: 'Track bugs, feature requests, and bounties.', color: 'var(--color-fg-muted)' },
+              { icon: <svg className="w-5 h-5" viewBox="0 0 16 16" fill="currentColor"><path d="M0 1.75A.75.75 0 0 1 .75 1h4.253c1.227 0 2.317.59 3 1.501A3.743 3.743 0 0 1 11.006 1h4.245a.75.75 0 0 1 .75.75v10.5a.75.75 0 0 1-.75.75h-4.507a2.25 2.25 0 0 0-1.591.659l-.622.621a.75.75 0 0 1-1.06 0l-.622-.621A2.25 2.25 0 0 0 5.258 13H.75a.75.75 0 0 1-.75-.75Zm7.251 10.324.004-5.073-.002-2.253A2.25 2.25 0 0 0 5.003 2.5H1.5v9h3.757a3.75 3.75 0 0 1 1.994.574ZM8.755 4.75l-.004 7.322a3.752 3.752 0 0 1 1.992-.572H14.5v-9h-3.495a2.25 2.25 0 0 0-2.25 2.25Z" /></svg>, title: 'Quests & bounties', desc: 'Track bugs, feature requests, and bounties.', color: 'var(--color-fg-muted)' },
             ].map((feature, i) => (
               <motion.div key={feature.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', bounce: 0, duration: 0.5, delay: i * 0.08 }}
                 className="Box p-6" style={{ borderColor: 'var(--color-border-default)' }}>

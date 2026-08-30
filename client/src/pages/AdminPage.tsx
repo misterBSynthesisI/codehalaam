@@ -118,15 +118,15 @@ export function AdminPage() {
           <div className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <StatCard icon={<Users className="w-5 h-5" style={{color:'var(--color-accent-fg)'}} />} label="Total Users" value={stats.users.total} sub={`${stats.users.recent} new (30d)`} color="var(--color-accent-muted)" />
-              <StatCard icon={<GitBranch className="w-5 h-5" style={{color:'var(--color-success-fg)'}} />} label="Repositories" value={stats.repos.total} sub={`${stats.repos.public} public, ${stats.repos.private} private`} color="var(--color-success-muted)" />
-              <StatCard icon={<AlertCircle className="w-5 h-5" style={{color:'var(--color-danger-fg)'}} />} label="Issues" value={stats.issues.total} sub={`${stats.issues.open} open, ${stats.issues.closed} closed`} color="var(--color-danger-muted)" />
-              <StatCard icon={<GitPullRequest className="w-5 h-5" style={{color:'var(--color-done-fg)'}} />} label="Pull Requests" value={stats.pullRequests.total} sub={`${stats.pullRequests.open} open, ${stats.pullRequests.merged} merged`} color="var(--color-done-muted)" />
+              <StatCard icon={<GitBranch className="w-5 h-5" style={{color:'var(--color-success-fg)'}} />} label="Codexes" value={stats.repos.total} sub={`${stats.repos.public} public, ${stats.repos.private} private`} color="var(--color-success-muted)" />
+              <StatCard icon={<AlertCircle className="w-5 h-5" style={{color:'var(--color-danger-fg)'}} />} label="Quests" value={stats.issues.total} sub={`${stats.issues.open} open, ${stats.issues.closed} closed`} color="var(--color-danger-muted)" />
+              <StatCard icon={<GitPullRequest className="w-5 h-5" style={{color:'var(--color-done-fg)'}} />} label="Offerings" value={stats.pullRequests.total} sub={`${stats.pullRequests.open} open, ${stats.pullRequests.merged} merged`} color="var(--color-done-muted)" />
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <StatCard icon={<Star className="w-5 h-5" style={{color:'var(--color-attention-fg)'}} />} label="Total Stars" value={stats.stars} color="var(--color-attention-muted)" />
+              <StatCard icon={<Star className="w-5 h-5" style={{color:'var(--color-attention-fg)'}} />} label="Total Embers" value={stats.stars} color="var(--color-attention-muted)" />
               <StatCard icon={<TrendingUp className="w-5 h-5" style={{color:'var(--color-success-fg)'}} />} label="Total Contributions" value={stats.contributions} color="var(--color-success-muted)" />
-              <StatCard icon={<Activity className="w-5 h-5" style={{color:'var(--color-fg-muted)'}} />} label="Recent Repos (30d)" value={stats.repos.recent} color="var(--color-canvas-subtle)" />
+              <StatCard icon={<Activity className="w-5 h-5" style={{color:'var(--color-fg-muted)'}} />} label="Recent Codexes (30d)" value={stats.repos.recent} color="var(--color-canvas-subtle)" />
             </div>
 
             {/* Top Languages */}
@@ -236,23 +236,23 @@ export function AdminPage() {
                   value={repoSearch}
                   onChange={(e) => setRepoSearch(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') fetchRepos(1, repoSearch) }}
-                  placeholder="Search repos..."
+                  placeholder="Search codexes..."
                   className="form-control pl-9"
                 />
               </div>
-              <span className="text-sm text-fg-muted">{repoTotal} repos total</span>
+              <span className="text-sm text-fg-muted">{repoTotal} codexes total</span>
             </div>
 
             <div className="border border-border rounded-md overflow-hidden">
               <table className="w-full">
                 <thead>
                   <tr className="bg-canvas-subtle border-b border-border">
-                    <th className="text-left px-4 py-2 text-xs font-medium text-fg-muted">Repository</th>
+                    <th className="text-left px-4 py-2 text-xs font-medium text-fg-muted">Codex</th>
                     <th className="text-left px-4 py-2 text-xs font-medium text-fg-muted">Owner</th>
                     <th className="text-left px-4 py-2 text-xs font-medium text-fg-muted">Visibility</th>
                     <th className="text-left px-4 py-2 text-xs font-medium text-fg-muted">Language</th>
                     <th className="text-left px-4 py-2 text-xs font-medium text-fg-muted">Stars</th>
-                    <th className="text-left px-4 py-2 text-xs font-medium text-fg-muted">Forks</th>
+                    <th className="text-left px-4 py-2 text-xs font-medium text-fg-muted">Echoes</th>
                     <th className="text-left px-4 py-2 text-xs font-medium text-fg-muted">Created</th>
                   </tr>
                 </thead>

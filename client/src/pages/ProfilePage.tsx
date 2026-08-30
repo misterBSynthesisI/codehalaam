@@ -85,9 +85,9 @@ export function ProfilePage() {
                 <h3 className="text-sm font-semibold mb-2" style={{ color: 'var(--color-fg-default)' }}>Stats</h3>
                 <div className="space-y-1 text-sm">
                   {[
-                    ['Public repos', repos.length],
-                    ['Stars received', repos.reduce((s, r) => s + (r.starsCount || 0), 0).toLocaleString()],
-                    ['Commits', profile.stats?.commits?.toLocaleString() || 0],
+                    ['Public codexes', repos.length],
+                    ['Embers received', repos.reduce((s, r) => s + (r.starsCount || 0), 0).toLocaleString()],
+                    ['Inscriptions', profile.stats?.commits?.toLocaleString() || 0],
                   ].map(([label, val]) => (
                     <div key={label} className="flex items-center justify-between">
                       <span style={{ color: 'var(--color-fg-muted)' }}>{label}</span>
@@ -102,7 +102,7 @@ export function ProfilePage() {
           {/* Main */}
           <div>
             <div className="UnderlineNav mb-4">
-              {(['overview', 'repositories', 'achievements'] as const).map(tab => (
+              {(['overview', 'codexes', 'achievements'] as const).map(tab => (
                 <button key={tab} onClick={() => setActiveTab(tab)} className="UnderlineNav-item capitalize" aria-selected={activeTab === tab}>{tab}</button>
               ))}
             </div>
@@ -133,7 +133,7 @@ export function ProfilePage() {
               </div>
             )}
 
-            {activeTab === 'repositories' && (
+            {activeTab === 'codexes' && (
               <div className="Box" data-testid="repo-list">
                 {repos.map(repo => (
                   <div key={repo._id} className="Box-row">
@@ -141,7 +141,7 @@ export function ProfilePage() {
                     <p className="text-xs mt-0.5" style={{ color: 'var(--color-fg-muted)' }}>{repo.description}</p>
                   </div>
                 ))}
-                {repos.length === 0 && <div className="Box-body text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>No repositories yet</div>}
+                {repos.length === 0 && <div className="Box-body text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>No codexes yet</div>}
               </div>
             )}
 

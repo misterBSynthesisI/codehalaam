@@ -110,7 +110,7 @@ function CodeTab({ repo, owner }: { repo: any; owner: string }) {
           </button>
           <span className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" className="inline mr-1 align-text-bottom"><path d="M2.5 7.775V2.75a.25.25 0 0 1 .25-.25h5.025a.25.25 0 0 1 .177.073l6.25 6.25a.25.25 0 0 1 0 .354l-5.025 5.025a.25.25 0 0 1-.354 0l-6.25-6.25a.25.25 0 0 1-.073-.177Z" /></svg>
-            {totalFiles} Branch
+            {totalFiles} Path
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -152,7 +152,7 @@ function CodeTab({ repo, owner }: { repo: any; owner: string }) {
 }
 
 /* ===== ISSUES TAB ===== */
-function IssuesTab({ owner, name }: { owner: string; name: string }) {
+function QuestsTab({ owner, name }: { owner: string; name: string }) {
   const [issues, setIssues] = useState<any[]>([])
   const [openCount, setOpenCount] = useState(0)
   const [closedCount, setClosedCount] = useState(0)
@@ -196,14 +196,14 @@ function IssuesTab({ owner, name }: { owner: string; name: string }) {
             </div>
           </div>
         ))}
-        {!loading && issues.length === 0 && <div className="Box-body text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>No issues yet</div>}
+        {!loading && issues.length === 0 && <div className="Box-body text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>No quests yet</div>}
       </div>
     </div>
   )
 }
 
 /* ===== PULL REQUESTS TAB ===== */
-function PullRequestsTab({ owner, name }: { owner: string; name: string }) {
+function OfferingsTab({ owner, name }: { owner: string; name: string }) {
   const [pulls, setPulls] = useState<any[]>([])
   const [openCount, setOpenCount] = useState(0)
   const [mergedCount, setMergedCount] = useState(0)
@@ -221,7 +221,7 @@ function PullRequestsTab({ owner, name }: { owner: string; name: string }) {
             <GitPullRequest className="w-4 h-4" style={{ color: 'var(--color-success-fg)' }} /> {openCount} Open
           </span>
           <span className="flex items-center gap-1" style={{ color: 'var(--color-fg-muted)' }}>
-            <Check className="w-4 h-4" /> {mergedCount} Merged
+            <Check className="w-4 h-4" /> {mergedCount} Bound
           </span>
         </div>
         <button className="btn btn-sm btn-primary"><Plus className="w-3 h-3" /> New pull request</button>
@@ -249,7 +249,7 @@ function PullRequestsTab({ owner, name }: { owner: string; name: string }) {
             </div>
           </div>
         ))}
-        {!loading && pulls.length === 0 && <div className="Box-body text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>No pull requests yet</div>}
+        {!loading && pulls.length === 0 && <div className="Box-body text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>No offerings yet</div>}
       </div>
     </div>
   )
@@ -400,7 +400,7 @@ function RepoSidebar({ repo, owner, languages }: { repo: any; owner: string; lan
           <div className="sidebar-item">
             <Star className="w-4 h-4" style={{ color: 'var(--color-fg-muted)' }} />
             <span className="count">{repo.starsCount || 0}</span>
-            <span style={{ color: 'var(--color-fg-muted)' }}>stars</span>
+            <span style={{ color: 'var(--color-fg-muted)' }}>embers</span>
           </div>
           <div className="sidebar-item">
             <Eye className="w-4 h-4" style={{ color: 'var(--color-fg-muted)' }} />
@@ -410,7 +410,7 @@ function RepoSidebar({ repo, owner, languages }: { repo: any; owner: string; lan
           <div className="sidebar-item">
             <GitFork className="w-4 h-4" style={{ color: 'var(--color-fg-muted)' }} />
             <span className="count">{repo.forksCount || 0}</span>
-            <span style={{ color: 'var(--color-fg-muted)' }}>forks</span>
+            <span style={{ color: 'var(--color-fg-muted)' }}>echoes</span>
           </div>
         </div>
       </div>
@@ -491,13 +491,13 @@ export function RepoPage() {
   }
 
   if (!repo) {
-    return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-canvas-default)' }}><div style={{ color: 'var(--color-fg-muted)' }}>Repository not found</div></div>
+    return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-canvas-default)' }}><div style={{ color: 'var(--color-fg-muted)' }}>Codex not found</div></div>
   }
 
   const tabs: { id: RepoTab; label: string; icon: React.ReactNode; count?: number }[] = [
     { id: 'code', label: 'Code', icon: <Code className="w-4 h-4" /> },
-    { id: 'issues', label: 'Issues', icon: <AlertCircle className="w-4 h-4" />, count: repo.openIssuesCount },
-    { id: 'pull-requests', label: 'Pull requests', icon: <GitPullRequest className="w-4 h-4" />, count: repo.openPullRequestsCount },
+    { id: 'issues', label: 'Quests', icon: <AlertCircle className="w-4 h-4" />, count: repo.openIssuesCount },
+    { id: 'pull-requests', label: 'Offerings', icon: <GitPullRequest className="w-4 h-4" />, count: repo.openPullRequestsCount },
     { id: 'collaborators', label: 'Collaborators', icon: <Users className="w-4 h-4" /> },
     { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> },
   ]
@@ -518,10 +518,10 @@ export function RepoPage() {
               <Eye className="w-3 h-3" style={{ color: 'var(--color-fg-muted)' }} /> Watch <span className="Counter">0</span>
             </button>
             <button className="btn btn-sm btn-default">
-              <GitFork className="w-3 h-3" style={{ color: 'var(--color-fg-muted)' }} /> Fork <span className="Counter">{repo.forksCount || 0}</span>
+              <GitFork className="w-3 h-3" style={{ color: 'var(--color-fg-muted)' }} /> Echo <span className="Counter">{repo.forksCount || 0}</span>
             </button>
             <button className="btn btn-sm btn-default">
-              <Star className="w-3 h-3" style={{ color: 'var(--color-fg-muted)' }} /> Star <span className="Counter">{repo.starsCount || 0}</span>
+              <Star className="w-3 h-3" style={{ color: 'var(--color-fg-muted)' }} /> Ember <span className="Counter">{repo.starsCount || 0}</span>
             </button>
           </div>
         </div>
@@ -546,8 +546,8 @@ export function RepoPage() {
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_296px] gap-6">
             <AnimatePresence mode="wait">
               <motion.div key={activeTab} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ type: 'spring', bounce: 0, duration: 0.3 }}>
-                {activeTab === 'issues' && <IssuesTab owner={username!} name={repo.name} />}
-                {activeTab === 'pull-requests' && <PullRequestsTab owner={username!} name={repo.name} />}
+                {activeTab === 'issues' && <QuestsTab owner={username!} name={repo.name} />}
+                {activeTab === 'pull-requests' && <OfferingsTab owner={username!} name={repo.name} />}
                 {activeTab === 'collaborators' && <CollaboratorsTab owner={username!} name={repo.name} />}
                 {activeTab === 'settings' && <SettingsTab repo={repo} owner={username!} />}
               </motion.div>
