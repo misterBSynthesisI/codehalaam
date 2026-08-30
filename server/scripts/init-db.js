@@ -17,7 +17,6 @@
  */
 
 import mongoose from 'mongoose'
-import bcrypt from 'bcryptjs'
 import dotenv from 'dotenv'
 import User from '../models/User.js'
 import Repository from '../models/Repository.js'
@@ -69,12 +68,11 @@ async function initDB() {
     if (userCount === 0) {
       console.log('\n🔧 No users found. Creating demo user...')
 
-      const hashedPassword = await bcrypt.hash('12345678', 12)
-
+      // Password is hashed automatically by the User model pre-save hook
       const demoUser = await User.create({
         username: 'demo',
         email: 'demo@codehalaam.local',
-        password: hashedPassword,
+        password: '12345678',
         displayName: 'Demo User',
         bio: 'Demo account for CODEHALAAM',
         class: 'Mage',
