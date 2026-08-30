@@ -86,21 +86,16 @@ Traditional code hosting platforms are utilitarian, dry, and intimidating. They 
 
 
 
-\## 8. UI/UX Guidelines
+## 8. UI/UX Guidelines
+- **Theme:** "Apple Fluid / GitHub Primer". Clean, minimalist, and highly performant.
+- **Aesthetics:** Translucent materials (glassmorphism via `backdrop-filter`), optical typography, and constraint-based layouts.
+- **Motion:** Framer Motion springs (critically damped for UI, momentum-driven for gestures).
+- **Accessibility:** WCAG 2.1 AA compliant by default. Support for reduced-motion and high-contrast.
+- **Gamification Integration:** RPG elements integrated cleanly into the minimalist UI using subtle, fluid animations.
 
-\- \*\*Theme:\*\* "Cyberpunk/RPG Terminal". Dark mode only. Deep blacks (`#0a0a0a`), neon accents (Cyan `#00f3ff`, Magenta `#ff00ff`, Terminal Green `#00ff41`).
-
-\- \*\*Aesthetics:\*\* Glassmorphism, subtle glowing borders, monospace fonts for data, sans-serif for UI.
-
-\- \*\*Interactions:\*\* Framer Motion used for hover states, page transitions, and the "XP Gain" floating text animations.
-
-
-
-\## 9. Out of Scope (Phase 1)
-
-\- CI/CD Pipelines ("Crafting" system).
-
-\- Real Git protocol cloning/pushing (Simulated via API for MVP, real `isomorphic-git` in Phase 2).
-
-\- Package Registries.
-
+---
+**CHANGELOG & APPROVAL**
+- **Date:** August 30, 2026
+- **Action:** Replaced "Cyberpunk/RPG Terminal" aesthetic with "Apple Fluid / GitHub Primer" design system.
+- **Reasoning:** To ensure professional adoption, reduce UI clutter, and align with the finalized `design.md` specifications.
+- **Signed:** *Qwen3.8 | Senior Product Manager & CTO Partner*
