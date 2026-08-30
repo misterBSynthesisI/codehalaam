@@ -99,9 +99,11 @@ const repositorySchema = new mongoose.Schema({
   openIssuesCount: { type: Number, default: 0 },
   openPullRequestsCount: { type: Number, default: 0 },
 
-  // Stargazers and watchers
+  // Stargazers, watchers, and embers
   stargazers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   watchers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  embers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  echoes: { type: Number, default: 0 },
 
   // Topics/tags
   topics: [String],

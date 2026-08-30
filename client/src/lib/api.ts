@@ -139,7 +139,7 @@ class ApiClient {
   }
 
   async getRepo(owner: string, name: string) {
-    return this.request<{ repo: any; languages: any[] }>(`/repos/${owner}/${name}`)
+    return this.request<{ repo: any; languages: any[]; isEmbered: boolean; isWatching: boolean; isStarred: boolean }>(`/repos/${owner}/${name}`)
   }
 
   async createRepo(data: any) {
@@ -165,6 +165,27 @@ class ApiClient {
   async toggleStar(owner: string, name: string) {
     return this.request<{ starred: boolean; starsCount: number }>(
       `/repos/${owner}/${name}/star`,
+      { method: 'POST' }
+    )
+  }
+
+  async toggleEmber(owner: string, name: string) {
+    return this.request<{ isEmbered: boolean; embersCount: number }>(
+      `/repos/${owner}/${name}/ember`,
+      { method: 'POST' }
+    )
+  }
+
+  async toggleWatch(owner: string, name: string) {
+    return this.request<{ isWatching: boolean; watchersCount: number }>(
+      `/repos/${owner}/${name}/watch`,
+      { method: 'POST' }
+    )
+  }
+
+  async echoRepo(owner: string, name: string) {
+    return this.request<{ echoesCount: number }>(
+      `/repos/${owner}/${name}/echo`,
       { method: 'POST' }
     )
   }

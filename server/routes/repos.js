@@ -58,9 +58,21 @@ router.get('/:owner/:name', async (req, res) => {
 
     const repo = await Repository.findOne({ owner: owner._id, name: req.params.name })
       .populate('owner', 'username displayName avatarUrl')
+      .populate('embers', 'username displayName avatarUrl')
+      .populate('watchers', 'username displayName avatarUrl')
 
     if (!repo) {
       return res.status(404).json({ error: 'Repository not found' })
+    }
+
+    // Compute user-specific states if authenticated
+    let isEmbered = false
+    let isWatching = false
+    let isStarred = false
+    if (req.user) {
+      isEmbered = repo.embers.some(u => u._id.toString() === req.user._id.toString())
+      isWatching = repo.watchers.some(u => u._id.toString() === req.user._id.toString())
+      isStarred = repo.stargazers?.some(id => id.toString() === req.user._id.toString()) || false
     }
 
     // Get languages stats
@@ -81,7 +93,7 @@ router.get('/:owner/:name', async (req, res) => {
       percentage: Math.round((count / total) * 100),
     }))
 
-    res.json({ repo, languages })
+    res.json({ repo, languages, isEmbered, isWatching, isStarred })
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch repository' })
   }
@@ -332,6 +344,80 @@ router.get('/:owner/:name/file', async (req, res) => {
     res.status(404).json({ error: 'File not found' })
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch file' })
+  }
+})
+
+// POST /api/repos/:owner/:name/ember - Toggle ember (like star)
+router.post('/:owner/:name/ember', protect, async (req, res) => {
+  try {
+    const owner = await User.findOne({ username: req.params.owner })
+    if (!owner) return res.status(404).json({ error: 'User not found' })
+
+    const repo = await Repository.findOne({ owner: owner._id, name: req.params.name })
+    if (!repo) return res.status(404).json({ error: 'Repository not found' })
+
+    const isEmbered = repo.embers.includes(req.user._id)
+
+    if (isEmbered) {
+      repo.embers.pull(req.user._id)
+    } else {
+      repo.embers.push(req.user._id)
+      await req.user.awardXP(2, 'Gave an Ember')
+    }
+
+    await repo.save()
+
+    res.json({ isEmbered: !isEmbered, embersCount: repo.embers.length })
+  } catch (err) {
+    console.error('Ember toggle error:', err)
+    res.status(500).json({ error: 'Failed to toggle ember' })
+  }
+})
+
+// POST /api/repos/:owner/:name/watch - Toggle watch
+router.post('/:owner/:name/watch', protect, async (req, res) => {
+  try {
+    const owner = await User.findOne({ username: req.params.owner })
+    if (!owner) return res.status(404).json({ error: 'User not found' })
+
+    const repo = await Repository.findOne({ owner: owner._id, name: req.params.name })
+    if (!repo) return res.status(404).json({ error: 'Repository not found' })
+
+    const isWatching = repo.watchers.includes(req.user._id)
+
+    if (isWatching) {
+      repo.watchers.pull(req.user._id)
+    } else {
+      repo.watchers.push(req.user._id)
+    }
+
+    await repo.save()
+
+    res.json({ isWatching: !isWatching, watchersCount: repo.watchers.length })
+  } catch (err) {
+    console.error('Watch toggle error:', err)
+    res.status(500).json({ error: 'Failed to toggle watch' })
+  }
+})
+
+// POST /api/repos/:owner/:name/echo - Increment echo counter
+router.post('/:owner/:name/echo', protect, async (req, res) => {
+  try {
+    const owner = await User.findOne({ username: req.params.owner })
+    if (!owner) return res.status(404).json({ error: 'User not found' })
+
+    const repo = await Repository.findOne({ owner: owner._id, name: req.params.name })
+    if (!repo) return res.status(404).json({ error: 'Repository not found' })
+
+    repo.echoes = (repo.echoes || 0) + 1
+    await repo.save()
+
+    await req.user.awardXP(15, 'Echoed a codex')
+
+    res.json({ echoesCount: repo.echoes })
+  } catch (err) {
+    console.error('Echo error:', err)
+    res.status(500).json({ error: 'Failed to echo' })
   }
 })
 

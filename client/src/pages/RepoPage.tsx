@@ -16,15 +16,18 @@
  * For licensing inquiries: justshipitai@gmail.com
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronRight, File, Folder, FolderOpen,
   Star, GitFork, FileCode2, MessageSquare, GitPullRequest,
   Settings, Check, Plus, AlertCircle, Users, Eye, GitBranch,
-  BookOpen, Activity, ExternalLink, Trash2, FolderGit2
+  BookOpen, Activity, ExternalLink, Trash2, FolderGit2,
+  Flame, Radio
 } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { api } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -72,6 +75,42 @@ function FileTreeNode({ node, depth = 0, onSelect, selectedPath }: {
   )
 }
 
+/* ===== MARKDOWN STYLES ===== */
+const markdownComponents = {
+  h1: ({ children, ...props }: any) => <h1 className="text-3xl font-bold mt-6 mb-4 pb-2 border-b" style={{ color: 'var(--color-fg-default)', borderColor: 'var(--color-border-default)' }} {...props}>{children}</h1>,
+  h2: ({ children, ...props }: any) => <h2 className="text-2xl font-semibold mt-6 mb-3 pb-2 border-b" style={{ color: 'var(--color-fg-default)', borderColor: 'var(--color-border-default)' }} {...props}>{children}</h2>,
+  h3: ({ children, ...props }: any) => <h3 className="text-xl font-semibold mt-5 mb-2" style={{ color: 'var(--color-fg-default)' }} {...props}>{children}</h3>,
+  h4: ({ children, ...props }: any) => <h4 className="text-lg font-semibold mt-4 mb-2" style={{ color: 'var(--color-fg-default)' }} {...props}>{children}</h4>,
+  p: ({ children, ...props }: any) => <p className="mb-3 leading-relaxed" style={{ color: 'var(--color-fg-default)' }} {...props}>{children}</p>,
+  a: ({ children, href, ...props }: any) => <a href={href} className="no-underline hover:underline" style={{ color: 'var(--color-accent-fg)' }} target="_blank" rel="noopener noreferrer" {...props}>{children}</a>,
+  ul: ({ children, ...props }: any) => <ul className="mb-3 ml-6 list-disc space-y-1" style={{ color: 'var(--color-fg-default)' }} {...props}>{children}</ul>,
+  ol: ({ children, ...props }: any) => <ol className="mb-3 ml-6 list-decimal space-y-1" style={{ color: 'var(--color-fg-default)' }} {...props}>{children}</ol>,
+  li: ({ children, ...props }: any) => <li className="leading-relaxed" {...props}>{children}</li>,
+  blockquote: ({ children, ...props }: any) => (
+    <blockquote className="border-l-4 pl-4 my-4 italic" style={{ borderColor: 'var(--color-accent-fg)', color: 'var(--color-fg-muted)' }} {...props}>{children}</blockquote>
+  ),
+  code: ({ inline, className, children, ...props }: any) => {
+    if (inline) {
+      return <code className="px-1.5 py-0.5 rounded text-sm" style={{ backgroundColor: 'var(--color-canvas-subtle)', color: 'var(--color-accent-fg)', fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace' }} {...props}>{children}</code>
+    }
+    return <code className={className} {...props}>{children}</code>
+  },
+  pre: ({ children, ...props }: any) => (
+    <pre className="rounded-md p-4 my-4 overflow-x-auto text-sm leading-relaxed" style={{ backgroundColor: 'var(--color-canvas-subtle)', border: '1px solid var(--color-border-default)', fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace' }} {...props}>{children}</pre>
+  ),
+  table: ({ children, ...props }: any) => (
+    <div className="overflow-x-auto my-4">
+      <table className="w-full border-collapse text-sm" style={{ border: '1px solid var(--color-border-default)' }} {...props}>{children}</table>
+    </div>
+  ),
+  thead: ({ children, ...props }: any) => <thead style={{ backgroundColor: 'var(--color-canvas-subtle)' }} {...props}>{children}</thead>,
+  th: ({ children, ...props }: any) => <th className="px-3 py-2 text-left font-semibold border" style={{ borderColor: 'var(--color-border-default)', color: 'var(--color-fg-default)' }} {...props}>{children}</th>,
+  td: ({ children, ...props }: any) => <td className="px-3 py-2 border" style={{ borderColor: 'var(--color-border-default)', color: 'var(--color-fg-default)' }} {...props}>{children}</td>,
+  hr: (props: any) => <hr className="my-6" style={{ borderColor: 'var(--color-border-default)' }} {...props} />,
+  strong: ({ children, ...props }: any) => <strong className="font-semibold" style={{ color: 'var(--color-fg-default)' }} {...props}>{children}</strong>,
+  em: ({ children, ...props }: any) => <em style={{ color: 'var(--color-fg-muted)' }} {...props}>{children}</em>,
+}
+
 /* ===== CODE TAB ===== */
 function CodeTab({ repo, owner }: { repo: any; owner: string }) {
   const [selectedFile, setSelectedFile] = useState<any>(null)
@@ -88,6 +127,7 @@ function CodeTab({ repo, owner }: { repo: any; owner: string }) {
   }, [repo])
 
   const totalFiles = (repo.fileTree || []).length
+  const isMarkdown = selectedFile && (selectedFile.name?.endsWith('.md') || selectedFile.language === 'Markdown')
 
   return (
     <div>
@@ -133,18 +173,26 @@ function CodeTab({ repo, owner }: { repo: any; owner: string }) {
         ))}
       </div>
 
-      {/* README */}
+      {/* File viewer — render markdown beautifully, code as pre/code */}
       {selectedFile && selectedFile.content && (
         <div className="Box">
           <div className="Box-header flex items-center gap-2" style={{ backgroundColor: 'var(--color-canvas-subtle)' }}>
             <File className="w-4 h-4" strokeWidth={1.5} style={{ color: 'var(--color-fg-muted)' }} />
-            <span className="text-sm font-semibold" style={{ color: 'var(--color-fg-default)' }}>README.md</span>
+            <span className="text-sm font-semibold" style={{ color: 'var(--color-fg-default)' }}>{selectedFile.name}</span>
             <span className="text-xs" style={{ color: 'var(--color-fg-subtle)' }}>{selectedFile.size}</span>
           </div>
           <div className="Box-body">
-            <pre className="font-mono text-sm leading-relaxed" style={{ color: 'var(--color-fg-default)', fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace' }}>
-              <code>{selectedFile.content}</code>
-            </pre>
+            {isMarkdown ? (
+              <div className="markdown-body">
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                  {selectedFile.content}
+                </ReactMarkdown>
+              </div>
+            ) : (
+              <pre className="font-mono text-sm leading-relaxed" style={{ color: 'var(--color-fg-default)', fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace' }}>
+                <code>{selectedFile.content}</code>
+              </pre>
+            )}
           </div>
         </div>
       )}
@@ -174,7 +222,7 @@ function QuestsTab({ owner, name }: { owner: string; name: string }) {
             <Check className="w-4 h-4" strokeWidth={1.5} /> {closedCount} Closed
           </span>
         </div>
-        <button className="btn btn-sm btn-primary"><Plus className="w-3 h-3" strokeWidth={1.5} /> New issue</button>
+        <button className="btn btn-sm btn-primary"><Plus className="w-3 h-3" strokeWidth={1.5} /> New quest</button>
       </div>
       <div className="Box">
         {issues.map((issue) => (
@@ -225,7 +273,7 @@ function OfferingsTab({ owner, name }: { owner: string; name: string }) {
             <Check className="w-4 h-4" strokeWidth={1.5} /> {mergedCount} Bound
           </span>
         </div>
-        <button className="btn btn-sm btn-primary"><Plus className="w-3 h-3" strokeWidth={1.5} /> New pull request</button>
+        <button className="btn btn-sm btn-primary"><Plus className="w-3 h-3" strokeWidth={1.5} /> New offering</button>
       </div>
       <div className="Box">
         {pulls.map((pr) => (
@@ -313,9 +361,9 @@ function CollaboratorsTab({ owner, name }: { owner: string; name: string }) {
           <div key={collab.user?._id || collab._id} className="Box-row">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium" style={{ backgroundColor: 'var(--color-counter-bg)', color: 'var(--color-fg-default)' }}>
+                <Link to={`/${collab.user?.username}`} className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium no-underline hover:scale-105 transition-transform" style={{ backgroundColor: 'var(--color-counter-bg)', color: 'var(--color-fg-default)' }}>
                   {collab.user?.username?.charAt(0).toUpperCase() || '?'}
-                </div>
+                </Link>
                 <div>
                   <Link to={`/${collab.user?.username}`} className="text-sm font-medium no-underline hover:underline" style={{ color: 'var(--color-fg-default)' }}>
                     {collab.user?.displayName || collab.user?.username}
@@ -376,7 +424,9 @@ function SettingsTab({ repo, owner }: { repo: any; owner: string }) {
 }
 
 /* ===== SIDEBAR ===== */
-function RepoSidebar({ repo, owner, languages }: { repo: any; owner: string; languages: any[] }) {
+function RepoSidebar({ repo, owner, languages, embersCount, watchersCount, echoesCount }: {
+  repo: any; owner: string; languages: any[]; embersCount: number; watchersCount: number; echoesCount: number
+}) {
   return (
     <div className="space-y-0">
       {/* About */}
@@ -399,47 +449,33 @@ function RepoSidebar({ repo, owner, languages }: { repo: any; owner: string; lan
             <span style={{ color: 'var(--color-fg-muted)' }}>Activity</span>
           </div>
           <div className="sidebar-item">
-            <Star className="w-4 h-4" strokeWidth={1.5} style={{ color: 'var(--color-fg-muted)' }} />
-            <span className="count">{repo.starsCount || 0}</span>
+            <Flame className="w-4 h-4" strokeWidth={1.5} style={{ color: '#f97316' }} />
+            <span className="count">{embersCount}</span>
             <span style={{ color: 'var(--color-fg-muted)' }}>embers</span>
           </div>
           <div className="sidebar-item">
             <Eye className="w-4 h-4" strokeWidth={1.5} style={{ color: 'var(--color-fg-muted)' }} />
-            <span className="count">1</span>
+            <span className="count">{watchersCount}</span>
             <span style={{ color: 'var(--color-fg-muted)' }}>watching</span>
           </div>
           <div className="sidebar-item">
-            <GitFork className="w-4 h-4" strokeWidth={1.5} style={{ color: 'var(--color-fg-muted)' }} />
-            <span className="count">{repo.forksCount || 0}</span>
+            <Radio className="w-4 h-4" strokeWidth={1.5} style={{ color: 'var(--color-done-fg)' }} />
+            <span className="count">{echoesCount}</span>
             <span style={{ color: 'var(--color-fg-muted)' }}>echoes</span>
           </div>
         </div>
       </div>
 
-      {/* Releases */}
-      <div className="sidebar-section">
-        <h2 className="sidebar-heading" style={{ color: 'var(--color-fg-default)', fontSize: 16 }}>Releases</h2>
-        <p className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>No releases published</p>
-        <a href="#" className="text-xs mt-1 inline-block" style={{ color: 'var(--color-accent-fg)' }}>Create a new release</a>
-      </div>
-
-      {/* Packages */}
-      <div className="sidebar-section">
-        <h2 className="sidebar-heading" style={{ color: 'var(--color-fg-default)', fontSize: 16 }}>Packages</h2>
-        <p className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>No packages published</p>
-        <a href="#" className="text-xs mt-1 inline-block" style={{ color: 'var(--color-accent-fg)' }}>Publish your first package</a>
-      </div>
-
-      {/* Contributors */}
+      {/* Contributors (The Crew) */}
       <div className="sidebar-section">
         <h2 className="sidebar-heading flex items-center gap-1" style={{ color: 'var(--color-fg-default)', fontSize: 16 }}>
-          Contributors <span className="Counter">1</span>
+          The Crew <span className="Counter">1</span>
         </h2>
         <div className="flex items-center gap-2 mt-1">
-          <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium" style={{ backgroundColor: 'var(--color-success-muted)', color: 'var(--color-success-fg)' }}>
+          <Link to={`/${owner}`} className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium no-underline hover:scale-110 transition-transform" style={{ backgroundColor: 'var(--color-success-muted)', color: 'var(--color-success-fg)' }}>
             {owner?.charAt(0).toUpperCase()}
-          </div>
-          <span className="text-sm" style={{ color: 'var(--color-accent-fg)' }}>{owner}</span>
+          </Link>
+          <Link to={`/${owner}`} className="text-sm no-underline hover:underline" style={{ color: 'var(--color-accent-fg)' }}>{owner}</Link>
         </div>
       </div>
 
@@ -477,14 +513,62 @@ function RepoSidebar({ repo, owner, languages }: { repo: any; owner: string; lan
 /* ===== MAIN REPO PAGE ===== */
 export function RepoPage() {
   const { username, repoName } = useParams()
+  const { user } = useAuth()
   const [repo, setRepo] = useState<any>(null)
   const [languages, setLanguages] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<RepoTab>('code')
 
+  // Action button states
+  const [isEmbered, setIsEmbered] = useState(false)
+  const [embersCount, setEmbersCount] = useState(0)
+  const [isWatching, setIsWatching] = useState(false)
+  const [watchersCount, setWatchersCount] = useState(0)
+  const [echoesCount, setEchoesCount] = useState(0)
+
   useEffect(() => {
     if (!username || !repoName) return
-    api.getRepo(username, repoName).then(data => { setRepo(data.repo); setLanguages(data.languages || []) }).finally(() => setLoading(false))
+    api.getRepo(username, repoName).then(data => {
+      setRepo(data.repo)
+      setLanguages(data.languages || [])
+      setIsEmbered(data.isEmbered || false)
+      setEmbersCount(data.repo.embers?.length || 0)
+      setIsWatching(data.isWatching || false)
+      setWatchersCount(data.repo.watchers?.length || 0)
+      setEchoesCount(data.repo.echoes || 0)
+    }).finally(() => setLoading(false))
+  }, [username, repoName])
+
+  const handleToggleEmber = useCallback(async () => {
+    if (!username || !repoName) return
+    const prev = { isEmbered, embersCount }
+    setIsEmbered(!isEmbered)
+    setEmbersCount(isEmbered ? embersCount - 1 : embersCount + 1)
+    try {
+      const data = await api.toggleEmber(username, repoName)
+      setIsEmbered(data.isEmbered)
+      setEmbersCount(data.embersCount)
+    } catch { setIsEmbered(prev.isEmbered); setEmbersCount(prev.embersCount) }
+  }, [username, repoName, isEmbered, embersCount])
+
+  const handleToggleWatch = useCallback(async () => {
+    if (!username || !repoName) return
+    const prev = { isWatching, watchersCount }
+    setIsWatching(!isWatching)
+    setWatchersCount(isWatching ? watchersCount - 1 : watchersCount + 1)
+    try {
+      const data = await api.toggleWatch(username, repoName)
+      setIsWatching(data.isWatching)
+      setWatchersCount(data.watchersCount)
+    } catch { setIsWatching(prev.isWatching); setWatchersCount(prev.watchersCount) }
+  }, [username, repoName, isWatching, watchersCount])
+
+  const handleEcho = useCallback(async () => {
+    if (!username || !repoName) return
+    try {
+      const data = await api.echoRepo(username, repoName)
+      setEchoesCount(data.echoesCount)
+    } catch { /* silent */ }
   }, [username, repoName])
 
   if (loading) {
@@ -514,17 +598,44 @@ export function RepoPage() {
             <span className="font-semibold text-lg" style={{ color: 'var(--color-fg-default)' }}>{repo.name}</span>
             <span className="Label Label-muted">{repo.visibility}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <motion.button whileTap={{ scale: 0.92 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }} className="btn btn-sm btn-default btn-flash">
-              <Eye className="w-3.5 h-3.5" strokeWidth={1.5} style={{ color: 'var(--color-fg-muted)' }} /> Watch <span className="Counter">0</span>
-            </motion.button>
-            <motion.button whileTap={{ scale: 0.92 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }} className="btn btn-sm btn-default btn-flash">
-              <GitFork className="w-3.5 h-3.5" strokeWidth={1.5} style={{ color: 'var(--color-fg-muted)' }} /> Echo <span className="Counter">{repo.forksCount || 0}</span>
-            </motion.button>
-            <motion.button whileTap={{ scale: 0.92 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }} className="btn btn-sm btn-default btn-flash">
-              <Star className="w-3.5 h-3.5" strokeWidth={1.5} style={{ color: 'var(--color-fg-muted)' }} /> Ember <span className="Counter">{repo.starsCount || 0}</span>
-            </motion.button>
-          </div>
+          {user && (
+            <div className="flex items-center gap-2">
+              <motion.button
+                whileTap={{ scale: 0.92 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                onClick={handleToggleWatch}
+                className="btn btn-sm btn-flash"
+                style={{
+                  backgroundColor: isWatching ? 'var(--color-accent-muted)' : 'var(--color-btn-default-bg)',
+                  borderColor: isWatching ? 'var(--color-accent-fg)' : 'var(--color-btn-default-border)',
+                  color: isWatching ? 'var(--color-accent-fg)' : 'var(--color-fg-muted)',
+                }}
+              >
+                <Eye className="w-3.5 h-3.5" strokeWidth={1.5} fill={isWatching ? 'currentColor' : 'none'} /> Watch <span className="Counter">{watchersCount}</span>
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.92 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                onClick={handleEcho}
+                className="btn btn-sm btn-default btn-flash"
+              >
+                <Radio className="w-3.5 h-3.5" strokeWidth={1.5} style={{ color: 'var(--color-done-fg)' }} /> Echo <span className="Counter">{echoesCount}</span>
+              </motion.button>
+              <motion.button
+                whileTap={{ scale: 0.92 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                onClick={handleToggleEmber}
+                className="btn btn-sm btn-flash"
+                style={{
+                  backgroundColor: isEmbered ? 'rgba(249,115,22,0.1)' : 'var(--color-btn-default-bg)',
+                  borderColor: isEmbered ? '#f97316' : 'var(--color-btn-default-border)',
+                  color: isEmbered ? '#f97316' : 'var(--color-fg-muted)',
+                }}
+              >
+                <Flame className="w-3.5 h-3.5" strokeWidth={1.5} fill={isEmbered ? 'currentColor' : 'none'} /> Ember <span className="Counter">{embersCount}</span>
+              </motion.button>
+            </div>
+          )}
         </div>
 
         {/* Tabs */}
@@ -541,7 +652,7 @@ export function RepoPage() {
         {activeTab === 'code' ? (
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_296px] gap-6">
             <CodeTab repo={repo} owner={username!} />
-            <RepoSidebar repo={repo} owner={username!} languages={languages} />
+            <RepoSidebar repo={repo} owner={username!} languages={languages} embersCount={embersCount} watchersCount={watchersCount} echoesCount={echoesCount} />
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_296px] gap-6">
@@ -553,7 +664,7 @@ export function RepoPage() {
                 {activeTab === 'settings' && <SettingsTab repo={repo} owner={username!} />}
               </motion.div>
             </AnimatePresence>
-            <RepoSidebar repo={repo} owner={username!} languages={languages} />
+            <RepoSidebar repo={repo} owner={username!} languages={languages} embersCount={embersCount} watchersCount={watchersCount} echoesCount={echoesCount} />
           </div>
         )}
       </div>

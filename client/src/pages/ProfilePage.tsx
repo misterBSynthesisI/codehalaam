@@ -19,9 +19,10 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { MapPin, Building, LinkIcon, Calendar, TrendingUp } from 'lucide-react'
+import { MapPin, Building, LinkIcon, Calendar, TrendingUp, Flame, BookOpen } from 'lucide-react'
 import { api } from '@/lib/api'
-import { ContributionHeatmap } from '@/components/dashboard/ContributionHeatmap'
+import { StarMap } from '@/components/dashboard/StarMap'
+import { VerifiedBadge } from '@/components/ui/VerifiedBadge'
 
 export function ProfilePage() {
   const { username } = useParams()
@@ -45,19 +46,49 @@ export function ProfilePage() {
 
   return (
     <div style={{ backgroundColor: 'var(--color-canvas-default)', color: 'var(--color-fg-default)', minHeight: '100vh' }}>
-      <div className="container-lg py-6">
+      {/* Power Photo — Cover Image Banner */}
+      <div className="relative" style={{ height: 200 }}>
+        {/* Galaxy/space gradient background */}
+        <div className="absolute inset-0" style={{
+          background: 'linear-gradient(135deg, #0a0a2e 0%, #1a1a3e 25%, #0d1117 50%, #1a0a2e 75%, #0a1a2e 100%)',
+        }} />
+        {/* Subtle star dots on the cover */}
+        <div className="absolute inset-0" style={{
+          backgroundImage: 'radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.4), transparent), radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,0.3), transparent), radial-gradient(1px 1px at 60% 20%, rgba(255,255,255,0.5), transparent), radial-gradient(1px 1px at 80% 60%, rgba(255,255,255,0.2), transparent), radial-gradient(1.5px 1.5px at 15% 80%, rgba(251,191,36,0.4), transparent), radial-gradient(1.5px 1.5px at 70% 40%, rgba(251,191,36,0.3), transparent), radial-gradient(1px 1px at 90% 15%, rgba(255,255,255,0.3), transparent)',
+        }} />
+        {/* Gradient fade at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-16" style={{
+          background: 'linear-gradient(to top, var(--color-canvas-default), transparent)',
+        }} />
+      </div>
+
+      <div className="container-lg" style={{ marginTop: -60, position: 'relative', zIndex: 10 }}>
         <div className="grid grid-cols-1 lg:grid-cols-[296px_1fr] gap-6">
           {/* Sidebar */}
           <div>
             <div className="sticky top-24">
-              <div className="w-[296px] h-[296px] rounded-full flex items-center justify-center text-8xl font-semibold mb-4 overflow-hidden" style={{ backgroundColor: 'var(--color-canvas-subtle)', border: '1px solid var(--color-border-default)', color: 'var(--color-fg-default)' }}>
+              {/* Avatar — overlaps the cover image */}
+              <div className="w-[180px] h-[180px] rounded-full flex items-center justify-center text-6xl font-semibold mb-4 overflow-hidden" style={{
+                backgroundColor: 'var(--color-canvas-subtle)',
+                border: '4px solid var(--color-canvas-default)',
+                color: 'var(--color-fg-default)',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+              }}>
                 {profile.avatarUrl ? <img src={profile.avatarUrl} className="w-full h-full object-cover" /> : profile.username.charAt(0).toUpperCase()}
               </div>
 
               <div className="mb-4">
-                <h1 className="text-2xl font-semibold leading-tight" style={{ color: 'var(--color-fg-default)' }}>{profile.displayName || profile.username}</h1>
+                <h1 className="text-2xl font-semibold leading-tight flex items-center gap-2" style={{ color: 'var(--color-fg-default)' }}>
+                  {profile.displayName || profile.username}
+                  <VerifiedBadge badgeColor={profile.badgeColor} />
+                </h1>
                 <p className="text-xl" style={{ color: 'var(--color-fg-muted)' }}>{profile.username}</p>
                 {profile.bio && <p className="text-sm mt-2" style={{ color: 'var(--color-fg-default)' }}>{profile.bio}</p>}
+                {profile.characterClass && (
+                  <span className="Label Label-purple mt-2" style={{ fontSize: 11 }}>
+                    ⚔️ {profile.characterClass}
+                  </span>
+                )}
               </div>
 
               <div className="space-y-2 text-sm mb-4" style={{ color: 'var(--color-fg-muted)' }}>
@@ -102,29 +133,33 @@ export function ProfilePage() {
           {/* Main */}
           <div>
             <div className="UnderlineNav mb-4">
-              {(['overview', 'codexes', 'achievements'] as const).map(tab => (
+              {(['overview', 'repositories', 'achievements'] as const).map(tab => (
                 <button key={tab} onClick={() => setActiveTab(tab)} className="UnderlineNav-item capitalize" aria-selected={activeTab === tab}>{tab}</button>
               ))}
             </div>
 
             {activeTab === 'overview' && (
               <div className="space-y-6">
+                {/* Star Map — replaces the old green squares */}
                 {contributionHeatmap.length > 0 && (
-                  <div className="Box"><ContributionHeatmap contributions={contributionHeatmap} totalContributions={profile.stats?.contributions || 0} /></div>
+                  <StarMap contributions={contributionHeatmap} totalContributions={profile.stats?.contributions || 0} />
                 )}
+
+                {/* Pinned Codexes */}
                 <div>
                   <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--color-fg-default)' }}>Pinned</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {repos.slice(0, 6).map(repo => (
                       <Link key={repo._id} to={`/${profile.username}/${repo.name}`} className="Box p-4 no-underline" style={{ textDecoration: 'none' }}>
                         <div className="flex items-center gap-2 mb-1">
+                          <BookOpen className="w-4 h-4" strokeWidth={1.5} style={{ color: 'var(--color-accent-fg)' }} />
                           <span className="text-sm font-semibold" style={{ color: 'var(--color-accent-fg)' }}>{repo.name}</span>
                           <span className="Label" style={{ fontSize: 10, padding: '0 6px', backgroundColor: repo.visibility === 'private' ? 'var(--color-counter-bg)' : 'var(--color-success-muted)', color: repo.visibility === 'private' ? 'var(--color-fg-muted)' : 'var(--color-success-fg)' }}>{repo.visibility}</span>
                         </div>
                         <p className="text-xs line-clamp-2" style={{ color: 'var(--color-fg-muted)' }}>{repo.description}</p>
                         <div className="flex items-center gap-3 mt-2 text-xs" style={{ color: 'var(--color-fg-muted)' }}>
                           {repo.language && <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--color-accent-fg)' }} />{repo.language}</span>}
-                          {repo.starsCount > 0 && <span>★ {repo.starsCount.toLocaleString()}</span>}
+                          {repo.starsCount > 0 && <span>🔥 {repo.starsCount.toLocaleString()}</span>}
                         </div>
                       </Link>
                     ))}
@@ -133,11 +168,14 @@ export function ProfilePage() {
               </div>
             )}
 
-            {activeTab === 'codexes' && (
+            {activeTab === 'repositories' && (
               <div className="Box" data-testid="repo-list">
                 {repos.map(repo => (
                   <div key={repo._id} className="Box-row">
-                    <Link to={`/${profile.username}/${repo.name}`} className="text-sm font-semibold no-underline hover:underline" style={{ color: 'var(--color-accent-fg)' }}>{repo.name}</Link>
+                    <Link to={`/${profile.username}/${repo.name}`} className="flex items-center gap-2 text-sm font-semibold no-underline hover:underline" style={{ color: 'var(--color-accent-fg)' }}>
+                      <BookOpen className="w-4 h-4" strokeWidth={1.5} />
+                      {repo.name}
+                    </Link>
                     <p className="text-xs mt-0.5" style={{ color: 'var(--color-fg-muted)' }}>{repo.description}</p>
                   </div>
                 ))}
