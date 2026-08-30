@@ -89,12 +89,12 @@ const userSchema = new mongoose.Schema({
 
   // Settings
   emailNotifications: { type: Boolean, default: true },
-  theme: { type: String, enum: ['dark', 'light', 'system'], default: 'dark' },
+  theme: { type: String, enum: ['dark', 'light', 'system'], default: 'light' },
 
   // Admin & badges
   isAdmin: { type: Boolean, default: false },
   badgeColor: { type: String, enum: ['none', 'blue', 'black', 'red'], default: 'none' },
-  characterClass: { type: String, enum: ['Mage', 'Tank', 'Rogue'], default: '' },
+  characterClass: { type: String, enum: ['Mage', 'Tank', 'Rogue'], required: false },
 
   // Account status
   isPublic: { type: Boolean, default: true },

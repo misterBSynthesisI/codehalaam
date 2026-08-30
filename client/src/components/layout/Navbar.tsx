@@ -17,7 +17,7 @@
  */
 
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Search, Bell, ChevronDown, ShieldAlert } from 'lucide-react'
+import { Search, Bell, ChevronDown, ShieldAlert, Sun, Moon } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useState, useRef, useEffect, useCallback } from 'react'
@@ -95,6 +95,14 @@ export function Navbar() {
         <div className="flex items-center gap-1.5">
           {isLanding ? (
             <div className="flex items-center gap-3">
+              <button
+                onClick={toggleTheme}
+                className="theme-toggle"
+                title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                data-testid="theme-toggle"
+              >
+                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
               <Link to="/auth?mode=login" className="btn-link text-sm no-underline hover:underline">Sign in</Link>
               <Link to="/auth" className="btn-primary text-sm no-underline">Sign up</Link>
             </div>
@@ -114,6 +122,16 @@ export function Navbar() {
                 <Search className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Search</span>
                 <kbd className="text-[10px] px-1 py-0.5 rounded ml-1 hidden sm:inline" style={{ backgroundColor: 'var(--color-canvas-default)', color: 'var(--color-fg-subtle)', border: '1px solid var(--color-border-default)' }}>⌘K</kbd>
+              </button>
+
+              {/* Theme Toggle */}
+              <button
+                onClick={toggleTheme}
+                className="theme-toggle"
+                title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                data-testid="theme-toggle"
+              >
+                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
 
               {/* Notification Bell */}
@@ -229,6 +247,14 @@ export function Navbar() {
             </>
           ) : (
             <div className="flex items-center gap-3">
+              <button
+                onClick={toggleTheme}
+                className="theme-toggle"
+                title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                data-testid="theme-toggle"
+              >
+                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
               <Link to="/auth?mode=login" className="btn-link text-sm no-underline hover:underline">Sign in</Link>
               <Link to="/auth" className="btn-primary text-sm no-underline">Sign up</Link>
             </div>

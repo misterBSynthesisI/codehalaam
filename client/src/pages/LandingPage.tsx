@@ -48,7 +48,7 @@ export function LandingPage() {
                   onClick={async () => {
                     setDemoLoading(true)
                     try {
-                      await login('kai@codehalaam.dev', 'kai12345')
+                      await login('kai@codehalaam.dev', 'password123')
                       navigate('/dashboard')
                     } catch { navigate('/auth?mode=login') } finally { setDemoLoading(false) }
                   }}
