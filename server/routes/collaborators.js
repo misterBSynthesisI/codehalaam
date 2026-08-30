@@ -20,18 +20,23 @@ import express from 'express'
 import Collaborator from '../models/Collaborator.js'
 import Repository from '../models/Repository.js'
 import User from '../models/User.js'
-import { protect } from '../middleware/auth.js'
+import { protect, optionalAuth } from '../middleware/auth.js'
+import { canViewCodex } from '../utils/permissions.js'
 
 const router = express.Router()
 
 // GET /api/collaborators/:owner/:name - List collaborators
-router.get('/:owner/:name', async (req, res) => {
+router.get('/:owner/:name', optionalAuth, async (req, res) => {
   try {
     const owner = await User.findOne({ username: req.params.owner })
     if (!owner) return res.status(404).json({ error: 'User not found' })
 
     const repo = await Repository.findOne({ owner: owner._id, name: req.params.name })
     if (!repo) return res.status(404).json({ error: 'Repository not found' })
+
+    if (!(await canViewCodex(req.user, repo))) {
+      return res.status(404).json({ error: 'Repository not found' })
+    }
 
     const collaborators = await Collaborator.find({ repository: repo._id })
       .populate('user', 'username displayName avatarUrl')

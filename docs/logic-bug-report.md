@@ -56,8 +56,8 @@
 ### BUG-005: Duplicate `updateProfile` Method in API Client
 - **File:** `client/src/lib/api.ts` (lines ~101 and ~145)
 - **Severity:** LOW
-- **Description:** The `ApiClient` class has two `updateProfile` methods — one using `PUT /auth/profile` and another using `PATCH /auth/me`. The second one shadows the first. This is technically a TypeScript error but the Vite build tolerates it. The second definition is the one that gets called, which uses `PATCH /auth/me`.
-- **Status:** ⏳ DEFERRED — Fix by removing the first duplicate method and consolidating to a single implementation.
+- **Description:** The `ApiClient` class had two `updateProfile` methods — one using `PUT /auth/profile` and another using `PATCH /auth/me`. The second one shadows the first.
+- **Status:** ✅ FIXED — Removed the old PUT method, kept the PATCH /auth/me implementation.
 
 ### BUG-006: `GET /api/users/:username` Missing `badgeColor` in Select
 - **File:** `server/routes/users.js`
@@ -68,26 +68,26 @@
 ### BUG-007: Issues/PRs Routes Missing Visibility Guard
 - **File:** `server/routes/issues.js`, `server/routes/pullRequests.js`
 - **Severity:** MEDIUM
-- **Description:** The issues and pull request routes do not check codex visibility. If a private codex has issues/PRs, they could be accessed directly.
-- **Status:** ⏳ DEFERRED — These routes use the legacy `Repository` model. Since private codexes created through the new codex flow use the same `Repository` model, this is a potential leak. Recommend adding visibility checks in a follow-up.
+- **Description:** The issues and pull request routes did not check codex visibility.
+- **Status:** ✅ FIXED — Added optionalAuth + canViewCodex to all GET routes in both files.
 
 ### BUG-008: Collaborator Route Missing Visibility Check
 - **File:** `server/routes/collaborators.js`
 - **Severity:** MEDIUM
-- **Description:** The `GET /api/collaborators/:owner/:name` endpoint returns collaborator data without checking codex visibility. This leaks collaborator usernames for private codexes.
-- **Status:** ⏳ DEFERRED — Recommend adding optionalAuth + visibility check.
+- **Description:** The `GET /api/collaborators/:owner/:name` endpoint returned collaborator data without checking codex visibility.
+- **Status:** ✅ FIXED — Added optionalAuth + canViewCodex check.
 
 ### BUG-009: `GET /api/repos/:owner/:name/commits` Missing Visibility Check
 - **File:** `server/routes/repos.js`
 - **Severity:** MEDIUM
-- **Description:** The commits endpoint for the legacy repos route does not check codex visibility.
-- **Status:** ⏳ DEFERRED — Recommend adding visibility check.
+- **Description:** The commits endpoint did not check codex visibility.
+- **Status:** ✅ FIXED — Added optionalAuth + canViewCodex check.
 
 ### BUG-010: Delete Codex Missing Related Comment Cleanup
 - **File:** `server/routes/codexes.js` (DELETE route)
 - **Severity:** LOW
-- **Description:** When deleting a codex, the code does `Comment.deleteMany({ targetType: { $in: ['Quest', 'Offering', 'Release'] } })` which deletes ALL comments of those types, not just ones belonging to this codex. This is a data loss bug.
-- **Status:** ⏳ DEFERRED — Fix by first finding all Quest/Offering/Release IDs for this codex, then deleting comments by targetId.
+- **Description:** When deleting a codex, the code deleted ALL comments of Quest/Offering/Release types, not just ones belonging to this codex.
+- **Status:** ✅ FIXED — Now finds Quest/Offering/Release IDs first, then deletes only comments with matching targetId.
 
 ### BUG-011: Frontend Upload Saves Blob URLs Instead of Persistent URLs
 - **File:** `client/src/pages/ProfilePage.tsx`, `client/src/pages/CodexHomePage.tsx`
@@ -103,6 +103,8 @@
 |----------|-------|-------|----------|
 | Critical | 4 | 4 | 0 |
 | High | 2 | 2 | 0 |
-| Medium | 2 | 0 | 2 |
-| Low | 3 | 1 | 2 |
-| **Total** | **11** | **7** | **4** |
+| Medium | 2 | 2 | 0 |
+| Low | 3 | 3 | 0 |
+| **Total** | **11** | **11** | **0** |
+
+**All bugs resolved.**

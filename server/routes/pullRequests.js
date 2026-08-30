@@ -21,12 +21,13 @@ import User from '../models/User.js'
 import PullRequest from '../models/PullRequest.js'
 import Repository from '../models/Repository.js'
 import Issue from '../models/Issue.js'
-import { protect } from '../middleware/auth.js'
+import { protect, optionalAuth } from '../middleware/auth.js'
+import { canViewCodex } from '../utils/permissions.js'
 
 const router = express.Router()
 
 // GET /api/pulls/:owner/:name - List PRs
-router.get('/:owner/:name', async (req, res) => {
+router.get('/:owner/:name', optionalAuth, async (req, res) => {
   try {
     const { state = 'all', sort = 'created', direction = 'desc' } = req.query
 
@@ -35,6 +36,10 @@ router.get('/:owner/:name', async (req, res) => {
 
     const repo = await Repository.findOne({ owner: owner._id, name: req.params.name })
     if (!repo) return res.status(404).json({ error: 'Repository not found' })
+
+    if (!(await canViewCodex(req.user, repo))) {
+      return res.status(404).json({ error: 'Repository not found' })
+    }
 
     const query = { repository: repo._id }
     if (state !== 'all') query.state = state
@@ -59,13 +64,17 @@ router.get('/:owner/:name', async (req, res) => {
 })
 
 // GET /api/pulls/:owner/:name/:number - Get single PR
-router.get('/:owner/:name/:number', async (req, res) => {
+router.get('/:owner/:name/:number', optionalAuth, async (req, res) => {
   try {
     const owner = await User.findOne({ username: req.params.owner })
     if (!owner) return res.status(404).json({ error: 'User not found' })
 
     const repo = await Repository.findOne({ owner: owner._id, name: req.params.name })
     if (!repo) return res.status(404).json({ error: 'Repository not found' })
+
+    if (!(await canViewCodex(req.user, repo))) {
+      return res.status(404).json({ error: 'Repository not found' })
+    }
 
     const pull = await PullRequest.findOne({ repository: repo._id, number: req.params.number })
       .populate('author', 'username displayName avatarUrl badgeColor')

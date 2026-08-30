@@ -98,13 +98,6 @@ class ApiClient {
     return this.request<{ user: any }>('/auth/me')
   }
 
-  async updateProfile(data: Record<string, any>) {
-    return this.request<{ user: any }>('/auth/profile', {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    })
-  }
-
   async updatePassword(currentPassword: string, newPassword: string) {
     return this.request<{ message: string }>('/auth/password', {
       method: 'PUT',

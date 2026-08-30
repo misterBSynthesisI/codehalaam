@@ -292,13 +292,17 @@ router.post('/:owner/:name/fork', protect, async (req, res) => {
 })
 
 // GET /api/repos/:owner/:name/commits - Get commit history
-router.get('/:owner/:name/commits', async (req, res) => {
+router.get('/:owner/:name/commits', optionalAuth, async (req, res) => {
   try {
     const owner = await User.findOne({ username: req.params.owner })
     if (!owner) return res.status(404).json({ error: 'User not found' })
 
     const repo = await Repository.findOne({ owner: owner._id, name: req.params.name })
     if (!repo) return res.status(404).json({ error: 'Repository not found' })
+
+    if (!(await canViewCodex(req.user, repo))) {
+      return res.status(404).json({ error: 'Repository not found' })
+    }
 
     const commits = await Commit.find({ repository: repo._id })
       .sort({ createdAt: -1 })

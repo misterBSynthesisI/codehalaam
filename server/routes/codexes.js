@@ -341,16 +341,30 @@ router.delete('/:owner/:name', protect, async (req, res) => {
       return res.status(403).json({ error: 'Only the owner or site admin can delete this codex' })
     }
 
-    // Delete related data
+    // Delete related data — find IDs first to avoid wiping ALL comments of those types
+    const [questIds, offeringIds, releaseIds] = await Promise.all([
+      Quest.find({ codex: repo._id }).distinct('_id'),
+      Offering.find({ codex: repo._id }).distinct('_id'),
+      Release.find({ codex: repo._id }).distinct('_id'),
+    ])
     await Promise.all([
       Quest.deleteMany({ codex: repo._id }),
       Offering.deleteMany({ codex: repo._id }),
       Path.deleteMany({ codex: repo._id }),
-      Comment.deleteMany({ targetType: { $in: ['Quest', 'Offering', 'Release'] } }),
       Release.deleteMany({ codex: repo._id }),
       Collaborator.deleteMany({ codex: repo._id }),
       Invitation.deleteMany({ codex: repo._id }),
     ])
+    // Delete only comments belonging to THIS codex's quests, offerings, and releases
+    if (questIds.length || offeringIds.length || releaseIds.length) {
+      await Comment.deleteMany({
+        $or: [
+          { targetType: 'Quest', targetId: { $in: questIds } },
+          { targetType: 'Offering', targetId: { $in: offeringIds } },
+          { targetType: 'Release', targetId: { $in: releaseIds } },
+        ],
+      })
+    }
     await repo.deleteOne()
 
     res.json({ message: 'Codex deleted' })
