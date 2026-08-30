@@ -134,7 +134,7 @@ export function ProfilePage() {
             )}
 
             {activeTab === 'repositories' && (
-              <div className="Box">
+              <div className="Box" data-testid="repo-list">
                 {repos.map(repo => (
                   <div key={repo._id} className="Box-row">
                     <Link to={`/${profile.username}/${repo.name}`} className="text-sm font-semibold no-underline hover:underline" style={{ color: 'var(--color-accent-fg)' }}>{repo.name}</Link>
@@ -146,7 +146,7 @@ export function ProfilePage() {
             )}
 
             {activeTab === 'achievements' && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4" data-testid="achievement-list">
                 {(profile.achievements || []).map((a: any) => (
                   <div key={a.id} className="Box p-4 flex flex-col items-center gap-2 text-center">
                     <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl" style={{ backgroundColor: 'var(--color-canvas-subtle)', border: '1px solid var(--color-border-default)' }}>

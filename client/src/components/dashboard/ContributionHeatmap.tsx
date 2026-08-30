@@ -56,7 +56,7 @@ export function ContributionHeatmap({ contributions, totalContributions }: Contr
   ]
 
   return (
-    <div className="p-4">
+    <div className="p-4" data-testid="contribution-heatmap">
       <div className="flex items-center justify-between mb-2">
         <h3 className="text-sm font-semibold" style={{ color: 'var(--color-fg-default)' }}>
           {total.toLocaleString()} contributions in the last year

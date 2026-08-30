@@ -60,6 +60,7 @@ export function DashboardPage() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Find a repository…"
                   className="form-control pl-9"
+                  data-testid="repo-search"
                 />
               </div>
               <Link to="/new" className="btn btn-primary no-underline">
@@ -70,7 +71,7 @@ export function DashboardPage() {
             {loading ? (
               <div className="Box"><div className="Box-body text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>Loading repositories...</div></div>
             ) : (
-              <div className="Box">
+              <div className="Box" data-testid="repo-list">
                 {filteredRepos.map((repo, i) => (
                   <motion.div key={repo._id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', bounce: 0, duration: 0.3, delay: i * 0.03 }}>
                     <Link to={`/${user?.username}/${repo.name}`} className="Box-row flex items-start justify-between gap-4 no-underline" style={{ textDecoration: 'none' }}>
