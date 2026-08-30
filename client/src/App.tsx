@@ -21,6 +21,7 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { XPProvider } from '@/components/gamification/XPToast'
 import { Navbar } from '@/components/layout/Navbar'
+import { CommandPalette } from '@/components/command/CommandPalette'
 import { LandingPage } from '@/pages/LandingPage'
 import { AuthPage } from '@/pages/AuthPage'
 import { DashboardPage } from '@/pages/DashboardPage'
@@ -95,6 +96,7 @@ function App() {
         <ThemeProvider>
         <XPProvider>
           <div className="min-h-screen" style={{backgroundColor: 'var(--color-canvas-default)', color: 'var(--color-fg-default)'}}>
+            <CommandPalette />
             <Navbar />
             <AppRoutes />
           </div>
