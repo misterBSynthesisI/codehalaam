@@ -45,7 +45,7 @@ const io = new Server(httpServer, {
   },
 })
 
-const PORT = process.env.PORT || 5000
+const PORT = parseInt(process.env.PORT, 10) || 5000
 
 // Middleware
 app.use(cors({
@@ -82,6 +82,25 @@ app.get('/api/health', (req, res) => {
     database: dbConnected ? 'connected' : 'disconnected',
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
+  })
+})
+
+// 404 catch-all — must come AFTER all route registrations, BEFORE error handler
+app.use((req, res) => {
+  res.status(404).json({
+    error: 'Route not found',
+    path: req.path,
+    method: req.method,
+  })
+})
+
+// Global error handler — last middleware, catches everything unhandled
+app.use((err, req, res, _next) => {
+  console.error('❌ Unhandled error:', err)
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal Server Error',
+    path: req.path,
+    method: req.method,
   })
 })
 

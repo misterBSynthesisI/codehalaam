@@ -268,6 +268,34 @@ PATCH  /api/collaborators/:owner/:name/:userId  - Update role
 DELETE /api/collaborators/:owner/:name/:userId  - Remove collaborator
 ```
 
+### Admin (requireAdmin middleware)
+```
+GET    /api/admin/stats              - Platform-wide stats
+GET    /api/admin/users              - List all users (paginated, searchable)
+GET    /api/admin/repos              - List all repos (paginated, searchable)
+GET    /api/admin/activity           - Recent activity feed
+PATCH  /api/admin/users/:userId      - Update user (level, xp, badge, class)
+DELETE /api/admin/users/:userId      - Delete user permanently
+```
+
+### Notifications
+```
+GET    /api/notifications            - List notifications for logged-in user
+PATCH  /api/notifications/read       - Mark all notifications as read
+```
+
+### Health Check
+```
+GET    /api/health                   - Server & database health status
+```
+
+## 🔐 Security
+
+- **RBAC**: Admin routes protected by `requireAdmin` middleware (backend) and `<AdminRoute>` guard (frontend)
+- **JWT Auth**: All protected routes require `Bearer` token in `Authorization` header
+- **Global Error Handler**: Every endpoint returns valid JSON, even on failure (no HTML error pages, no empty responses)
+- **404 Catch-all**: Unknown routes return `{ error: 'Route not found', path, method }`
+
 ## 🤝 Contributing
 
 We love contributions! Please read our [Contributing Guide](CONTRIBUTING.md) before submitting a PR.

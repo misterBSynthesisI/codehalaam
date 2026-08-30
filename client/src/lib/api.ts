@@ -45,15 +45,31 @@ class ApiClient {
       headers['Authorization'] = `Bearer ${this.token}`
     }
 
-    const res = await fetch(`${API_BASE}${path}`, {
-      ...options,
-      headers,
-    })
+    let res: Response
+    try {
+      res = await fetch(`${API_BASE}${path}`, {
+        ...options,
+        headers,
+      })
+    } catch (networkError: any) {
+      if (networkError.name === 'TypeError') {
+        throw new Error('Cannot reach server. Is the backend running?')
+      }
+      throw networkError
+    }
 
-    const data = await res.json()
+    // Safely parse response — handle non-JSON, empty, and HTML error pages
+    const text = await res.text()
+    let data: any
+    try {
+      data = text ? JSON.parse(text) : {}
+    } catch (_parseError) {
+      console.error(`Non-JSON response from ${path}:`, text.substring(0, 200))
+      throw new Error(`Server returned invalid response for ${path}`)
+    }
 
     if (!res.ok) {
-      throw new Error(data.error || 'Request failed')
+      throw new Error(data.error || data.message || `Request failed: ${res.status}`)
     }
 
     return data
