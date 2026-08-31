@@ -65,9 +65,8 @@ invitationSchema.pre('save', function (next) {
   next()
 })
 
-// Indexes
+// Indexes (token already indexed via unique: true on field)
 invitationSchema.index({ codex: 1, email: 1 })
-invitationSchema.index({ token: 1 }, { unique: true })
 invitationSchema.index({ codex: 1, status: 1 })
 
 const Invitation = mongoose.model('Invitation', invitationSchema)

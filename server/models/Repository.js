@@ -131,7 +131,7 @@ const repositorySchema = new mongoose.Schema({
 
 // Indexes
 repositorySchema.index({ owner: 1, name: 1 }, { unique: true })
-repositorySchema.index({ slug: 1 })
+// slug index already created by unique: true on field definition
 repositorySchema.index({ visibility: 1, starsCount: -1 })
 repositorySchema.index({ owner: 1, updatedAt: -1 })
 

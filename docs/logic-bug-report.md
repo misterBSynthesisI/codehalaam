@@ -95,16 +95,22 @@
 - **Description:** After uploading an image, `handleSave` passed `avatarPreview`/`coverPreview` state variables to `onSave`. These held blob URLs from `URL.createObjectURL()`. React state updates are async — by the time `onSave` ran, the state still held the old blob URL, not the server-returned persistent URL. Images appeared to work on upload but would break on refresh.
 - **Status:** ✅ FIXED — Captured server-returned URLs into local variables and passed those to `onSave` instead of reading stale state.
 
+### BUG-012: Dashboard Fetches Wrong Data Model (Issues/PullRequests vs Quests/Offerings)
+- **File:** `client/src/pages/DashboardPage.tsx`
+- **Severity:** CRITICAL
+- **Description:** The dashboard fetched from `api.getIssues()` and `api.getPulls()` (the legacy Issue/PullRequest models with numbers like 42, 40, 39) but linked items to `/codex/:owner/:name/quests/:number` and `/codex/:owner/:name/offerings/:number` (which use the Quest/Offering models with numbers 1, 2, 3). Clicking any dashboard quest/offering returned "Quest not found" because the numbers didn't match.
+- **Status:** ✅ FIXED — Changed to use `api.getQuests()` and `api.getOfferings()`. Dashboard now shows real quest/offering data with status badges and correct click-through links.
+
 ---
 
 ## Summary
 
 | Category | Count | Fixed | Deferred |
 |----------|-------|-------|----------|
-| Critical | 4 | 4 | 0 |
+| Critical | 5 | 5 | 0 |
 | High | 2 | 2 | 0 |
 | Medium | 2 | 2 | 0 |
 | Low | 3 | 3 | 0 |
-| **Total** | **11** | **11** | **0** |
+| **Total** | **12** | **12** | **0** |
 
 **All bugs resolved.**

@@ -267,6 +267,29 @@ agents:
 
 ---
 
+## Data Model Rules (CRITICAL)
+
+> **CODEHALAAM has TWO separate numbering systems. Never mix them.**
+
+### The Two Models
+
+| Model | Purpose | Numbers | API Endpoint | Frontend Route |
+|-------|---------|---------|-------------|----------------|
+| **Issue** (legacy) | Traditional GitHub-style issues | 38, 39, 40, 41, 42... | `GET /api/issues/:owner/:name` | No dedicated detail page |
+| **Quest** (Barry) | Gamified tasks with XP bounties | 1, 2, 3... | `GET /api/codexes/:owner/:name/quests` | `/codex/:owner/:name/quests/:number` |
+| **PullRequest** (legacy) | Traditional PRs | 15, 21, 22, 34, 35... | `GET /api/pulls/:owner/:name` | No dedicated detail page |
+| **Offering** (Barry) | Gamified code contributions (bound = merged) | 1, 2, 3... | `GET /api/codexes/:owner/:name/offerings` | `/codex/:owner/:name/offerings/:number` |
+
+### Rules
+
+1. **Dashboard must use Quests/Offerings**, not Issues/PullRequests. The dashboard links to detail pages that only exist for Quests and Offerings.
+2. **Codex Home must use Quests/Offerings.** Same reason.
+3. **Issues/PullRequests are only used by legacy RepoPage** (which is not currently routed — it's a dead file).
+4. **Never link from one model's numbers to another's routes.** Quest #2 ≠ Issue #2.
+5. **When in doubt**, use the `/api/codexes/` endpoints (Quests, Offerings, Paths, Releases) — these are the Barry-era models.
+
+---
+
 ## Upload Persistence (MANDATORY)
 
 > **All uploaded images must survive page refresh AND server restart.**

@@ -28,41 +28,30 @@
 ### TASK A1: Dashboard Data Flow Trace
 
 **Endpoint called:** `GET /api/repos` (requires auth)
-**Evidence (actual API response):**
+**Sub-endpoints called per repo:** Was `api.getIssues()` + `api.getPulls()` — WRONG.
+
+**BUG-012 FOUND:** The dashboard fetched from the legacy Issue/PullRequest models (numbers 42, 40, 39...) but linked to the Quest/Offering detail routes (numbers 1, 2, 3...). Clicking any item returned "Quest not found".
+
+**After fix:** Now fetches from `api.getQuests()` + `api.getOfferings()` — the correct models.
+**Evidence (fixed dashboard):**
 ```json
 {
-  "repoCount": 5,
-  "repos": [
-    {"name": "aurora-ui", "owner": "kai-nakamura", "visibility": "private"},
-    {"name": "api-forge", "owner": "kai-nakamura", "visibility": "public"},
-    {"name": "pixel-dungeon", "owner": "kai-nakamura", "visibility": "public"},
-    {"name": "neuro-search", "owner": "kai-nakamura", "visibility": "public"},
-    {"name": "dotfiles", "owner": "kai-nakamura", "visibility": "public"}
+  "activeQuests": [
+    {"number": 2, "title": "Fix tooltip positioning on edge of screen", "status": "In Progress", "bountyXp": 20},
+    {"number": 1, "title": "Add dark mode toggle to navbar", "status": "Open", "bountyXp": 30}
+  ],
+  "pendingOfferings": [
+    {"number": 2, "title": "Add DropdownMenu with keyboard navigation", "status": "Open"},
+    {"number": 1, "title": "Implement Toast notification component", "status": "Bound"}
   ]
 }
 ```
-
-**Sub-endpoints called per repo:** `GET /api/issues/:owner/:name` and `GET /api/pulls/:owner/:name`
-**Evidence (issues for aurora-ui):**
-```json
-{
-  "issueCount": 5,
-  "openCount": 4,
-  "issues": [
-    {"number": 38, "state": "closed", "title": "Document polymorphic 'as' prop pattern"},
-    {"number": 39, "state": "open", "title": "Add Calendar / DatePicker component"},
-    {"number": 40, "state": "open", "title": "DropdownMenu keyboard navigation broken on Firefox"}
-  ]
-}
-```
-
-**ANSWER:** Data is **REAL** (from DB). No mock/hard-coded data. Response shape matches component expectations.
 
 ### TASK A2: Dashboard Fix
-No fix needed — dashboard already shows real DB data.
+✅ FIXED — Changed from Issues/PullRequests to Quests/Offerings endpoints.
 
 ### TASK A3: Click-through Verification
-Dashboard items link to `/codex/:owner/:name/quests/:number` and `/codex/:owner/:name/offerings/:number`. These are real, working detail routes backed by the QuestDetailPage and OfferingDetailPage components.
+✅ VERIFIED — Both quest and offering detail pages load correctly from dashboard links.
 
 ---
 
@@ -119,16 +108,21 @@ Dashboard items link to `/codex/:owner/:name/quests/:number` and `/codex/:owner/
 - **Description:** `handleSave` passed blob URLs to `onSave` instead of server-returned persistent URLs
 - **Status:** ✅ FIXED (in previous session) — Captures server URLs directly
 
+#### HUNT-006: Dashboard Quest Click-Through Returns "Quest Not Found" (CRITICAL)
+- **File:** `client/src/pages/DashboardPage.tsx`
+- **Description:** Dashboard fetched Issues/PullRequests (numbers 42, 40, 39) but linked to Quest/Offering detail routes (numbers 1, 2, 3). Every click on a dashboard quest/offering returned 404.
+- **Status:** ✅ FIXED — Changed to fetch from `api.getQuests()` and `api.getOfferings()`.
+
 ---
 
 ## Summary
 
 | Category | Found | Fixed | Deferred |
 |----------|-------|-------|----------|
-| Critical | 0 | 0 | 0 |
+| Critical | 1 | 1 | 0 |
 | High | 2 | 2 | 0 |
 | Medium | 3 | 3 | 0 |
 | Low | 2 | 2 | 0 |
-| **Total** | **7** | **7** | **0** |
+| **Total** | **8** | **8** | **0** |
 
 **All findings resolved. Zero deferred items.**
