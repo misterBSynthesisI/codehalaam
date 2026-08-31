@@ -20,15 +20,15 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  GitPullRequest, AlertCircle, Check, Clock, ArrowUpRight, Plus, Zap, Lock
+  GitPullRequest, AlertCircle, Check, Clock, ArrowUpRight, Plus, Zap, Lock, Swords, Gift
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 
 export function DashboardPage() {
   const { user } = useAuth()
-  const [myIssues, setMyIssues] = useState<any[]>([])
-  const [myPRs, setMyPRs] = useState<any[]>([])
+  const [myQuests, setMyQuests] = useState<any[]>([])
+  const [myOfferings, setMyOfferings] = useState<any[]>([])
   const [repos, setRepos] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -37,25 +37,24 @@ export function DashboardPage() {
     Promise.all([
       api.getRepos().then(d => {
         setRepos(d.repos || [])
-        // Fetch issues and PRs for user's repos
-        const allIssues: any[] = []
-        const allPRs: any[] = []
+        // Fetch quests and offerings for user's repos
+        const allQuests: any[] = []
+        const allOfferings: any[] = []
         return Promise.all(
           (d.repos || []).map(async (r: any) => {
             try {
               const ownerName = r.owner?.username || user.username
-              const [issueData, prData] = await Promise.all([
-                api.getIssues(ownerName, r.name),
-                api.getPulls(ownerName, r.name),
+              const [questData, offeringData] = await Promise.all([
+                api.getQuests(ownerName, r.name),
+                api.getOfferings(ownerName, r.name),
               ])
-              allIssues.push(...(issueData.issues || []).map((i: any) => ({ ...i, _repoName: r.name, _repoOwner: ownerName })))
-              allPRs.push(...(prData.pulls || []).map((p: any) => ({ ...p, _repoName: r.name, _repoOwner: ownerName })))
+              allQuests.push(...(questData.quests || []).map((q: any) => ({ ...q, _repoName: r.name, _repoOwner: ownerName })))
+              allOfferings.push(...(offeringData.offerings || []).map((o: any) => ({ ...o, _repoName: r.name, _repoOwner: ownerName })))
             } catch { /* skip */ }
           })
         ).then(() => {
-          // Filter to relevant items
-          setMyIssues(allIssues.filter(i => i.state === 'open').slice(0, 8))
-          setMyPRs(allPRs.slice(0, 8))
+          setMyQuests(allQuests.filter(q => q.status !== 'Closed').slice(0, 8))
+          setMyOfferings(allOfferings.slice(0, 8))
         })
       }),
     ]).finally(() => setLoading(false))
@@ -93,42 +92,40 @@ export function DashboardPage() {
             <section>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-semibold flex items-center gap-2" style={{ color: 'var(--color-fg-default)' }}>
-                  <AlertCircle className="w-4 h-4" style={{ color: 'var(--color-success-fg)' }} />
+                  <Swords className="w-4 h-4" style={{ color: 'var(--color-success-fg)' }} />
                   Active Quests
-                  {myIssues.length > 0 && <span className="text-xs font-normal" style={{ color: 'var(--color-fg-muted)' }}>({myIssues.length})</span>}
+                  {myQuests.length > 0 && <span className="text-xs font-normal" style={{ color: 'var(--color-fg-muted)' }}>({myQuests.length})</span>}
                 </h2>
               </div>
               <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--color-border-default)' }}>
                 {loading ? (
                   <div className="px-4 py-8 text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>Loading...</div>
-                ) : myIssues.length === 0 ? (
+                ) : myQuests.length === 0 ? (
                   <div className="px-4 py-8 text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>
                     No active quests. You're all caught up.
                   </div>
                 ) : (
-                  myIssues.map((issue, i) => (
-                    <motion.div key={issue._id}
+                  myQuests.map((quest, i) => (
+                    <motion.div key={quest._id}
                       initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                       transition={{ delay: i * 0.03, duration: 0.2 }}
                     >
                       <Link
-                        to={`/codex/${issue._repoOwner}/${issue._repoName}/quests/${issue.number}`}
+                        to={`/codex/${quest._repoOwner}/${quest._repoName}/quests/${quest.number}`}
                         className="hover-row flex items-center gap-3 px-4 py-3 no-underline"
-                        style={{ borderBottom: i < myIssues.length - 1 ? '1px solid var(--color-border-default)' : undefined, color: 'var(--color-fg-default)' }}
+                        style={{ borderBottom: i < myQuests.length - 1 ? '1px solid var(--color-border-default)' : undefined, color: 'var(--color-fg-default)' }}
                       >
-                        <AlertCircle className="w-4 h-4 shrink-0" style={{ color: 'var(--color-success-fg)' }} />
+                        <AlertCircle className="w-4 h-4 shrink-0" style={{ color: quest.status === 'In Progress' ? 'var(--color-attention-fg)' : 'var(--color-success-fg)' }} />
                         <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium truncate">{issue.title}</div>
+                          <div className="text-sm font-medium truncate">{quest.title}</div>
                           <div className="text-xs mt-0.5 flex items-center gap-2" style={{ color: 'var(--color-fg-muted)' }}>
-                            <span>#{issue.number}</span>
+                            <span>#{quest.number}</span>
                             <span>·</span>
-                            <span>{issue._repoOwner}/{issue._repoName}</span>
-                            {issue.bountyXp > 0 && <><span>·</span><span style={{ color: 'var(--color-attention-fg)' }}>⚡{issue.bountyXp}</span></>}
+                            <span>{quest._repoOwner}/{quest._repoName}</span>
+                            {quest.bountyXp > 0 && <><span>·</span><span style={{ color: 'var(--color-attention-fg)' }}>⚡{quest.bountyXp}</span></>}
                           </div>
                         </div>
-                        {(issue.labels || []).slice(0, 2).map((l: any) => (
-                          <span key={l.name} className="text-[11px] px-1.5 py-0.5 rounded shrink-0" style={{ backgroundColor: 'var(--color-canvas-subtle)', color: 'var(--color-fg-muted)', border: '1px solid var(--color-border-default)' }}>{l.name}</span>
-                        ))}
+                        <span className="text-[11px] px-1.5 py-0.5 rounded shrink-0" style={{ backgroundColor: quest.status === 'In Progress' ? 'rgba(210, 153, 34, 0.15)' : 'rgba(63, 185, 80, 0.15)', color: quest.status === 'In Progress' ? 'var(--color-attention-fg)' : 'var(--color-success-fg)' }}>{quest.status}</span>
                         <ArrowUpRight className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--color-fg-subtle)' }} />
                       </Link>
                     </motion.div>
@@ -141,46 +138,41 @@ export function DashboardPage() {
             <section>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-semibold flex items-center gap-2" style={{ color: 'var(--color-fg-default)' }}>
-                  <GitPullRequest className="w-4 h-4" style={{ color: 'var(--color-done-fg)' }} />
+                  <Gift className="w-4 h-4" style={{ color: 'var(--color-done-fg)' }} />
                   Pending Offerings
-                  {myPRs.length > 0 && <span className="text-xs font-normal" style={{ color: 'var(--color-fg-muted)' }}>({myPRs.length})</span>}
+                  {myOfferings.length > 0 && <span className="text-xs font-normal" style={{ color: 'var(--color-fg-muted)' }}>({myOfferings.length})</span>}
                 </h2>
               </div>
               <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--color-border-default)' }}>
                 {loading ? (
                   <div className="px-4 py-8 text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>Loading...</div>
-                ) : myPRs.length === 0 ? (
+                ) : myOfferings.length === 0 ? (
                   <div className="px-4 py-8 text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>
                     No pending offerings.
                   </div>
                 ) : (
-                  myPRs.map((pr, i) => (
-                    <motion.div key={pr._id}
+                  myOfferings.map((offering, i) => (
+                    <motion.div key={offering._id}
                       initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                       transition={{ delay: i * 0.03, duration: 0.2 }}
                     >
                       <Link
-                        to={`/codex/${pr._repoOwner}/${pr._repoName}/offerings/${pr.number}`}
+                        to={`/codex/${offering._repoOwner}/${offering._repoName}/offerings/${offering.number}`}
                         className="hover-row flex items-center gap-3 px-4 py-3 no-underline"
-                        style={{ borderBottom: i < myPRs.length - 1 ? '1px solid var(--color-border-default)' : undefined, color: 'var(--color-fg-default)' }}
+                        style={{ borderBottom: i < myOfferings.length - 1 ? '1px solid var(--color-border-default)' : undefined, color: 'var(--color-fg-default)' }}
                       >
                         <GitPullRequest className="w-4 h-4 shrink-0" style={{
-                          color: pr.state === 'merged' ? 'var(--color-done-fg)' : pr.state === 'open' ? 'var(--color-success-fg)' : 'var(--color-fg-muted)'
+                          color: offering.status === 'Bound' ? 'var(--color-done-fg)' : 'var(--color-success-fg)'
                         }} />
                         <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium truncate">{pr.title}</div>
+                          <div className="text-sm font-medium truncate">{offering.title}</div>
                           <div className="text-xs mt-0.5 flex items-center gap-2" style={{ color: 'var(--color-fg-muted)' }}>
-                            <span>#{pr.number}</span>
+                            <span>#{offering.number}</span>
                             <span>·</span>
-                            <span>{pr._repoOwner}/{pr._repoName}</span>
-                            <span>·</span>
-                            <span style={{ color: 'var(--color-success-fg)' }}>+{pr.additions}</span>
-                            <span style={{ color: 'var(--color-danger-fg)' }}>-{pr.deletions}</span>
+                            <span>{offering._repoOwner}/{offering._repoName}</span>
                           </div>
                         </div>
-                        {pr.state === 'merged' && (
-                          <span className="text-[11px] px-1.5 py-0.5 rounded shrink-0" style={{ backgroundColor: 'var(--color-done-subtle)', color: 'var(--color-done-fg)' }}>Bound</span>
-                        )}
+                        <span className="text-[11px] px-1.5 py-0.5 rounded shrink-0" style={{ backgroundColor: offering.status === 'Bound' ? 'var(--color-done-subtle)' : 'rgba(63, 185, 80, 0.15)', color: offering.status === 'Bound' ? 'var(--color-done-fg)' : 'var(--color-success-fg)' }}>{offering.status}</span>
                         <ArrowUpRight className="w-3.5 h-3.5 shrink-0" style={{ color: 'var(--color-fg-subtle)' }} />
                       </Link>
                     </motion.div>
