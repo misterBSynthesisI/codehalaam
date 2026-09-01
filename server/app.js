@@ -109,11 +109,13 @@ app.all(/^\/([^/]+)\/([^/]+)\.git\/(.*)$/, gitRoutes)
 // Health check
 app.get('/api/health', (req, res) => {
   const dbConnected = mongoose.connection.readyState === 1
+  const hasUri = !!process.env.MONGODB_URI
   const status = dbConnected ? 'ok' : 'degraded'
   const httpStatus = dbConnected ? 200 : 503
   res.status(httpStatus).json({
     status,
     database: dbConnected ? 'connected' : 'disconnected',
+    databaseConfigured: hasUri, // false = MONGODB_URI env var not set at all
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
   })

@@ -34,12 +34,13 @@ function CodeLogo() {
 interface SetupChecks {
   needsSetup: boolean | null
   dbReachable: boolean | null
+  dbConfigured: boolean | null
 }
 
 export function SetupPage() {
   const navigate = useNavigate()
   const { login } = useAuth()
-  const [checks, setChecks] = useState<SetupChecks>({ needsSetup: null, dbReachable: null })
+  const [checks, setChecks] = useState<SetupChecks>({ needsSetup: null, dbReachable: null, dbConfigured: null })
   const [checking, setChecking] = useState(true)
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
@@ -59,16 +60,20 @@ export function SetupPage() {
       try {
         const healthRes = await fetch('/api/health')
         const health = await healthRes.json()
-        setChecks(prev => ({ ...prev, dbReachable: health.database === 'connected' }))
+        setChecks(prev => ({
+          ...prev,
+          dbReachable: health.database === 'connected',
+          dbConfigured: health.databaseConfigured !== false,
+        }))
       } catch {
-        setChecks(prev => ({ ...prev, dbReachable: false }))
+        setChecks(prev => ({ ...prev, dbReachable: false, dbConfigured: false }))
       }
 
       // Setup status
       const { needsSetup } = await api.getSetupStatus()
       setChecks(prev => ({ ...prev, needsSetup }))
     } catch {
-      setChecks({ needsSetup: null, dbReachable: false })
+      setChecks({ needsSetup: null, dbReachable: false, dbConfigured: false })
     } finally {
       setChecking(false)
     }

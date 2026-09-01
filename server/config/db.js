@@ -73,7 +73,7 @@ export const ensureConnected = async () => {
 
   connecting = mongoose
     .connect(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 8000,
+      serverSelectionTimeoutMS: 10000,
       bufferCommands: true,
     })
     .then((conn) => {
@@ -83,7 +83,18 @@ export const ensureConnected = async () => {
     })
     .catch((err) => {
       connecting = null
-      throw err
+      // Provide a clear, actionable error so the Vercel logs tell you
+      // exactly what to fix.
+      let hint = ''
+      if (err.name === 'MongoServerSelectionError') {
+        hint = ' — Cannot reach MongoDB. Check: (1) MONGODB_URI is set in Vercel env vars, (2) your Atlas IP allowlist includes 0.0.0.0/0, (3) the password in the URI is correct.'
+      } else if (err.name === 'MongoServerError' && err.code === 18) {
+        hint = ' — Authentication failed. Check the username and password in your MONGODB_URI.'
+      } else if (err.message?.includes('Invalid schema')) {
+        hint = ' — The MONGODB_URI format is wrong. It should start with mongodb:// or mongodb+srv://'
+      }
+      console.error(`❌ MongoDB connection failed: ${err.message}${hint}`)
+      throw new Error(`Database connection failed: ${err.message}${hint}`)
     })
 
   return connecting
