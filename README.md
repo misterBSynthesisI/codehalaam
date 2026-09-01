@@ -81,7 +81,51 @@ CODEHALAAM is a gamified code hosting platform that combines the best of GitHub 
 - **Optional Auth** — public routes recognize logged-in users without requiring tokens
 - **Viewer-Aware Profiles** — profile pages show private codexes only to owners and collaborators
 
-## 🚀 Quick Start
+## 🚀 One-Tap Deploy to Vercel (Free Tier)
+
+CODEHALAAM deploys as a **single Vercel app** — no need to run a separate database server or host the API elsewhere.
+
+### 1. Create a free MongoDB Atlas cluster
+
+Go to [MongoDB Atlas](https://www.mongodb.com/atlas), create a free **M0** cluster, and copy the connection string. It looks like:
+
+```
+mongodb+srv://<username>:<password>@cluster0.mongodb.net/codehalaam
+```
+
+### 2. Deploy with one click
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
+
+Import the GitHub repo. Vercel auto-detects the build via `vercel.json`:
+
+- **Install:** installs root + client + server deps
+- **Build:** builds the React client (`client/dist`)
+- **API:** all `/api/*` requests run as a single serverless function (`api/index.js`)
+- **Static:** everything else is served as the SPA from the CDN
+
+### 3. Set environment variables
+
+In the Vercel project **Settings → Environment Variables**, add:
+
+| Variable | Value |
+|----------|-------|
+| `MONGODB_URI` | your Atlas connection string |
+| `JWT_SECRET` | a long random string (e.g. `openssl rand -hex 32`) |
+| `CLIENT_URL` | your Vercel URL, e.g. `https://your-app.vercel.app` |
+| `NODE_ENV` | `production` |
+
+### 4. Deploy
+
+Click **Deploy**. That's it — one server, one database, free tier.
+
+> **Realtime:** Socket.io WebSocket support is disabled on Vercel serverless (functions can't hold open connections). Local development keeps full realtime support via `npm run dev`. The REST API and all features work identically on Vercel.
+>
+> **File uploads:** Disk-based uploads are ephemeral on Vercel. For persistent avatar/codex media, swap `multer.diskStorage` for a blob store (S3 / Vercel Blob) in `server/services/uploadService.js`.
+
+---
+
+## 🛠 Local Quick Start
 
 ### Prerequisites
 - Node.js 18+
