@@ -21,6 +21,7 @@ import User from '../models/User.js'
 import Repository from '../models/Repository.js'
 import Issue from '../models/Issue.js'
 import PullRequest from '../models/PullRequest.js'
+import ForumPost from '../models/ForumPost.js'
 import { protect, requireAdmin } from '../middleware/auth.js'
 
 const router = express.Router()
@@ -256,6 +257,79 @@ router.delete('/users/:userId', async (req, res) => {
   } catch (err) {
     console.error('User delete error:', err)
     res.status(500).json({ error: 'Failed to delete user' })
+  }
+})
+
+// ============================================================
+//  FORUM MANAGEMENT
+// ============================================================
+
+// GET /api/admin/forum — list all forum posts with pagination
+router.get('/forum', async (req, res) => {
+  try {
+    const { page = 1, limit = 20, sort = '-createdAt', search = '' } = req.query
+    const query = {}
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { body: { $regex: search, $options: 'i' } },
+      ]
+    }
+
+    const posts = await ForumPost.find(query)
+      .sort(sort)
+      .skip((page - 1) * limit)
+      .limit(parseInt(limit))
+      .populate('author', 'username displayName avatarUrl badgeColor')
+
+    const total = await ForumPost.countDocuments(query)
+
+    res.json({ posts, total, page: parseInt(page), pages: Math.ceil(total / limit) })
+  } catch (err) {
+    console.error('Admin forum list error:', err)
+    res.status(500).json({ error: 'Failed to fetch forum posts' })
+  }
+})
+
+// DELETE /api/admin/forum/:postId — delete any forum post
+router.delete('/forum/:postId', async (req, res) => {
+  try {
+    const post = await ForumPost.findByIdAndDelete(req.params.postId)
+    if (!post) return res.status(404).json({ error: 'Post not found' })
+    res.json({ message: 'Post deleted' })
+  } catch (err) {
+    console.error('Admin forum delete error:', err)
+    res.status(500).json({ error: 'Failed to delete post' })
+  }
+})
+
+// PATCH /api/admin/forum/:postId/pin — toggle pin on a forum post
+router.patch('/forum/:postId/pin', async (req, res) => {
+  try {
+    const post = await ForumPost.findById(req.params.postId)
+    if (!post) return res.status(404).json({ error: 'Post not found' })
+    post.isPinned = !post.isPinned
+    await post.save()
+    const populated = await post.populate('author', 'username displayName avatarUrl badgeColor')
+    res.json({ post: populated })
+  } catch (err) {
+    console.error('Admin forum pin error:', err)
+    res.status(500).json({ error: 'Failed to toggle pin' })
+  }
+})
+
+// PATCH /api/admin/forum/:postId/close — toggle close on a forum post
+router.patch('/forum/:postId/close', async (req, res) => {
+  try {
+    const post = await ForumPost.findById(req.params.postId)
+    if (!post) return res.status(404).json({ error: 'Post not found' })
+    post.isClosed = !post.isClosed
+    await post.save()
+    const populated = await post.populate('author', 'username displayName avatarUrl badgeColor')
+    res.json({ post: populated })
+  } catch (err) {
+    console.error('Admin forum close error:', err)
+    res.status(500).json({ error: 'Failed to toggle close' })
   }
 })
 

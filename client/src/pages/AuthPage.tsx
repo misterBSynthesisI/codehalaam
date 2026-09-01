@@ -109,7 +109,7 @@ export function AuthPage() {
                 data-testid="quick-login"
               >
                 <Zap className="w-4 h-4" />
-                {loading ? 'Logging in...' : 'Try Demo Account'}
+                {loading ? 'Loading...' : 'Browse as Demo (read-only)'}
               </motion.button>
 
               <div className="relative my-4">

@@ -19,7 +19,7 @@
 import express from 'express'
 import mongoose from 'mongoose'
 import User from '../models/User.js'
-import { generateToken, protect } from '../middleware/auth.js'
+import { generateToken, protect, requireDemoFree } from '../middleware/auth.js'
 import { uploadAvatar, resolveUploadUrl } from '../services/uploadService.js'
 
 const router = express.Router()
@@ -137,7 +137,7 @@ router.get('/me', protect, async (req, res) => {
 })
 
 // PUT /api/auth/profile
-router.put('/profile', protect, async (req, res) => {
+router.put('/profile', protect, requireDemoFree, async (req, res) => {
   try {
     const allowedUpdates = [
       'displayName', 'bio', 'company', 'location', 'website', 'twitter',
@@ -163,7 +163,7 @@ router.put('/profile', protect, async (req, res) => {
 })
 
 // PUT /api/auth/password
-router.put('/password', protect, async (req, res) => {
+router.put('/password', protect, requireDemoFree, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body
 
@@ -192,7 +192,7 @@ router.put('/password', protect, async (req, res) => {
 })
 
 // POST /api/auth/avatar — Upload user avatar
-router.post('/avatar', protect, uploadAvatar.single('avatar'), async (req, res) => {
+router.post('/avatar', protect, requireDemoFree, uploadAvatar.single('avatar'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' })
@@ -213,7 +213,7 @@ router.post('/avatar', protect, uploadAvatar.single('avatar'), async (req, res) 
 })
 
 // PATCH /api/auth/me — Update profile fields
-router.patch('/me', protect, async (req, res) => {
+router.patch('/me', protect, requireDemoFree, async (req, res) => {
   try {
     const { displayName, bio, location, websiteUrl, company, twitter } = req.body
     const updates = {}
@@ -238,7 +238,7 @@ router.patch('/me', protect, async (req, res) => {
 })
 
 // POST /api/auth/cover — Upload profile cover/banner
-router.post('/cover', protect, uploadAvatar.single('cover'), async (req, res) => {
+router.post('/cover', protect, requireDemoFree, uploadAvatar.single('cover'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' })
@@ -288,6 +288,7 @@ router.post('/demo', requireDB, async (req, res) => {
         badgeColor: 'blue',
         characterClass: 'Rogue',
         website: 'https://kai-nakamura.dev',
+        demoMode: true,
       })
 
       // Generate contribution heatmap

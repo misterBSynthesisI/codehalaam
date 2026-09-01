@@ -378,11 +378,11 @@ export function CodexHomePage() {
         {repo.coverUrl ? (
           <div className="absolute inset-0">
             <img src={repo.coverUrl} alt="" className="w-full h-full object-cover" />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 30%, var(--color-canvas-default) 100%)' }} />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.2) 40%, var(--color-canvas-default) 85%)' }} />
           </div>
         ) : (
           <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${accent}22 0%, ${accent}08 50%, transparent 100%)` }}>
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 50%, var(--color-canvas-default) 100%)' }} />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 30%, var(--color-canvas-default) 80%)' }} />
           </div>
         )}
 

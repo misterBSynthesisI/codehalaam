@@ -98,3 +98,14 @@ export const requireAdmin = (req, res, next) => {
 
   next()
 }
+
+/**
+ * requireDemoFree — blocks demo mode users from making any data changes.
+ * MUST run after protect.
+ */
+export const requireDemoFree = (req, res, next) => {
+  if (req.user?.demoMode) {
+    return res.status(403).json({ error: 'This action is not available in demo mode. Create a real account to get started.' })
+  }
+  next()
+}

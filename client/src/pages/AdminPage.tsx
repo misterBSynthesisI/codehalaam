@@ -20,9 +20,9 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Search, Pencil, Trash2, X, ShieldAlert, Users, ChevronLeft, ChevronRight,
+  Search,  Pencil, Trash2, X, ShieldAlert, Users, ChevronLeft, ChevronRight,
   AlertTriangle, CheckCircle2, BarChart3, GitBranch, Settings, Activity,
-  Eye, EyeOff, Star, GitFork, Lock, Globe, ExternalLink
+  Eye, EyeOff, Star, Flame, Radio, Lock, Globe, ExternalLink, MessageSquare, Pin
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { VerifiedBadge } from '@/components/ui/VerifiedBadge'
@@ -37,7 +37,7 @@ interface Toast {
 let toastId = 0
 
 /* ── Types ── */
-type TabId = 'overview' | 'users' | 'repos' | 'settings'
+type TabId = 'overview' | 'users' | 'repos' | 'forum' | 'settings'
 
 interface AdminUser {
   _id: string
@@ -118,7 +118,8 @@ export function AdminPage() {
   const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: 'Overview', icon: <BarChart3 className="w-4 h-4" /> },
     { id: 'users', label: 'Users', icon: <Users className="w-4 h-4" /> },
-    { id: 'repos', label: 'Repositories', icon: <GitBranch className="w-4 h-4" /> },
+    { id: 'repos', label: 'Codexes', icon: <GitBranch className="w-4 h-4" /> },
+    { id: 'forum', label: 'Forum', icon: <MessageSquare className="w-4 h-4" /> },
     { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> },
   ]
 
@@ -181,6 +182,7 @@ export function AdminPage() {
           {activeTab === 'overview' && <OverviewTab key="overview" showToast={showToast} />}
           {activeTab === 'users' && <UsersTab key="users" showToast={showToast} />}
           {activeTab === 'repos' && <ReposTab key="repos" showToast={showToast} />}
+          {activeTab === 'forum' && <ForumTab key="forum" showToast={showToast} />}
         </AnimatePresence>
       </div>
     </div>
@@ -220,9 +222,9 @@ function OverviewTab({ showToast }: { showToast: (m: string, t?: 'success' | 'er
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <StatCard label="Users" value={stats.users.total} sub={`${stats.users.recent} new (30d)`} color="var(--color-accent-fg)" />
-          <StatCard label="Repositories" value={stats.repos.total} sub={`${stats.repos.public} public · ${stats.repos.private} private`} color="var(--color-success-fg)" />
-          <StatCard label="Issues" value={stats.issues.total} sub={`${stats.issues.open} open · ${stats.issues.closed} closed`} color="var(--color-attention-fg)" />
-          <StatCard label="Pull Requests" value={stats.pullRequests.total} sub={`${stats.pullRequests.open} open · ${stats.pullRequests.merged} merged`} color="var(--color-done-fg)" />
+          <StatCard label="Codexes" value={stats.repos.total} sub={`${stats.repos.public} public · ${stats.repos.private} private`} color="var(--color-success-fg)" />
+          <StatCard label="Quests" value={stats.issues.total} sub={`${stats.issues.open} open · ${stats.issues.closed} closed`} color="var(--color-attention-fg)" />
+          <StatCard label="Offerings" value={stats.pullRequests.total} sub={`${stats.pullRequests.open} open · ${stats.pullRequests.merged} merged`} color="var(--color-done-fg)" />
         </div>
       )}
 
@@ -231,7 +233,7 @@ function OverviewTab({ showToast }: { showToast: (m: string, t?: 'success' | 'er
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
           <StatCard label="Total Embers" value={stats.stars} color="var(--color-attention-fg)" icon={<Star className="w-4 h-4" />} />
           <StatCard label="Contributions" value={stats.contributions.toLocaleString()} color="var(--color-success-fg)" />
-          <StatCard label="Top Language" value={stats.topLanguages[0]?.name || '—'} sub={stats.topLanguages[0] ? `${stats.topLanguages[0].count} repos` : ''} color="var(--color-accent-fg)" />
+          <StatCard label="Top Language" value={stats.topLanguages[0]?.name || '—'} sub={stats.topLanguages[0] ? `${stats.topLanguages[0].count} codexes` : ''} color="var(--color-accent-fg)" />
         </div>
       )}
 
@@ -686,14 +688,14 @@ function ReposTab({ showToast }: { showToast: (m: string, t?: 'success' | 'error
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--color-fg-subtle)' }} />
           <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search repositories..." className="form-control pl-9" />
+            placeholder="Search codexes..." className="form-control pl-9" />
         </div>
         <select value={visibilityFilter} onChange={(e) => setVisibilityFilter(e.target.value)} className="form-control" style={{ width: 150 }}>
           <option value="">All visibility</option>
           <option value="public">Public</option>
           <option value="private">Private</option>
         </select>
-        <span className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>{total} repos</span>
+        <span className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>{total} codexes</span>
       </div>
 
       {/* ── Repos Table ── */}
@@ -702,19 +704,19 @@ function ReposTab({ showToast }: { showToast: (m: string, t?: 'success' | 'error
           <table className="w-full" style={{ minWidth: 700 }}>
             <thead>
               <tr style={{ backgroundColor: 'var(--color-canvas-subtle)', borderBottom: '1px solid var(--color-border-default)' }}>
-                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-fg-muted)' }}>Repository</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-fg-muted)' }}>Codex</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-fg-muted)' }}>Owner</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-fg-muted)' }}>Language</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-fg-muted)' }}>Visibility</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-fg-muted)' }}>Stars</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-fg-muted)' }}>Forks</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-fg-muted)' }}>Embers</th>
+                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-fg-muted)' }}>Echoes</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={6} className="px-4 py-12 text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>Loading repositories...</td></tr>
+                <tr><td colSpan={6} className="px-4 py-12 text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>Loading codexes...</td></tr>
               ) : repos.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-12 text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>No repositories found.</td></tr>
+                <tr><td colSpan={6} className="px-4 py-12 text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>No codexes found.</td></tr>
               ) : (
                 repos.map((repo, i) => (
                   <motion.tr key={repo._id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}
@@ -757,12 +759,12 @@ function ReposTab({ showToast }: { showToast: (m: string, t?: 'success' | 'error
                     </td>
                     <td className="px-4 py-3">
                       <span className="flex items-center gap-1 text-sm" style={{ color: 'var(--color-fg-muted)' }}>
-                        <Star className="w-3 h-3" /> {repo.starsCount.toLocaleString()}
+                        <Flame className="w-3 h-3" /> {repo.starsCount.toLocaleString()}
                       </span>
                     </td>
                     <td className="px-4 py-3">
                       <span className="flex items-center gap-1 text-sm" style={{ color: 'var(--color-fg-muted)' }}>
-                        <GitFork className="w-3 h-3" /> {repo.forksCount.toLocaleString()}
+                        <Radio className="w-3 h-3" /> {repo.forksCount.toLocaleString()}
                       </span>
                     </td>
                   </motion.tr>
@@ -781,6 +783,151 @@ function ReposTab({ showToast }: { showToast: (m: string, t?: 'success' | 'error
             <button disabled={page <= 1} onClick={() => fetchRepos(page - 1, debouncedSearch, visibilityFilter)} className="btn btn-default btn-sm"
               style={{ opacity: page <= 1 ? 0.4 : 1 }}><ChevronLeft className="w-3 h-3" /> Previous</button>
             <button disabled={page >= pages} onClick={() => fetchRepos(page + 1, debouncedSearch, visibilityFilter)} className="btn btn-default btn-sm"
+              style={{ opacity: page >= pages ? 0.4 : 1 }}>Next <ChevronRight className="w-3 h-3" /></button>
+          </div>
+        </div>
+      )}
+    </motion.div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FORUM TAB — Manage forum posts (pin, close, delete)
+   ═══════════════════════════════════════════════════════════════════════════ */
+function ForumTab({ showToast }: { showToast: (m: string, t?: 'success' | 'error') => void }) {
+  const [posts, setPosts] = useState<any[]>([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [pages, setPages] = useState(1)
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
+
+  const fetchPosts = useCallback(async (p: number, q: string) => {
+    setLoading(true)
+    try {
+      const data = await api.adminGetForumPosts({ page: p, limit: 15, search: q })
+      setPosts(data.posts || [])
+      setTotal(data.total)
+      setPages(data.pages)
+      setPage(p)
+    } catch (err: any) {
+      showToast(err.message || 'Failed to fetch forum posts', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }, [showToast])
+
+  useEffect(() => {
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current)
+    searchTimeoutRef.current = setTimeout(() => setDebouncedSearch(searchQuery), 300)
+    return () => { if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current) }
+  }, [searchQuery])
+
+  useEffect(() => { fetchPosts(1, debouncedSearch) }, [debouncedSearch, fetchPosts])
+
+  const handleTogglePin = async (post: any) => {
+    try {
+      const { post: updated } = await api.adminTogglePinForumPost(post._id)
+      setPosts(prev => prev.map(p => p._id === updated._id ? updated : p))
+      showToast(updated.isPinned ? '📌 Post pinned' : 'Post unpinned')
+    } catch (err: any) {
+      showToast(err.message || 'Failed to toggle pin', 'error')
+    }
+  }
+
+  const handleToggleClose = async (post: any) => {
+    try {
+      const { post: updated } = await api.adminToggleCloseForumPost(post._id)
+      setPosts(prev => prev.map(p => p._id === updated._id ? updated : p))
+      showToast(updated.isClosed ? '🔒 Thread closed' : 'Thread reopened')
+    } catch (err: any) {
+      showToast(err.message || 'Failed to toggle close', 'error')
+    }
+  }
+
+  const handleDelete = async (post: any) => {
+    if (!confirm(`Delete "${post.title}"? This cannot be undone.`)) return
+    try {
+      await api.adminDeleteForumPost(post._id)
+      setPosts(prev => prev.filter(p => p._id !== post._id))
+      setTotal(prev => prev - 1)
+      showToast('🗑️ Post deleted')
+    } catch (err: any) {
+      showToast(err.message || 'Failed to delete post', 'error')
+    }
+  }
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
+      <div className="flex items-center gap-3 mb-4">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--color-fg-subtle)' }} />
+          <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search forum posts..." className="form-control pl-9" />
+        </div>
+        <span className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>{total} posts</span>
+      </div>
+
+      <div className="Box overflow-hidden">
+        {loading ? (
+          <div className="px-4 py-12 text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>Loading forum posts...</div>
+        ) : posts.length === 0 ? (
+          <div className="px-4 py-12 text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>No forum posts found.</div>
+        ) : (
+          <div>
+            {posts.map((post, i) => (
+              <motion.div key={post._id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}
+                className="flex items-center gap-3 px-4 py-3"
+                style={{ borderBottom: i < posts.length - 1 ? '1px solid var(--color-border-default)' : 'none' }}>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    {post.isPinned && <Pin className="w-3 h-3 shrink-0" style={{ color: 'var(--color-attention-fg)' }} />}
+                    <span className="text-sm font-semibold truncate" style={{ color: 'var(--color-fg-default)' }}>{post.title}</span>
+                    {post.isClosed && <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: 'var(--color-danger-muted)', color: 'var(--color-danger-fg)' }}>Closed</span>}
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>by {post.author?.displayName || post.author?.username || 'Unknown'}</span>
+                    <span className="text-xs" style={{ color: 'var(--color-fg-subtle)' }}>·</span>
+                    <span className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>{post.answers?.length || 0} answers</span>
+                    <span className="text-xs" style={{ color: 'var(--color-fg-subtle)' }}>·</span>
+                    <span className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>{new Date(post.createdAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button onClick={() => handleTogglePin(post)} className="p-1.5 rounded-md transition-colors" title={post.isPinned ? 'Unpin' : 'Pin'}
+                    style={{ color: post.isPinned ? 'var(--color-attention-fg)' : 'var(--color-fg-muted)' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--color-canvas-subtle)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}>
+                    <Pin className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => handleToggleClose(post)} className="p-1.5 rounded-md transition-colors" title={post.isClosed ? 'Reopen' : 'Close'}
+                    style={{ color: post.isClosed ? 'var(--color-danger-fg)' : 'var(--color-fg-muted)' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = 'var(--color-canvas-subtle)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent' }}>
+                    <EyeOff className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => handleDelete(post)} className="p-1.5 rounded-md transition-colors" title="Delete post"
+                    style={{ color: 'var(--color-fg-muted)' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-danger-fg)'; e.currentTarget.style.backgroundColor = 'var(--color-danger-muted)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-fg-muted)'; e.currentTarget.style.backgroundColor = 'transparent' }}>
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {pages > 1 && (
+        <div className="flex items-center justify-between mt-4">
+          <span className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>Page {page} of {pages}</span>
+          <div className="flex gap-2">
+            <button disabled={page <= 1} onClick={() => fetchPosts(page - 1, debouncedSearch)} className="btn btn-default btn-sm"
+              style={{ opacity: page <= 1 ? 0.4 : 1 }}><ChevronLeft className="w-3 h-3" /> Previous</button>
+            <button disabled={page >= pages} onClick={() => fetchPosts(page + 1, debouncedSearch)} className="btn btn-default btn-sm"
               style={{ opacity: page >= pages ? 0.4 : 1 }}>Next <ChevronRight className="w-3 h-3" /></button>
           </div>
         </div>

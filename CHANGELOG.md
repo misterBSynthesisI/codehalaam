@@ -8,7 +8,34 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## 🔜 Upcoming
 
-### v1.4.0 — "Forum & Docs" (in progress)
+---
+
+## ✅ Released
+
+### v1.4.0 — "Admin, Demo Mode & Mobile" (2026-09-01)
+
+#### Added
+- **Demo Mode**: Read-only browsing for unregistered users. Demo users see a yellow banner and cannot create, edit, or delete any data. Server-side enforcement via `requireDemoFree` middleware.
+- **Forum Management in Admin**: Admins can now browse, pin/unpin, close/reopen, and delete forum posts from the Control Room.
+- **Forum Admin API**: `GET /api/admin/forum`, `PATCH /api/admin/forum/:postId/pin`, `PATCH /api/admin/forum/:postId/close`, `DELETE /api/admin/forum/:postId`.
+- **Codex File Tree Preview**: Expandable file tree on the Codex homepage, fetched via `api.getCodexTree()`.
+- **Demo Mode Banner**: Dismissible yellow banner shown when logged in as demo user.
+
+#### Changed
+- **Mobile-responsive Codex hero**: Profile picture centered, cover photo behind, project name and action buttons stacked vertically. Buttons use `flex-wrap` to prevent overlap.
+- **Stronger cover gradient**: Cover image gradient now starts with `rgba(0,0,0,0.5)` at the top for better text readability.
+- **Admin terminology**: "Repositories" → "Codexes", "Stars" → "Embers", "Forks" → "Echoes" in admin panel.
+- **Admin Overview stats**: "Issues" → "Quests", "Pull Requests" → "Offerings" in stats cards.
+- **Footer added**: Site-wide footer with Product, Community, Resources, and Legal sections.
+- **DB performance**: Added `.lean()` to user profile and codex queries, connection pooling (`maxPoolSize: 10`), additional MongoDB indexes.
+- **404 pages**: Profile page now shows proper 404 page for invalid usernames instead of plain text.
+- **Demo button text**: "Try Demo Account" → "Browse as Demo (read-only)".
+
+#### Fixed
+- Profile page shows proper 404 error page for invalid usernames.
+- Database query performance improved with lean queries and connection pooling.
+
+---
 
 ---
 

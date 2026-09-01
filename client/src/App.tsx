@@ -24,6 +24,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext'
 import { XPProvider } from '@/components/gamification/XPToast'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
+import { DemoModeBanner } from '@/components/ui/DemoModeBanner'
 import { CommandPalette } from '@/components/command/CommandPalette'
 import { LandingPage } from '@/pages/LandingPage'
 import { AuthPage } from '@/pages/AuthPage'
@@ -149,6 +150,23 @@ function AppRoutes() {
   )
 }
 
+function AppShell() {
+  const { user } = useAuth()
+
+  return (
+    <div className="flex flex-col min-h-screen" style={{backgroundColor: 'var(--color-canvas-default)', color: 'var(--color-fg-default)'}}>
+      <CommandPalette />
+      <Navbar />
+      {user?.demoMode && <DemoModeBanner />}
+      <div className="flex-1">
+        <AppRoutes />
+      </div>
+      <Footer />
+      <Toaster position="top-right" richColors closeButton />
+    </div>
+  )
+}
+
 function App() {
   // Apply site branding (favicon, title, meta) on load — admin-configurable
   useSiteSettings()
@@ -159,15 +177,7 @@ function App() {
       <AuthProvider>
         <ThemeProvider>
         <XPProvider>
-          <div className="flex flex-col min-h-screen" style={{backgroundColor: 'var(--color-canvas-default)', color: 'var(--color-fg-default)'}}>
-            <CommandPalette />
-            <Navbar />
-            <div className="flex-1">
-              <AppRoutes />
-            </div>
-            <Footer />
-            <Toaster position="top-right" richColors closeButton />
-          </div>
+          <AppShell />
         </XPProvider>
         </ThemeProvider>
       </AuthProvider>

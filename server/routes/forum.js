@@ -18,7 +18,7 @@
 
 import express from 'express'
 import ForumPost from '../models/ForumPost.js'
-import { protect, optionalAuth } from '../middleware/auth.js'
+import { protect, optionalAuth, requireDemoFree } from '../middleware/auth.js'
 
 const router = express.Router()
 
@@ -75,7 +75,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
 })
 
 // POST /api/forum — Create a new post
-router.post('/', protect, async (req, res) => {
+router.post('/', protect, requireDemoFree, async (req, res) => {
   try {
     const { title, body, tags } = req.body
     if (!title || !body) return res.status(400).json({ error: 'Title and body are required' })
@@ -96,7 +96,7 @@ router.post('/', protect, async (req, res) => {
 })
 
 // POST /api/forum/:id/answer — Add an answer
-router.post('/:id/answer', protect, async (req, res) => {
+router.post('/:id/answer', protect, requireDemoFree, async (req, res) => {
   try {
     const post = await ForumPost.findById(req.params.id)
     if (!post) return res.status(404).json({ error: 'Post not found' })
@@ -118,7 +118,7 @@ router.post('/:id/answer', protect, async (req, res) => {
 })
 
 // POST /api/forum/:id/vote — Vote on a post (up or down)
-router.post('/:id/vote', protect, async (req, res) => {
+router.post('/:id/vote', protect, requireDemoFree, async (req, res) => {
   try {
     const post = await ForumPost.findById(req.params.id)
     if (!post) return res.status(404).json({ error: 'Post not found' })
@@ -182,7 +182,7 @@ router.post('/:id/answer/:answerId/accept', protect, async (req, res) => {
 })
 
 // DELETE /api/forum/:id — Delete a post (author or admin)
-router.delete('/:id', protect, async (req, res) => {
+router.delete('/:id', protect, requireDemoFree, async (req, res) => {
   try {
     const post = await ForumPost.findById(req.params.id)
     if (!post) return res.status(404).json({ error: 'Post not found' })

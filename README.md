@@ -4,7 +4,7 @@
 
 **The development platform where teams ship faster.**
 
-*Free private repos. Unlimited collaborators. Gamified contributions.*
+*Free private codexes. Unlimited collaborators. Gamified contributions.*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](CONTRIBUTING.md)
@@ -28,35 +28,40 @@ CODEHALAAM is a gamified code hosting platform that combines the best of GitHub 
 
 | Feature | GitHub Free | GitHub Pro | **CODEHALAAM** |
 |---------|-------------|------------|----------------|
-| Public Repos | ✅ Unlimited | ✅ Unlimited | ✅ Unlimited |
-| Private Repos | ✅ Unlimited | ✅ Unlimited | ✅ Unlimited |
+| Public Codexes | ✅ Unlimited | ✅ Unlimited | ✅ Unlimited |
+| Private Codexes | ✅ Unlimited | ✅ Unlimited | ✅ Unlimited |
 | Collaborators | ⚠️ Limited | ✅ Unlimited | ✅ **Unlimited** |
-| Pull Requests | ✅ | ✅ | ✅ |
-| Issues | ✅ | ✅ | ✅ |
-| Code Review | ✅ | ✅ | ✅ |
+| Quests & Offerings | ❌ | ❌ | ✅ **Gamified tasks** |
 | **Gamification** | ❌ | ❌ | ✅ **XP & Achievements** |
 | **Contribution Heatmap** | ✅ | ✅ | ✅ |
 | **XP Rewards** | ❌ | ❌ | ✅ **Earn XP for every action** |
+| **Forum** | ❌ | ❌ | ✅ **Community Q&A** |
 | Price | Free | $4/mo | **Free forever** |
 
 ## ✨ Features
 
 ### 🚀 Core Platform
-- **Unlimited repositories** — public and private
+- **Unlimited codexes** — public and private
 - **Unlimited collaborators** — no per-seat pricing
-- **Pull requests** — with inline comments, reviews, and approvals
-- **Issues** — with labels, milestones, and assignees
+- **Offerings** — gamified code contributions (like PRs)
+- **Quests** — gamified tasks with XP bounties
 - **Code review** — approve, request changes, or comment
-- **File browser** — navigate repository files with ease
-- **Version control** — full commit history and branches
+- **File browser** — navigate codex files with GitHub-style tree
+- **Version control** — full commit history and paths (branches)
+
+### 📱 Mobile-First Design
+- **Responsive hero section** — centered logo, name, and action buttons on mobile
+- **File tree preview** — expandable file tree on codex homepage
+- **Stacked layout** — all content flows vertically on small screens
+- **Touch-friendly buttons** — proper spacing and wrapping on mobile
 
 ### 🎮 Gamification
 - **XP System** — earn experience for every contribution
   - Commit: +10 XP
-  - Pull Request: +10 XP
-  - PR Merged: +50 XP
+  - Offering opened: +10 XP
+  - Offering bound: +50 XP
   - Code Review: +25 XP
-  - Issue Closed: +15 XP
+  - Quest closed: +15 XP
 - **Level Up** — progress through levels as you contribute
 - **Achievements** — unlock badges for milestones
 - **Contribution Heatmap** — track your activity over time
@@ -64,7 +69,7 @@ CODEHALAAM is a gamified code hosting platform that combines the best of GitHub 
 
 ### 👥 Collaboration
 - **Team Management** — invite collaborators with role-based access
-- **Role Permissions** — Admin, Write, Triage, Read
+- **Role Permissions** — Owner, Admin, Write, Read
 - **Real-time Updates** — Socket.io for live notifications
 - **Activity Feed** — see what your team is working on
 
@@ -75,6 +80,12 @@ CODEHALAAM is a gamified code hosting platform that combines the best of GitHub 
 - **Accessible** — WCAG 2.1 AA compliant
 - **Verified Badges** — blue/red/black verified seals on user names
 
+### 👀 Demo Mode
+- **Read-only browsing** — explore the platform without an account
+- **Demo user banner** — clear indicator when in demo mode
+- **Server-side enforcement** — all write operations blocked for demo users
+- **Easy signup** — one-tap transition from demo to real account
+
 ### 🔒 Privacy & Security
 - **Private Codexes** — hide codexes from unauthorized viewers (returns 404)
 - **Centralized Permissions** — single reusable permission layer (`canViewCodex`, `canEditCodex`, etc.)
@@ -82,12 +93,24 @@ CODEHALAAM is a gamified code hosting platform that combines the best of GitHub 
 - **Viewer-Aware Profiles** — profile pages show private codexes only to owners and collaborators
 - **Admin Token Security** — short-lived 2-day admin tokens, freshness re-verification, disabled-account blocking
 - **First-Run Setup** — admin account created via `/setup` page (auto-disabled once any user exists)
+- **Demo Mode Protection** — demo users cannot create, edit, or delete any data
 
-### 🎨 Admin & Branding
-- **Fully Functional Admin Panel** — real DB-backed user management (not mock data)
+### 🎨 Admin Panel
+- **Fully Functional Control Room** — real DB-backed management (not mock data)
+- **User Management** — search, edit level/XP/badges, delete users
+- **Codex Management** — browse all codexes with search and visibility filters
+- **Forum Management** — pin, close, and delete forum posts
 - **Site Settings** — admin can change logo, favicon, site name, tagline, and meta description
 - **Feature Flags** — toggle signup and maintenance mode from the admin panel
 - **Custom Badges** — blue (verified), red (admin), black (stealth) badges, managed from admin
+- **Activity Feed** — real-time platform activity
+
+### 💬 Community Forum
+- **Q&A-style posts** — ask questions, share knowledge
+- **Voting system** — upvote/downvote posts
+- **Accepted answers** — mark the best answer
+- **Admin moderation** — pin, close, and delete posts
+- **Tags and search** — find topics quickly
 
 ### 🔍 SEO & AEO
 - **Meta Tags** — OpenGraph, Twitter Cards, canonical URLs
@@ -205,11 +228,9 @@ cd server
 npm run seed
 ```
 
-### Demo Login
+### Demo Mode
 
-After seeding, use these credentials:
-- **Email:** `neo@codehalaam.dev`
-- **Password:** `password123`
+Click **"Browse as Demo (read-only)"** on the login page to explore the platform without creating an account. Demo users can browse all public codexes, view profiles, and read forum posts — but cannot create, edit, or delete any data.
 
 ## 🛠 Tech Stack
 
@@ -241,7 +262,7 @@ codehalaam/
 ├── client/                 # React frontend
 │   ├── src/
 │   │   ├── components/     # Reusable UI components
-│   │   ├── contexts/       # React contexts (Auth, etc.)
+│   │   ├── contexts/       # React contexts (Auth, Theme)
 │   │   ├── hooks/          # Custom hooks
 │   │   ├── lib/            # Utilities and API client
 │   │   ├── pages/          # Route components
@@ -250,7 +271,7 @@ codehalaam/
 ├── server/                 # Express backend
 │   ├── models/             # Mongoose models
 │   ├── routes/             # API routes
-│   ├── middleware/          # Auth middleware (protect, optionalAuth)
+│   ├── middleware/          # Auth middleware (protect, optionalAuth, requireDemoFree)
 │   ├── utils/              # Utilities (permissions.js)
 │   ├── services/           # Git, upload services
 │   ├── seed.js             # Database seeder
@@ -258,7 +279,7 @@ codehalaam/
 ├── docs/                   # Documentation
 │   ├── agent.md            # Agent architecture & copyright policy
 │   ├── design.md           # Design system
-│   └── logic-bug-report.md # Bug audit report
+│   └── bug-hunt-report.md  # Bug audit report
 ├── CONTRIBUTING.md         # Contribution guide
 └── README.md               # This file
 ```
@@ -266,8 +287,9 @@ codehalaam/
 ## 📚 Documentation
 
 - **[Design System](docs/design.md)** — Colors, typography, components
-- **[Agent Architecture](docs/agent.md)** — AI agent integration
+- **[Agent Architecture](docs/agent.md)** — AI agent integration, permissions, upload persistence
 - **[Contributing Guide](CONTRIBUTING.md)** — How to contribute
+- **[Definition of Done](docs/definition-of-done.md)** — Quality checklist
 
 ## 🎮 Gamification System
 
@@ -276,13 +298,13 @@ codehalaam/
 | Action | XP |
 |--------|-----|
 | Commit | +10 |
-| Open PR | +10 |
-| Merge PR | +50 |
-| Review PR | +25 |
-| Close Issue | +15 |
-| Open Issue | +5 |
-| Star Repository | +2 |
-| Fork Repository | +15 |
+| Open Offering | +10 |
+| Bind Offering | +50 |
+| Review Code | +25 |
+| Close Quest | +15 |
+| Open Quest | +5 |
+| Give Ember | +2 |
+| Echo Codex | +15 |
 | Comment | +2 |
 
 ### Achievements
@@ -313,43 +335,13 @@ Level up by earning XP. Each level requires more XP than the last:
 ```
 POST   /api/auth/signup     - Create account
 POST   /api/auth/login      - Sign in
+POST   /api/auth/demo       - Browse as demo (read-only)
 GET    /api/auth/me         - Get current user
 PUT    /api/auth/profile    - Update profile
 PUT    /api/auth/password   - Change password
 ```
 
-### Repositories
-```
-GET    /api/repos                    - List user repos
-GET    /api/repos/:owner/:name       - Get repository
-POST   /api/repos                    - Create repository
-PUT    /api/repos/:owner/:name       - Update repository
-DELETE /api/repos/:owner/:name       - Delete repository
-POST   /api/repos/:owner/:name/star  - Toggle star
-POST   /api/repos/:owner/:name/fork  - Fork repository
-GET    /api/repos/:owner/:name/commits - Get commits
-```
-
-### Issues
-```
-GET    /api/issues/:owner/:name          - List issues
-GET    /api/issues/:owner/:name/:number  - Get issue
-POST   /api/issues/:owner/:name          - Create issue
-PATCH  /api/issues/:owner/:name/:number  - Update issue
-POST   /api/issues/:owner/:name/:number/comment - Add comment
-```
-
-### Pull Requests
-```
-GET    /api/pulls/:owner/:name          - List PRs
-GET    /api/pulls/:owner/:name/:number  - Get PR
-POST   /api/pulls/:owner/:name          - Create PR
-PATCH  /api/pulls/:owner/:name/:number  - Update PR
-POST   /api/pulls/:owner/:name/:number/merge - Merge PR
-POST   /api/pulls/:owner/:name/:number/review - Submit review
-```
-
-### Codexes (Barry/Storefront)
+### Codexes (Primary)
 ```
 GET    /api/codexes/:owner/:name              - Get codex (requires optionalAuth)
 GET    /api/codexes/:owner/:name/readme       - Get README
@@ -360,30 +352,37 @@ GET    /api/codexes/:owner/:name/offerings    - List offerings
 GET    /api/codexes/:owner/:name/paths        - List paths
 GET    /api/codexes/:owner/:name/releases     - List releases
 GET    /api/codexes/:owner/:name/collaborators - List collaborators
-POST   /api/codexes/:owner/:name/ember        - Toggle ember (auth)
-POST   /api/codexes/:owner/:name/watch        - Toggle watch (auth)
-POST   /api/codexes/:owner/:name/echo         - Toggle echo (auth)
+POST   /api/codexes/:owner/:name/ember        - Toggle ember (auth + demo-free)
+POST   /api/codexes/:owner/:name/watch        - Toggle watch (auth + demo-free)
+POST   /api/codexes/:owner/:name/echo         - Toggle echo (auth + demo-free)
 PATCH  /api/codexes/:owner/:name              - Update codex (auth + canEditCodex)
 DELETE /api/codexes/:owner/:name              - Delete codex (auth + canDeleteCodex)
 ```
 
-### Collaborators
+### Forum
 ```
-GET    /api/collaborators/:owner/:name          - List collaborators
-POST   /api/collaborators/:owner/:name          - Add collaborator
-PATCH  /api/collaborators/:owner/:name/:userId  - Update role
-DELETE /api/collaborators/:owner/:name/:userId  - Remove collaborator
+GET    /api/forum                    - List posts (sorted by hot/new/unanswered)
+GET    /api/forum/:id                - Get single post
+POST   /api/forum                    - Create post (auth + demo-free)
+POST   /api/forum/:id/answer         - Add answer (auth + demo-free)
+POST   /api/forum/:id/vote           - Vote on post (auth + demo-free)
+POST   /api/forum/:id/answer/:aid/accept - Accept answer (auth)
+DELETE /api/forum/:id                - Delete post (author or admin + demo-free)
 ```
 
 ### Admin (requireAdmin middleware)
 ```
 GET    /api/admin/stats              - Platform-wide stats
 GET    /api/admin/users              - List all users (paginated, searchable)
-GET    /api/admin/repos              - List all repos (paginated, searchable)
+GET    /api/admin/repos              - List all codexes (paginated, searchable)
 GET    /api/admin/activity           - Recent activity feed
+GET    /api/admin/forum              - List all forum posts (paginated, searchable)
 PATCH  /api/admin/users/:userId      - Update user (level, xp, badge, class)
 PATCH  /api/admin/users/:userId/badge - Update user badge (backward compat)
 DELETE /api/admin/users/:userId      - Delete user permanently
+PATCH  /api/admin/forum/:postId/pin  - Toggle pin on forum post
+PATCH  /api/admin/forum/:postId/close - Toggle close on forum post
+DELETE /api/admin/forum/:postId      - Delete any forum post
 ```
 
 ### Site Settings
@@ -416,6 +415,7 @@ GET    /api/health                   - Server & database health (actively probes
 - **RBAC**: Admin routes protected by `requireAdmin` middleware (backend) and `<AdminRoute>` guard (frontend)
 - **JWT Auth**: All protected routes require `Bearer` token in `Authorization` header
 - **Optional Auth**: Public routes use `optionalAuth` to recognize logged-in users without requiring tokens
+- **Demo Mode Protection**: `requireDemoFree` middleware blocks all write operations for demo users
 - **Private Codex Guard**: All read routes check `canViewCodex()` — returns 404 (not 403) for unauthorized access
 - **Centralized Permissions**: Single `server/utils/permissions.js` module for all authorization logic
 - **Global Error Handler**: Every endpoint returns valid JSON, even on failure (no HTML error pages, no empty responses)
@@ -427,7 +427,7 @@ We love contributions! Please read our [Contributing Guide](CONTRIBUTING.md) bef
 
 ### Good First Issues
 
-Looking for a place to start? Check out our [good first issues](https://github.com/your-username/codehalaam/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22).
+Looking for a place to start? Check out our [good first issues](https://github.com/misterBSynthesisI/codehalaam/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22).
 
 ## 📄 License
 
@@ -439,6 +439,6 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 **Built with ❤️ by the CODEHALAAM community**
 
-[Website](https://codehalaam.dev) • [Twitter](https://twitter.com/codehalaam) • [Discord](https://discord.gg/codehalaam)
+[Website](https://codehalaam.vercel.app) • [GitHub](https://github.com/misterBSynthesisI/codehalaam)
 
 </div>

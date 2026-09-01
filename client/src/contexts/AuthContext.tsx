@@ -39,6 +39,7 @@ interface User {
   isAdmin: boolean
   badgeColor: string
   characterClass?: string
+  demoMode?: boolean
   stats: {
     commits: number
     pullRequests: number

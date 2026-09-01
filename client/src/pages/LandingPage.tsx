@@ -61,7 +61,7 @@ export function LandingPage() {
                   className="btn btn-default text-base px-6 py-2"
                   data-testid="see-demo"
                 >
-                  {demoLoading ? 'Signing in...' : 'See the demo'}
+                  {demoLoading ? 'Loading...' : 'Browse as Demo (read-only)'}
                 </button>
               </div>
               <div className="flex items-center gap-6 text-sm" style={{ color: 'var(--color-fg-muted)' }}>

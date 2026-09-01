@@ -27,7 +27,7 @@ import Release from '../models/Release.js'
 import Collaborator from '../models/Collaborator.js'
 import Invitation from '../models/Invitation.js'
 import Commit from '../models/Commit.js'
-import { protect, optionalAuth } from '../middleware/auth.js'
+import { protect, optionalAuth, requireDemoFree } from '../middleware/auth.js'
 import { canViewCodex, canEditCodex, canDeleteCodex, canManageCollaborators } from '../utils/permissions.js'
 import * as gitService from '../services/gitService.js'
 import { uploadCodexMedia, uploadProjectFile, resolveUploadUrl, MAX_FILE_SIZE } from '../services/uploadService.js'
@@ -196,7 +196,7 @@ router.get('/:owner/:name/blob', optionalAuth, async (req, res) => {
 // ============================================================
 
 // POST /api/codexes/:owner/:name/ember — Toggle ember
-router.post('/:owner/:name/ember', protect, async (req, res) => {
+router.post('/:owner/:name/ember', protect, requireDemoFree, async (req, res) => {
   try {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
@@ -222,7 +222,7 @@ router.post('/:owner/:name/ember', protect, async (req, res) => {
 })
 
 // POST /api/codexes/:owner/:name/watch — Toggle watch
-router.post('/:owner/:name/watch', protect, async (req, res) => {
+router.post('/:owner/:name/watch', protect, requireDemoFree, async (req, res) => {
   try {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
@@ -247,7 +247,7 @@ router.post('/:owner/:name/watch', protect, async (req, res) => {
 })
 
 // POST /api/codexes/:owner/:name/echo — Toggle echo
-router.post('/:owner/:name/echo', protect, async (req, res) => {
+router.post('/:owner/:name/echo', protect, requireDemoFree, async (req, res) => {
   try {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
@@ -277,7 +277,7 @@ router.post('/:owner/:name/echo', protect, async (req, res) => {
 // ============================================================
 
 // POST /api/codexes/:owner/:name/media — Upload cover or logo
-router.post('/:owner/:name/media', protect, uploadCodexMedia.single('file'), async (req, res) => {
+router.post('/:owner/:name/media', protect, requireDemoFree, uploadCodexMedia.single('file'), async (req, res) => {
   try {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
@@ -310,7 +310,7 @@ router.post('/:owner/:name/media', protect, uploadCodexMedia.single('file'), asy
 // POST /api/codexes/:owner/:name/upload — Upload a project file (up to 30 MB)
 // Accepts a single file upload (form-data, field name 'file').
 // Stored in Vercel Blob (production) or local disk (dev).
-router.post('/:owner/:name/upload', protect, uploadProjectFile.single('file'), async (req, res) => {
+router.post('/:owner/:name/upload', protect, requireDemoFree, uploadProjectFile.single('file'), async (req, res) => {
   try {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
@@ -342,7 +342,7 @@ router.post('/:owner/:name/upload', protect, uploadProjectFile.single('file'), a
 })
 
 // PATCH /api/codexes/:owner/:name — Update codex storefront fields
-router.patch('/:owner/:name', protect, async (req, res) => {
+router.patch('/:owner/:name', protect, requireDemoFree, async (req, res) => {
   try {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
@@ -369,7 +369,7 @@ router.patch('/:owner/:name', protect, async (req, res) => {
 })
 
 // DELETE /api/codexes/:owner/:name — Delete codex
-router.delete('/:owner/:name', protect, async (req, res) => {
+router.delete('/:owner/:name', protect, requireDemoFree, async (req, res) => {
   try {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
@@ -446,7 +446,7 @@ router.get('/:owner/:name/quests', optionalAuth, async (req, res) => {
 })
 
 // POST /api/codexes/:owner/:name/quests — Create quest
-router.post('/:owner/:name/quests', protect, async (req, res) => {
+router.post('/:owner/:name/quests', protect, requireDemoFree, async (req, res) => {
   try {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
@@ -616,7 +616,7 @@ router.get('/:owner/:name/offerings', optionalAuth, async (req, res) => {
 })
 
 // POST /api/codexes/:owner/:name/offerings — Create offering
-router.post('/:owner/:name/offerings', protect, async (req, res) => {
+router.post('/:owner/:name/offerings', protect, requireDemoFree, async (req, res) => {
   try {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
@@ -807,7 +807,7 @@ router.get('/:owner/:name/paths', optionalAuth, async (req, res) => {
 })
 
 // POST /api/codexes/:owner/:name/paths — Create path
-router.post('/:owner/:name/paths', protect, async (req, res) => {
+router.post('/:owner/:name/paths', protect, requireDemoFree, async (req, res) => {
   try {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
@@ -881,7 +881,7 @@ router.get('/:owner/:name/releases', optionalAuth, async (req, res) => {
 })
 
 // POST /api/codexes/:owner/:name/releases — Create release
-router.post('/:owner/:name/releases', protect, async (req, res) => {
+router.post('/:owner/:name/releases', protect, requireDemoFree, async (req, res) => {
   try {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })
@@ -956,7 +956,7 @@ router.get('/:owner/:name/collaborators', optionalAuth, async (req, res) => {
 })
 
 // POST /api/codexes/:owner/:name/collaborators — Add collaborator
-router.post('/:owner/:name/collaborators', protect, async (req, res) => {
+router.post('/:owner/:name/collaborators', protect, requireDemoFree, async (req, res) => {
   try {
     const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
     if (error) return res.status(status).json({ error })

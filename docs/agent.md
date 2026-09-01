@@ -144,6 +144,14 @@ CODEHALAAM is a gamified, collaborative code hosting platform. This document des
 - `AuthContext.refreshUser()` only removes the JWT token on 401/403 responses. Network errors, 503s, and other transient failures leave the token intact so the user stays logged in.
 - Demo login (`POST /api/auth/demo`) calls `refreshUser()` after setting the token to ensure `ProtectedRoute` sees the authenticated user before navigating to `/dashboard`.
 
+### Demo Mode (v1.4)
+
+- Demo users have `demoMode: true` on their User document.
+- The `requireDemoFree` middleware blocks all write operations (POST, PATCH, DELETE) for demo users.
+- The frontend shows a `DemoModeBanner` when `user.demoMode` is true.
+- Demo users can browse all public content but cannot create, edit, or delete anything.
+- The demo button on the login page says "Browse as Demo (read-only)".
+
 ### Admin Token Security (v1.2)
 
 - Admin tokens expire in **2 days** (vs 30 days for regular users).
@@ -521,7 +529,7 @@ The database (MongoDB Atlas) is an **external managed service**. Vercel does not
 
 ---
 
-## Admin Panel Capabilities (v1.2)
+## Admin Panel Capabilities (v1.4)
 
 > **The admin panel is fully functional — not mock data. All changes persist to MongoDB.**
 
@@ -529,12 +537,17 @@ The database (MongoDB Atlas) is an **external managed service**. Vercel does not
 
 | Feature | Endpoint | Effect |
 |---------|----------|--------|
-| View platform stats | `GET /api/admin/stats` | Real-time counts of users, repos, issues, PRs, stars |
+| View platform stats | `GET /api/admin/stats` | Real-time counts of users, codexes, quests, offerings, embers |
 | Search users | `GET /api/admin/users?search=` | Paginated, searchable user list from DB |
 | Edit user level/XP | `PATCH /api/admin/users/:userId` | Updates `level`, `xp`, `characterClass` in DB |
 | Grant badges | `PATCH /api/admin/users/:userId/badge` | Sets `badgeColor` (blue/black/red/none) — visible immediately on client |
 | Delete users | `DELETE /api/admin/users/:userId` | Permanently removes user from DB |
-| View activity feed | `GET /api/admin/activity` | Recent users/repos/issues/PRs |
+| Browse codexes | `GET /api/admin/repos?search=` | Paginated, searchable codex list with visibility filters |
+| Manage forum | `GET /api/admin/forum` | Paginated, searchable forum post list |
+| Pin/unpin forum posts | `PATCH /api/admin/forum/:postId/pin` | Toggle pin status on any forum post |
+| Close/reopen forum posts | `PATCH /api/admin/forum/:postId/close` | Toggle close status on any forum post |
+| Delete forum posts | `DELETE /api/admin/forum/:postId` | Permanently delete any forum post |
+| View activity feed | `GET /api/admin/activity` | Recent users/codexes/quests/offerings |
 | Customize branding | `PUT /api/settings` + upload endpoints | Changes logo, favicon, site name — applied across the site |
 | Toggle signup | `PUT /api/settings` | Enable/disable new signups platform-wide |
 | Toggle maintenance mode | `PUT /api/settings` | Shows 503 to non-admins |

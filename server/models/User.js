@@ -100,6 +100,7 @@ const userSchema = new mongoose.Schema({
   // Account status
   isPublic: { type: Boolean, default: true },
   isActive: { type: Boolean, default: true },
+  demoMode: { type: Boolean, default: false },
 }, { timestamps: true })
 
 // Indexes (username and email already indexed via unique: true on fields)

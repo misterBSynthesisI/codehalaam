@@ -30,15 +30,19 @@ Users interact through a web browser. Core workflows: create a codex (repo), wri
 - Pull requests (offerings): with source/target paths, bind workflow, comments
 - Issues (quests): with labels, assignees, bounty XP, status management
 - Code review: approve, request changes, comment
-- File browser: navigate repository file trees
+- File browser: navigate repository file trees with GitHub-style tree preview on codex homepage
 - Collaboration: unlimited collaborators with role-based access (Owner, Admin, Write, Read)
 - Invitations: email-based invitation flow with tokens
 - Gamification: XP, levels (1.5x multiplier), streaks, achievements, contribution heatmap
 - Verified badges: blue (verified), red (admin), black (stealth)
 - Privacy: private codexes hidden from unauthorized viewers (404, not 403)
-- Admin panel: user management, badge assignment, platform stats
+- Demo mode: read-only browsing for unregistered users, server-side write protection
+- Community forum: Q&A-style posts with voting, accepted answers, admin moderation
+- Admin panel: user management, codex management, forum management, badge assignment, platform stats, site settings
 - Real-time: Socket.io for notifications
+- Mobile-responsive: centered hero layout, stacked buttons, responsive file tree
 - Design: GitHub Primer + Apple fluid motion, dark/light themes, translucent materials
+- Footer: site-wide footer with navigation links
 - Stack: React 18, TypeScript, Vite, Tailwind CSS, Framer Motion, Express, MongoDB, Socket.io
 
 ## Brand Commitments

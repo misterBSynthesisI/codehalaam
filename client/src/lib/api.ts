@@ -711,6 +711,24 @@ class ApiClient {
     const query = new URLSearchParams(params as any).toString()
     return this.request<{ repos: any[]; total: number; page: number; pages: number }>(`/admin/repos?${query}`)
   }
+
+  // Admin Forum Management
+  async adminGetForumPosts(params?: { page?: number; limit?: number; search?: string; sort?: string }) {
+    const query = new URLSearchParams(params as any).toString()
+    return this.request<{ posts: any[]; total: number; page: number; pages: number }>(`/admin/forum?${query}`)
+  }
+
+  async adminDeleteForumPost(postId: string) {
+    return this.request<{ message: string }>(`/admin/forum/${postId}`, { method: 'DELETE' })
+  }
+
+  async adminTogglePinForumPost(postId: string) {
+    return this.request<{ post: any }>(`/admin/forum/${postId}/pin`, { method: 'PATCH' })
+  }
+
+  async adminToggleCloseForumPost(postId: string) {
+    return this.request<{ post: any }>(`/admin/forum/${postId}/close`, { method: 'PATCH' })
+  }
 }
 
 export const api = new ApiClient()
