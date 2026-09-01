@@ -18,9 +18,13 @@
 
 import mongoose from 'mongoose'
 
+let connecting = null
+
 /**
  * Connect to MongoDB using the URI from environment variables.
  * Fail-fast: exits the process if connection fails.
+ *
+ * Used by the long-running local dev server (server/index.js).
  *
  * @returns {Promise<void>}
  */
@@ -46,6 +50,43 @@ const connectDB = async () => {
     console.error('   Ensure MongoDB is running and the URI is correct.')
     process.exit(1)
   }
+}
+
+/**
+ * Ensure a Mongoose connection exists, connecting lazily if needed.
+ *
+ * Designed for serverless platforms (Vercel) where each request may run
+ * in a fresh or reused invocation. Never calls process.exit — returns a
+ * resolved/rejected promise instead so request handlers can surface errors.
+ *
+ * @returns {Promise<typeof mongoose>}
+ */
+export const ensureConnected = async () => {
+  if (mongoose.connection.readyState === 1) return mongoose
+
+  // If a connection attempt is already in flight, await it rather than racing.
+  if (connecting) return connecting
+
+  if (!process.env.MONGODB_URI) {
+    throw new Error('MONGODB_URI is not configured')
+  }
+
+  connecting = mongoose
+    .connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 8000,
+      bufferCommands: true,
+    })
+    .then((conn) => {
+      console.log(`✅ MongoDB connected: ${conn.connection.db?.databaseName}`)
+      connecting = null
+      return mongoose
+    })
+    .catch((err) => {
+      connecting = null
+      throw err
+    })
+
+  return connecting
 }
 
 export default connectDB

@@ -2,13 +2,27 @@
   "name": "thegithub",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
+  "engines": { "node": ">=18" },
   "description": "A gamified, immersive alternative to GitHub — Cyberpunk/RPG Terminal aesthetic",
   "scripts": {
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:client": "cd client && npm run dev",
     "dev:server": "cd server && npm run dev",
     "build": "cd client && npm run build",
-    "install:all": "cd client && npm install && cd ../server && npm install"
+    "install:all": "cd client && npm install && cd ../server && npm install",
+    "build:vercel": "cd client && npm run build"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.4.1",
+    "multer": "^2.3.0",
+    "simple-git": "^3.36.0",
+    "socket.io": "^4.8.3"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
