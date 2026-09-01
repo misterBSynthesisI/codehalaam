@@ -532,8 +532,13 @@ export function CodexHomePage() {
                 <div className="space-y-1.5 mt-1">
                   {collaborators.slice(0, 8).map((c: any) => (
                     <div key={c.user?._id || c._id} className="flex items-center gap-2">
-                      <Link to={`/${c.user?.username}`} className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium no-underline hover:scale-110 transition-transform" style={{ backgroundColor: 'var(--color-success-muted)', color: 'var(--color-success-fg)' }}>{c.user?.username?.charAt(0).toUpperCase() || '?'}</Link>
-                      <Link to={`/${c.user?.username}`} className="text-sm no-underline hover:underline" style={{ color: 'var(--color-accent-fg)' }}>{c.user?.displayName || c.user?.username}</Link>
+                      <Link to={`/${c.user?.username}`} className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium no-underline hover:scale-110 transition-transform overflow-hidden" style={{ backgroundColor: 'var(--color-success-muted)', color: 'var(--color-success-fg)' }}>
+                        {c.user?.avatarUrl ? <img src={c.user.avatarUrl} alt="" className="w-full h-full object-cover" /> : (c.user?.username?.charAt(0).toUpperCase() || '?')}
+                      </Link>
+                      <Link to={`/${c.user?.username}`} className="text-sm no-underline hover:underline flex items-center gap-1" style={{ color: 'var(--color-accent-fg)' }}>
+                        {c.user?.displayName || c.user?.username}
+                        <VerificationBadge badgeColor={c.user?.badgeColor} size={14} />
+                      </Link>
                       <span className="text-xs" style={{ color: 'var(--color-fg-subtle)' }}>{c.role}</span>
                     </div>
                   ))}

@@ -35,7 +35,7 @@ function CodeLogo() {
 export function AuthPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { login, signup } = useAuth()
+  const { login, signup, refreshUser } = useAuth()
   const [mode, setMode] = useState<AuthMode>(() => {
     const param = searchParams.get('mode')
     return param === 'login' ? 'login' : 'signup'
@@ -63,6 +63,7 @@ export function AuthPage() {
     try {
       const { api } = await import('@/lib/api')
       await api.demoLogin()
+      await refreshUser()
       navigate('/dashboard')
     } catch (err: any) {
       setError(err.message || 'Quick login failed. Please try again.')

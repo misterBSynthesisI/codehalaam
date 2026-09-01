@@ -56,7 +56,7 @@ export function ProfilePage() {
   return (
     <div style={{ backgroundColor: 'var(--color-canvas-default)', color: 'var(--color-fg-default)', minHeight: '100vh' }}>
       {/* Cover Image Banner */}
-      <div className="relative" style={{ height: 200 }}>
+      <div className="relative" style={{ height: 280 }}>
         {profile.coverUrl ? (
           <img src={profile.coverUrl} alt="Profile banner" className="absolute inset-0 w-full h-full object-cover" />
         ) : (
@@ -70,8 +70,8 @@ export function ProfilePage() {
             backgroundImage: 'radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.4), transparent), radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,0.3), transparent), radial-gradient(1px 1px at 60% 20%, rgba(255,255,255,0.5), transparent), radial-gradient(1px 1px at 80% 60%, rgba(255,255,255,0.2), transparent), radial-gradient(1.5px 1.5px at 15% 80%, rgba(251,191,36,0.4), transparent), radial-gradient(1.5px 1.5px at 70% 40%, rgba(251,191,36,0.3), transparent), radial-gradient(1px 1px at 90% 15%, rgba(255,255,255,0.3), transparent)',
           }} />
         )}
-        <div className="absolute bottom-0 left-0 right-0 h-16" style={{
-          background: 'linear-gradient(to top, var(--color-canvas-default), transparent)',
+        <div className="absolute bottom-0 left-0 right-0 h-24" style={{
+          background: 'linear-gradient(to top, var(--color-canvas-default) 10%, rgba(255,255,255,0) 100%)',
         }} />
       </div>
 

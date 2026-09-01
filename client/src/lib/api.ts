@@ -69,7 +69,9 @@ class ApiClient {
     }
 
     if (!res.ok) {
-      throw new Error(data.error || data.message || `Request failed: ${res.status}`)
+      const err: any = new Error(data.error || data.message || `Request failed: ${res.status}`)
+      err.status = res.status
+      throw err
     }
 
     return data

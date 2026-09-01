@@ -77,9 +77,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const { user } = await api.getMe()
       setUser(user)
-    } catch (err) {
-      localStorage.removeItem('codehalaam_token')
-      setUser(null)
+    } catch (err: any) {
+      // Only remove token on auth errors — not on network/503/etc.
+      if (err?.status === 401 || err?.status === 403) {
+        localStorage.removeItem('codehalaam_token')
+        setUser(null)
+      }
     } finally {
       setLoading(false)
     }

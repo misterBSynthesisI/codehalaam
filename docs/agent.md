@@ -138,6 +138,12 @@ CODEHALAAM is a gamified, collaborative code hosting platform. This document des
 | `optionalAuth` | Attaches `req.user` if JWT present, continues with `req.user = null` if not |
 | `requireAdmin` | Returns 403 if `req.user.isAdmin` is false; enforces 2-day admin token freshness |
 
+### Auth State Persistence (v1.3.3)
+
+- API client errors carry a `status` property (e.g., `err.status = 401`) so the frontend can distinguish auth failures from transient server errors.
+- `AuthContext.refreshUser()` only removes the JWT token on 401/403 responses. Network errors, 503s, and other transient failures leave the token intact so the user stays logged in.
+- Demo login (`POST /api/auth/demo`) calls `refreshUser()` after setting the token to ensure `ProtectedRoute` sees the authenticated user before navigating to `/dashboard`.
+
 ### Admin Token Security (v1.2)
 
 - Admin tokens expire in **2 days** (vs 30 days for regular users).
@@ -538,7 +544,9 @@ The database (MongoDB Atlas) is an **external managed service**. Vercel does not
 When an admin changes a user's badge, level, or class, the change is written to MongoDB. The client sees it because:
 1. The `/api/auth/me` endpoint reads the current user from DB on every load.
 2. The `AuthContext` re-fetches the user on window focus (`refreshUser`).
-3. Badge changes appear immediately on the user's profile, navbar, and any populated user reference.
+3. Badge changes appear immediately on the user's profile, navbar, dashboard, codex crew sidebar, and any populated user reference.
+4. Verified badges (`VerificationBadge`) are rendered next to user names in the Dashboard welcome header, Codex Home crew list, and Profile page sidebar.
+5. Navbar shows the user's avatar image (not just first letter) when `avatarUrl` is set.
 
 ### Admin route protection
 

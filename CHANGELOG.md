@@ -12,6 +12,26 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+### v1.3.3 — "Auth & UX Fixes" (2026-09-01)
+
+#### Fixed
+- **Critical**: "Try Demo Account" button now correctly logs in and navigates to dashboard. Previously, `api.demoLogin()` set the JWT token but `refreshUser()` was never called, so `ProtectedRoute` saw `user === null` and bounced back to `/auth`.
+- **Critical**: Login state no longer flickers on page refresh. Previously, `refreshUser()` removed the JWT token on ANY server error (network failure, 503 DB unavailable, etc.), logging the user out. Now only removes the token on 401/403 auth errors.
+- Added `status` property to API client errors so the auth layer can distinguish auth failures from transient server errors.
+
+#### Changed
+- Profile cover photo height increased from 200px to 280px for better visibility.
+- Profile cover gradient overlay made more transparent so the full image is visible.
+- Navbar user avatar now shows the user's profile picture instead of just the first letter.
+- Navbar user dropdown now shows the user's avatar next to their name.
+
+#### Added
+- Verified badge now appears on the Dashboard welcome header.
+- Verified badge now appears next to collaborator names in the Codex Home "The Crew" sidebar.
+- Collaborator avatars now show profile pictures in the Codex Home "The Crew" section.
+
+---
+
 ## ✅ Released
 
 ### v1.3.2 — "Vercel Setup Fix" (2026-09-01)

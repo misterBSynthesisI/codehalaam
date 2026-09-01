@@ -21,9 +21,11 @@ import { motion } from 'framer-motion'
 import { GitBranch, Users, Lock, Zap, Globe, ArrowRight } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
+import { useAuth } from '@/contexts/AuthContext'
 
 export function LandingPage() {
   const navigate = useNavigate()
+  const { refreshUser } = useAuth()
   const [demoLoading, setDemoLoading] = useState(false)
   const [stats, setStats] = useState<{ totalUsers: number; totalRepos: number } | null>(null)
 
@@ -51,6 +53,7 @@ export function LandingPage() {
                     setDemoLoading(true)
                     try {
                       await api.demoLogin()
+                      await refreshUser()
                       navigate('/dashboard')
                     } catch { navigate('/auth?mode=login') } finally { setDemoLoading(false) }
                   }}

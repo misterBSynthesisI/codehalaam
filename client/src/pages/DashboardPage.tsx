@@ -24,6 +24,7 @@ import {
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
+import { VerificationBadge } from '@/components/ui/UserBadge'
 
 export function DashboardPage() {
   const { user } = useAuth()
@@ -68,8 +69,9 @@ export function DashboardPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-xl font-semibold" style={{ color: 'var(--color-fg-default)' }}>
+            <h1 className="text-xl font-semibold flex items-center gap-2" style={{ color: 'var(--color-fg-default)' }}>
               Welcome back, {user.displayName || user.username}
+              <VerificationBadge badgeColor={user.badgeColor} size={20} />
             </h1>
             <p className="text-sm mt-0.5" style={{ color: 'var(--color-fg-muted)' }}>
               Here's your workspace at a glance.

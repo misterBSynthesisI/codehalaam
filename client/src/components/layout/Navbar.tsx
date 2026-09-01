@@ -17,7 +17,7 @@
  */
 
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Search, Bell, ChevronDown, ShieldAlert, Sun, Moon, BadgeCheck } from 'lucide-react'
+import { Search, Bell, ChevronDown, ShieldAlert, Sun, Moon, BadgeCheck, BadgeCheck as BadgeCheckIcon } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useState, useRef, useEffect, useCallback } from 'react'
@@ -202,9 +202,13 @@ export function Navbar() {
               {/* User avatar */}
               <div className="relative" ref={menuRef}>
                 <button onClick={() => setShowUserMenu(!showUserMenu)} className="flex items-center gap-1 p-0.5 rounded-full transition-colors">
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium"
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium overflow-hidden"
                     style={{ backgroundColor: 'var(--color-success-muted)', color: 'var(--color-success-fg)', border: '1px solid rgba(46,160,67,0.4)' }}>
-                    {user.username.charAt(0).toUpperCase()}
+                    {user.avatarUrl ? (
+                      <img src={user.avatarUrl} alt={user.username} className="w-full h-full object-cover" />
+                    ) : (
+                      user.username.charAt(0).toUpperCase()
+                    )}
                   </div>
                   <ChevronDown className="w-3 h-3" style={{ color: 'var(--color-fg-muted)' }} />
                 </button>
@@ -214,6 +218,11 @@ export function Navbar() {
                     style={{ border: '1px solid var(--color-border-default)', boxShadow: 'var(--color-shadow-large)' }}>
                     <div className="px-3 py-2 border-b" style={{ borderColor: 'var(--color-border-default)' }}>
                       <p className="text-sm font-medium flex items-center gap-1.5" style={{ color: 'var(--color-fg-default)' }}>
+                        {user.avatarUrl ? (
+                          <span className="w-5 h-5 rounded-full overflow-hidden inline-flex items-center justify-center shrink-0" style={{ backgroundColor: 'var(--color-success-muted)' }}>
+                            <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
+                          </span>
+                        ) : null}
                         {user.displayName || user.username}
                         {user.badgeColor && user.badgeColor !== 'none' && (
                           <BadgeCheck
