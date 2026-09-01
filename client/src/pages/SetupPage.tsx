@@ -129,21 +129,48 @@ export function SetupPage() {
 
           <div className="Box p-6">
             <p className="text-sm mb-4" style={{ color: 'var(--color-fg-muted)' }}>
-              CODEHALAAM needs a MongoDB database to run. Choose one of these free options:
+              CODEHALAAM needs a MongoDB database to function. Vercel does not provide a built-in database — you must connect an external one. Here's how:
             </p>
 
-            <div className="space-y-4 text-sm">
-              <div>
-                <h3 className="font-medium mb-1" style={{ color: 'var(--color-fg-default)' }}>Option 1: MongoDB Atlas (Recommended)</h3>
-                <p style={{ color: 'var(--color-fg-muted)' }}>Free M0 cluster at <a href="https://www.mongodb.com/atlas" target="_blank" rel="noreferrer" style={{ color: 'var(--color-accent-fg)' }}>mongodb.com/atlas</a>. Set the <code className="px-1 rounded" style={{ backgroundColor: 'var(--color-canvas-subtle)' }}>MONGODB_URI</code> env var.</p>
+            <div className="space-y-5 text-sm">
+              {/* Option 1: MongoDB Atlas */}
+              <div className="p-3 rounded-md" style={{ backgroundColor: 'var(--color-canvas-subtle)', border: '1px solid var(--color-border-default)' }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded" style={{ backgroundColor: 'var(--color-success-subtle)', color: 'var(--color-success-fg)' }}>RECOMMENDED</span>
+                  <h3 className="font-medium" style={{ color: 'var(--color-fg-default)' }}>MongoDB Atlas (Free)</h3>
+                </div>
+                <ol className="list-decimal list-inside space-y-1" style={{ color: 'var(--color-fg-muted)' }}>
+                  <li>Go to <a href="https://www.mongodb.com/atlas" target="_blank" rel="noreferrer" style={{ color: 'var(--color-accent-fg)' }}>mongodb.com/atlas</a> and sign up (free)</li>
+                  <li>Create a free <strong>M0</strong> cluster (512 MB — plenty for a SaaS)</li>
+                  <li>Under “Database Access”, create a user + password</li>
+                  <li>Under “Network Access”, allow all IPs (<code className="px-1 rounded" style={{ backgroundColor: 'var(--color-canvas-default)' }}>0.0.0.0/0</code>)</li>
+                  <li>Click “Connect” → “Drivers” → copy the connection string</li>
+                  <li>In Vercel → Settings → Environment Variables, add:
+                    <code className="block px-2 py-1 mt-1 rounded text-xs" style={{ backgroundColor: 'var(--color-canvas-default)', color: 'var(--color-fg-default)' }}>MONGODB_URI = mongodb+srv://user:pass@cluster.mongodb.net/codehalaam</code>
+                  </li>
+                  <li>Redeploy (push to <code className="px-1 rounded" style={{ backgroundColor: 'var(--color-canvas-default)' }}>main</code> or click “Redeploy” in Vercel)</li>
+                </ol>
               </div>
+
+              {/* Option 2: Other options */}
+              <div className="p-3 rounded-md" style={{ backgroundColor: 'var(--color-canvas-subtle)', border: '1px solid var(--color-border-default)' }}>
+                <h3 className="font-medium mb-1" style={{ color: 'var(--color-fg-default)' }}>Other MongoDB providers</h3>
+                <p style={{ color: 'var(--color-fg-muted)' }}>Any MongoDB-compatible URI works: <a href="https://www.mongodb.com/atlas" target="_blank" rel="noreferrer" style={{ color: 'var(--color-accent-fg)' }}>MongoDB Atlas</a>, <a href="https://www.mongodb.com/docs/atlas/app-services/" target="_blank" rel="noreferrer" style={{ color: 'var(--color-accent-fg)' }}>Atlas App Services</a>, or a self-hosted MongoDB. Set the <code className="px-1 rounded" style={{ backgroundColor: 'var(--color-canvas-default)' }}>MONGODB_URI</code> env var.</p>
+                <p className="mt-2" style={{ color: 'var(--color-fg-muted)' }}>
+                  <strong>Note:</strong> Supabase uses PostgreSQL, not MongoDB. CODEHALAAM requires MongoDB. A Postgres adapter is not yet available.
+                </p>
+              </div>
+
+              {/* Other env vars */}
               <div>
-                <h3 className="font-medium mb-1" style={{ color: 'var(--color-fg-default)' }}>Option 2: Supabase (Postgres)</h3>
-                <p style={{ color: 'var(--color-fg-muted)' }}>Not yet supported — MongoDB is required.</p>
+                <h3 className="font-medium mb-1" style={{ color: 'var(--color-fg-default)' }}>Other required env vars</h3>
+                <pre className="block px-2 py-2 rounded text-xs" style={{ backgroundColor: 'var(--color-canvas-subtle)', color: 'var(--color-fg-default)' }}>{`JWT_SECRET = (any long random string)
+CLIENT_URL = https://your-app.vercel.app
+NODE_ENV = production`}</pre>
               </div>
             </div>
 
-            <button onClick={runChecks} className="btn btn-primary w-full py-2 mt-6">Retry connection</button>
+            <button onClick={runChecks} className="btn btn-primary w-full py-2 mt-6">I've set the env vars — retry</button>
           </div>
         </motion.div>
       </div>

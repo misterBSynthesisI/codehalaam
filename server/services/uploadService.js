@@ -85,22 +85,39 @@ function sanitizeFilename(filename) {
 const USE_BLOB = !!process.env.BLOB_READ_WRITE_TOKEN
 
 let blob = null
-if (USE_BLOB) {
+// We load @vercel/blob lazily (not at module top-level) to avoid
+// top-level await issues on Vercel cold starts and to prevent a missing
+// package from crashing the entire function.
+async function getBlob() {
+  if (blob) return blob
   try {
-    blob = (await import('@vercel/blob')).put
+    const mod = await import('@vercel/blob')
+    blob = mod.put
+    return blob
   } catch {
-    console.warn('⚠️  @vercel/blob not installed but BLOB_READ_WRITE_TOKEN is set. Falling back to disk.')
+    console.warn('⚠️  @vercel/blob not installed. Falling back to disk.')
+    return null
   }
 }
 
-// Ensure local upload directories exist (used in dev fallback + avatars)
+// Ensure local upload directories exist (local dev only).
+// CRITICAL: This must NEVER throw on Vercel — the /var/task/ filesystem is
+// read-only and mkdirSync would crash the entire serverless function.
+// We wrap in try/catch and skip entirely when Blob is active.
 const uploadsBase = path.resolve(__dirname, '../uploads')
 const avatarDir = path.join(uploadsBase, 'avatars')
 const codexDir = path.join(uploadsBase, 'codexes')
 const projectsDir = path.join(uploadsBase, 'projects')
-fs.mkdirSync(avatarDir, { recursive: true })
-fs.mkdirSync(codexDir, { recursive: true })
-fs.mkdirSync(projectsDir, { recursive: true })
+if (!USE_BLOB) {
+  try {
+    fs.mkdirSync(avatarDir, { recursive: true })
+    fs.mkdirSync(codexDir, { recursive: true })
+    fs.mkdirSync(projectsDir, { recursive: true })
+  } catch {
+    // Filesystem may not be writable (e.g. some CI environments).
+    // In that case, uploads won't work locally — but the module won't crash.
+  }
+}
 
 // ─── Memory storage for Blob uploads; disk for local dev ────────────────
 // Memory storage is used when Blob is active so we can stream the buffer
@@ -153,13 +170,14 @@ export const uploadProjectFile = multer({
  * @returns {Promise<string>} public URL
  */
 export async function uploadToBlob(file, folder = 'uploads') {
-  if (!blob) throw new Error('Vercel Blob is not configured (BLOB_READ_WRITE_TOKEN missing)')
+  const put = await getBlob()
+  if (!put) throw new Error('Vercel Blob is not configured (BLOB_READ_WRITE_TOKEN missing or @vercel/blob not installed)')
   if (!file.buffer) throw new Error('File buffer is empty — memory storage required for Blob uploads')
 
   const ext = path.extname(file.originalname).toLowerCase()
   const pathname = `${folder}/${Date.now()}-${crypto.randomBytes(8).toString('hex')}${ext}`
 
-  const result = await blob(pathname, file.buffer, {
+  const result = await put(pathname, file.buffer, {
     access: 'public',
     addRandomSuffix: false,
     contentType: file.mimetype || 'application/octet-stream',

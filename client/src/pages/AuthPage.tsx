@@ -20,7 +20,7 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
-import { Zap, Settings } from 'lucide-react'
+import { Zap } from 'lucide-react'
 
 type AuthMode = 'login' | 'signup'
 
@@ -156,13 +156,7 @@ export function AuthPage() {
           )}
         </p>
 
-        {mode === 'login' && (
-          <p className="text-center text-xs mt-3" style={{ color: 'var(--color-fg-muted)' }}>
-            <button onClick={() => navigate('/setup')} className="hover:underline inline-flex items-center gap-1" style={{ color: 'var(--color-accent-fg)' }}>
-              <Settings className="w-3 h-3" /> First-time setup
-            </button>
-          </p>
-        )}
+
       </motion.div>
     </div>
   )

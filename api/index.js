@@ -54,6 +54,7 @@ import notificationRoutes from '../server/routes/notifications.js'
 import codexRoutes from '../server/routes/codexes.js'
 import setupRoutes from '../server/routes/setup.js'
 import settingsRoutes from '../server/routes/settings.js'
+import forumRoutes from '../server/routes/forum.js'
 
 dotenv.config()
 
@@ -118,6 +119,7 @@ app.use('/api/notifications', notificationRoutes)
 app.use('/api/codexes', codexRoutes)
 app.use('/api/setup', setupRoutes)
 app.use('/api/settings', settingsRoutes)
+app.use('/api/forum', forumRoutes)
 
 // Git Smart HTTP routes
 app.all(/^\/([^/]+)\/([^/]+)\.git\/(.*)$/, gitRoutes)

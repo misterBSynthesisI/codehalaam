@@ -42,6 +42,9 @@ import { AdminRoute } from '@/components/auth/AdminRoute'
 import { SetupPage } from '@/pages/SetupPage'
 import { AdminSettingsPage } from '@/pages/AdminSettingsPage'
 import { NotFoundPage, ServerErrorPage } from '@/pages/ErrorPage'
+import { ForumPage, ForumPostPage } from '@/pages/ForumPage'
+import { DocsPage } from '@/pages/DocsPage'
+import { ChangelogPage } from '@/pages/ChangelogPage'
 import { useSiteSettings } from '@/hooks/useSiteSettings'
 
 function RepoRedirect() {
@@ -75,6 +78,10 @@ function AppRoutes() {
       <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
       <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
       <Route path="/setup" element={<SetupPage />} />
+      <Route path="/forum" element={<ForumPage />} />
+      <Route path="/forum/:id" element={<ForumPostPage />} />
+      <Route path="/docs" element={<DocsPage />} />
+      <Route path="/changelog" element={<ChangelogPage />} />
 
       <Route path="/dashboard" element={
         <ProtectedRoute>

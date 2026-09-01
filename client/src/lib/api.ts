@@ -130,6 +130,49 @@ class ApiClient {
     return this.request<{ activity: any[] }>('/admin/activity')
   }
 
+  // Forum
+  async getForumPosts(params?: { sort?: string; tag?: string; search?: string; page?: number }) {
+    const query = new URLSearchParams(params as any).toString()
+    return this.request<{ posts: any[]; total: number; page: number; pages: number }>(`/forum?${query}`)
+  }
+
+  async getForumPost(id: string) {
+    return this.request<{ post: any }>(`/forum/${id}`)
+  }
+
+  async createForumPost(data: { title: string; body: string; tags?: string[] }) {
+    return this.request<{ post: any }>('/forum', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async addForumAnswer(postId: string, body: string) {
+    return this.request<{ answer: any }>(`/forum/${postId}/answer`, {
+      method: 'POST',
+      body: JSON.stringify({ body }),
+    })
+  }
+
+  async voteForumPost(postId: string, direction: 'up' | 'down') {
+    return this.request<{ score: number; upvotes: number; downvotes: number; userVote: string | null }>(
+      `/forum/${postId}/vote`,
+      { method: 'POST', body: JSON.stringify({ direction }) }
+    )
+  }
+
+  async acceptForumAnswer(postId: string, answerId: string) {
+    return this.request<{ post: any }>(`/forum/${postId}/answer/${answerId}/accept`, {
+      method: 'POST',
+    })
+  }
+
+  async deleteForumPost(postId: string) {
+    return this.request<{ message: string }>(`/forum/${postId}`, {
+      method: 'DELETE',
+    })
+  }
+
   // Setup (first-run)
   async getSetupStatus() {
     return this.request<{ needsSetup: boolean; userCount: number; message: string }>('/setup/status')
