@@ -22,7 +22,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronRight, GitFork, FileCode2, GitPullRequest,
   AlertCircle, Eye, GitBranch, BookOpen, Users, Flame, Radio,
-  Plus, Tag, ExternalLink, Settings, X, Upload, Globe, Lock
+  Plus, Tag, ExternalLink, Settings, X, Upload, Globe, Lock,
+  File, Folder, FolderOpen, ChevronDown
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -202,6 +203,65 @@ function CustomizeModal({ repo, owner, onSave, onClose }: { repo: any; owner: st
   )
 }
 
+/* ===== FILE TREE PREVIEW NODE ===== */
+function FileTreePreviewNode({ node, owner, name, depth = 0 }: { node: any; owner: string; name: string; depth?: number }) {
+  const [expanded, setExpanded] = useState(depth < 1)
+  const isFolder = node.type === 'folder' || node.children
+
+  return (
+    <div>
+      <div
+        onClick={() => isFolder && setExpanded(!expanded)}
+        className="file-row"
+        style={{ paddingLeft: `${depth * 16 + 16}px`, cursor: isFolder ? 'pointer' : 'default' }}
+      >
+        {isFolder ? (
+          <>
+            <ChevronDown
+              className="w-3 h-3 shrink-0"
+              strokeWidth={1.5}
+              style={{ color: 'var(--color-fg-subtle)', transform: expanded ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.15s' }}
+            />
+            {expanded ? (
+              <FolderOpen className="w-4 h-4 shrink-0" strokeWidth={1.5} style={{ color: 'var(--color-accent-fg)' }} />
+            ) : (
+              <Folder className="w-4 h-4 shrink-0" strokeWidth={1.5} style={{ color: 'var(--color-accent-fg)' }} />
+            )}
+          </>
+        ) : (
+          <>
+            <span className="w-3 h-3 shrink-0" />
+            <File className="w-4 h-4 shrink-0" strokeWidth={1.5} style={{ color: 'var(--color-fg-subtle)' }} />
+          </>
+        )}
+        {isFolder ? (
+          <span className="file-name" style={{ fontWeight: 500 }}>{node.name}</span>
+        ) : (
+          <Link
+            to={`/codex/${owner}/${name}/code?path=${encodeURIComponent(node.path || node.name)}`}
+            className="file-name no-underline"
+            style={{ textDecoration: 'none' }}
+          >
+            {node.name}
+          </Link>
+        )}
+      </div>
+      {isFolder && expanded && node.children && (
+        <div>
+          {node.children.slice(0, 6).map((child: any) => (
+            <FileTreePreviewNode key={child.name} node={child} owner={owner} name={name} depth={depth + 1} />
+          ))}
+          {node.children.length > 6 && (
+            <div className="text-xs py-1" style={{ paddingLeft: `${(depth + 1) * 16 + 16}px`, color: 'var(--color-fg-muted)' }}>
+              ... {node.children.length - 6} more items
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* ===== CODEX HOME PAGE ===== */
 export function CodexHomePage() {
   const { owner: ownerParam, name } = useParams()
@@ -231,6 +291,7 @@ export function CodexHomePage() {
   const [releases, setReleases] = useState<any[]>([])
   const [paths, setPaths] = useState<any[]>([])
   const [collaborators, setCollaborators] = useState<any[]>([])
+  const [fileTree, setFileTree] = useState<any[]>([])
 
   useEffect(() => {
     if (!owner || !name) return
@@ -263,6 +324,7 @@ export function CodexHomePage() {
     api.getReleases(owner, name).then(d => setReleases(d.releases?.slice(0, 3) || [])).catch(() => {})
     api.getPaths(owner, name).then(d => setPaths(d.paths || [])).catch(() => {})
     api.getCodexCollaborators(owner, name).then(d => setCollaborators(d.collaborators || [])).catch(() => {})
+    api.getCodexTree(owner, name).then(d => setFileTree(d.tree || [])).catch(() => {})
   }, [owner, name])
 
   const handleToggleEmber = useCallback(async () => {
@@ -311,103 +373,112 @@ export function CodexHomePage() {
   return (
     <div style={{ backgroundColor: 'var(--color-canvas-default)', minHeight: '100vh' }}>
       {/* ===== HERO SECTION ===== */}
-      <div className="relative" style={{ minHeight: 260 }}>
+      <div className="relative" style={{ minHeight: 200 }}>
         {/* Cover image or gradient */}
         {repo.coverUrl ? (
           <div className="absolute inset-0">
             <img src={repo.coverUrl} alt="" className="w-full h-full object-cover" />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 40%, var(--color-canvas-default))' }} />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 30%, var(--color-canvas-default) 100%)' }} />
           </div>
         ) : (
           <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${accent}22 0%, ${accent}08 50%, transparent 100%)` }}>
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 60%, var(--color-canvas-default))' }} />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 50%, var(--color-canvas-default) 100%)' }} />
           </div>
         )}
 
-        <div className="relative container-lg pt-6 pb-4">
-          <div className="flex items-end gap-4">
-            {/* Logo */}
-            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
-              className="shrink-0 w-24 h-24 rounded-xl flex items-center justify-center text-3xl font-bold shadow-lg"
-              style={{ border: `3px solid var(--color-canvas-default)`, backgroundColor: repo.logoUrl ? 'transparent' : accent + '22', color: accent }}>
-              {repo.logoUrl ? <img src={repo.logoUrl} alt={repo.name} className="w-full h-full rounded-xl object-cover" /> : repo.name?.charAt(0).toUpperCase()}
-            </motion.div>
+        {/* Customize button (owner only) — top right */}
+        {isOwner && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="absolute top-3 right-3 md:top-4 md:right-4 z-10">
+            <button onClick={() => setShowCustomize(true)} className="btn btn-sm btn-default">
+              <Settings className="w-3.5 h-3.5" strokeWidth={1.5} /> <span className="hidden sm:inline">Customize</span>
+            </button>
+          </motion.div>
+        )}
 
-            {/* Title block */}
-            <div className="flex-1 min-w-0 pb-1">
-              <motion.h1 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', bounce: 0, duration: 0.4, delay: 0.05 }}
-                className="text-3xl font-bold tracking-tight" style={{ color: 'var(--color-fg-default)', letterSpacing: '-0.02em' }}>
-                {repo.name}
-              </motion.h1>
-              {repo.tagline && (
-                <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="text-sm mt-1" style={{ color: 'var(--color-fg-muted)' }}>
-                  {repo.tagline}
-                </motion.p>
-              )}
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }} className="flex items-center gap-2 mt-2 text-xs" style={{ color: 'var(--color-fg-muted)' }}>
-                <Link to={`/${owner}`} className="flex items-center gap-1.5 no-underline hover:underline" style={{ color: 'var(--color-accent-fg)' }}>
-                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium" style={{ backgroundColor: 'var(--color-success-muted)', color: 'var(--color-success-fg)' }}>{owner?.charAt(0).toUpperCase()}</span>
-                  {repo.owner?.displayName || owner}
-                </Link>
-                <VerificationBadge badgeColor={repo.owner?.badgeColor} size={14} />
-                <span className="Label Label-muted flex items-center gap-1" style={{ fontSize: 10 }}>{repo.visibility === 'private' && <Lock className="w-3 h-3" strokeWidth={2} />}{repo.visibility}</span>
-              </motion.div>
-            </div>
+        <div className="relative flex flex-col items-center pt-6 pb-4 px-4">
+          {/* Logo centered */}
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+            className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl flex items-center justify-center text-3xl font-bold shadow-lg"
+            style={{ border: `3px solid var(--color-canvas-default)`, backgroundColor: repo.logoUrl ? 'transparent' : accent + '22', color: accent }}>
+            {repo.logoUrl ? <img src={repo.logoUrl} alt={repo.name} className="w-full h-full rounded-xl object-cover" /> : repo.name?.charAt(0).toUpperCase()}
+          </motion.div>
 
-            {/* Action buttons with sticker badges */}
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="flex items-center gap-2 shrink-0 pb-1">
-              {user && (
-                <>
-                  {/* Watch button with sticker */}
-                  <motion.button whileTap={{ scale: 0.92 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                    onClick={handleToggleWatch} className="btn btn-sm btn-default relative">
-                    <Eye className="w-3.5 h-3.5" strokeWidth={1.5} /> Watch <span className="Counter">{watchersCount}</span>
-                    <AnimatePresence>
-                      {isWatching && (
-                        <motion.span initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={{ type: 'spring', bounce: 0.15, duration: 0.3 }}
-                          className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-accent-fg)', border: '1.5px solid var(--color-canvas-default)', zIndex: 10 }}>
-                          <Eye className="w-2.5 h-2.5" strokeWidth={2} style={{ color: '#fff' }} fill="currentColor" />
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
-                  </motion.button>
-                  {/* Echo button with sticker */}
-                  <motion.button whileTap={{ scale: 0.92 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                    onClick={handleToggleEcho} className="btn btn-sm btn-default relative">
-                    <Radio className="w-3.5 h-3.5" strokeWidth={1.5} /> Echo <span className="Counter">{echoesCount}</span>
-                    <AnimatePresence>
-                      {hasEchoed && (
-                        <motion.span initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={{ type: 'spring', bounce: 0.15, duration: 0.3 }}
-                          className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-done-fg)', border: '1.5px solid var(--color-canvas-default)', zIndex: 10 }}>
-                          <Radio className="w-2.5 h-2.5" strokeWidth={2} style={{ color: '#fff' }} fill="currentColor" />
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
-                  </motion.button>
-                  {/* Ember button with sticker */}
-                  <motion.button whileTap={{ scale: 0.92 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                    onClick={handleToggleEmber} className="btn btn-sm btn-default relative">
-                    <Flame className="w-3.5 h-3.5" strokeWidth={1.5} /> Ember <span className="Counter">{embersCount}</span>
-                    <AnimatePresence>
-                      {isEmbered && (
-                        <motion.span initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={{ type: 'spring', bounce: 0.15, duration: 0.3 }}
-                          className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: '#f97316', border: '1.5px solid var(--color-canvas-default)', zIndex: 10 }}>
-                          <Flame className="w-2.5 h-2.5" strokeWidth={2} style={{ color: '#fff' }} fill="currentColor" />
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
-                  </motion.button>
-                </>
-              )}
-              <button onClick={() => navigate(`/codex/${owner}/${name}/code`)} className="btn btn-sm btn-primary">
-                <FileCode2 className="w-4 h-4" strokeWidth={1.5} /> Code
-              </button>
-            </motion.div>
-          </div>
+          {/* Project name */}
+          <motion.h1 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', bounce: 0, duration: 0.4, delay: 0.05 }}
+            className="text-2xl sm:text-3xl font-bold tracking-tight mt-3 text-center" style={{ color: 'var(--color-fg-default)', letterSpacing: '-0.02em' }}>
+            {repo.name}
+          </motion.h1>
 
-          {/* Technology badges */}
+          {/* Tagline */}
+          {repo.tagline && (
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="text-sm mt-1 text-center max-w-md" style={{ color: 'var(--color-fg-muted)' }}>
+              {repo.tagline}
+            </motion.p>
+          )}
+
+          {/* Owner info */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }} className="flex items-center gap-2 mt-2 text-xs" style={{ color: 'var(--color-fg-muted)' }}>
+            <Link to={`/${owner}`} className="flex items-center gap-1.5 no-underline hover:underline" style={{ color: 'var(--color-accent-fg)' }}>
+              <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium" style={{ backgroundColor: 'var(--color-success-muted)', color: 'var(--color-success-fg)' }}>{owner?.charAt(0).toUpperCase()}</span>
+              {repo.owner?.displayName || owner}
+            </Link>
+            <VerificationBadge badgeColor={repo.owner?.badgeColor} size={14} />
+            <span className="Label Label-muted flex items-center gap-1" style={{ fontSize: 10 }}>{repo.visibility === 'private' && <Lock className="w-3 h-3" strokeWidth={2} />}{repo.visibility}</span>
+          </motion.div>
+
+          {/* Action buttons — centered, wrapping on mobile */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} className="flex flex-wrap items-center justify-center gap-2 mt-3">
+            {user && (
+              <>
+                {/* Watch button with sticker */}
+                <motion.button whileTap={{ scale: 0.92 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                  onClick={handleToggleWatch} className="btn btn-sm btn-default relative">
+                  <Eye className="w-3.5 h-3.5" strokeWidth={1.5} /> Watch <span className="Counter">{watchersCount}</span>
+                  <AnimatePresence>
+                    {isWatching && (
+                      <motion.span initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={{ type: 'spring', bounce: 0.15, duration: 0.3 }}
+                        className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-accent-fg)', border: '1.5px solid var(--color-canvas-default)', zIndex: 10 }}>
+                        <Eye className="w-2.5 h-2.5" strokeWidth={2} style={{ color: '#fff' }} fill="currentColor" />
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </motion.button>
+                {/* Echo button with sticker */}
+                <motion.button whileTap={{ scale: 0.92 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                  onClick={handleToggleEcho} className="btn btn-sm btn-default relative">
+                  <Radio className="w-3.5 h-3.5" strokeWidth={1.5} /> Echo <span className="Counter">{echoesCount}</span>
+                  <AnimatePresence>
+                    {hasEchoed && (
+                      <motion.span initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={{ type: 'spring', bounce: 0.15, duration: 0.3 }}
+                        className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-done-fg)', border: '1.5px solid var(--color-canvas-default)', zIndex: 10 }}>
+                        <Radio className="w-2.5 h-2.5" strokeWidth={2} style={{ color: '#fff' }} fill="currentColor" />
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </motion.button>
+                {/* Ember button with sticker */}
+                <motion.button whileTap={{ scale: 0.92 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                  onClick={handleToggleEmber} className="btn btn-sm btn-default relative">
+                  <Flame className="w-3.5 h-3.5" strokeWidth={1.5} /> Ember <span className="Counter">{embersCount}</span>
+                  <AnimatePresence>
+                    {isEmbered && (
+                      <motion.span initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0, opacity: 0 }} transition={{ type: 'spring', bounce: 0.15, duration: 0.3 }}
+                        className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center" style={{ backgroundColor: '#f97316', border: '1.5px solid var(--color-canvas-default)', zIndex: 10 }}>
+                        <Flame className="w-2.5 h-2.5" strokeWidth={2} style={{ color: '#fff' }} fill="currentColor" />
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </motion.button>
+              </>
+            )}
+            <button onClick={() => navigate(`/codex/${owner}/${name}/code`)} className="btn btn-sm btn-primary">
+              <FileCode2 className="w-4 h-4" strokeWidth={1.5} /> Code
+            </button>
+          </motion.div>
+
+          {/* Technology badges — centered */}
           {(repo.technologies?.length > 0 || isOwner) && (
-            <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="flex flex-wrap gap-1.5 mt-4">
+            <motion.div initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} className="flex flex-wrap items-center justify-center gap-1.5 mt-3">
               {repo.technologies?.map((t: string) => (
                 <span key={t} className="px-2.5 py-1 rounded-full text-xs font-medium transition-all hover:scale-105" style={{ backgroundColor: 'var(--color-canvas-subtle)', border: '1px solid var(--color-border-default)', color: 'var(--color-fg-default)' }}>
                   {t}
@@ -420,15 +491,6 @@ export function CodexHomePage() {
               )}
             </motion.div>
           )}
-
-          {/* Customize button (owner only) */}
-          {isOwner && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="absolute top-4 right-4">
-              <button onClick={() => setShowCustomize(true)} className="btn btn-sm btn-default">
-                <Settings className="w-3.5 h-3.5" strokeWidth={1.5} /> Customize
-              </button>
-            </motion.div>
-          )}
         </div>
       </div>
 
@@ -436,6 +498,31 @@ export function CodexHomePage() {
       <div className="container-lg py-4">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_296px] gap-6">
           <div>
+            {/* File Tree Preview */}
+            {fileTree.length > 0 && (
+              <div className="Box mb-6">
+                <div className="Box-header flex items-center justify-between" style={{ backgroundColor: 'var(--color-canvas-subtle)' }}>
+                  <span className="flex items-center gap-2 text-sm font-semibold" style={{ color: 'var(--color-fg-default)' }}>
+                    <Folder className="w-4 h-4" strokeWidth={1.5} style={{ color: 'var(--color-accent-fg)' }} />
+                    Files
+                  </span>
+                  <button onClick={() => navigate(`/codex/${owner}/${name}/code`)} className="text-xs flex items-center gap-1 hover:underline" style={{ color: 'var(--color-accent-fg)' }}>
+                    Browse code <ExternalLink className="w-3 h-3" strokeWidth={1.5} />
+                  </button>
+                </div>
+                <div>
+                  {fileTree.slice(0, 8).map((node: any) => (
+                    <FileTreePreviewNode key={node.name} node={node} owner={owner} name={name || ''} depth={0} />
+                  ))}
+                  {fileTree.length > 8 && (
+                    <div className="px-4 py-2 text-xs" style={{ color: 'var(--color-fg-muted)' }}>
+                      ... and {fileTree.length - 8} more items
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* README */}
             <div className="Box mb-6">
               <div className="Box-header flex items-center gap-2" style={{ backgroundColor: 'var(--color-canvas-subtle)' }}>
