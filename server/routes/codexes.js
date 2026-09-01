@@ -30,7 +30,7 @@ import Commit from '../models/Commit.js'
 import { protect, optionalAuth } from '../middleware/auth.js'
 import { canViewCodex, canEditCodex, canDeleteCodex, canManageCollaborators } from '../utils/permissions.js'
 import * as gitService from '../services/gitService.js'
-import { uploadCodexMedia } from '../services/uploadService.js'
+import { uploadCodexMedia, uploadProjectFile, resolveUploadUrl, MAX_FILE_SIZE } from '../services/uploadService.js'
 
 const router = express.Router()
 
@@ -288,7 +288,7 @@ router.post('/:owner/:name/media', protect, uploadCodexMedia.single('file'), asy
     }
 
     const fieldType = req.body.field || 'cover' // 'cover' or 'logo'
-    const fileUrl = `/uploads/codexes/${req.file.filename}`
+    const fileUrl = await resolveUploadUrl(req.file, 'codexes', `/uploads/codexes/${req.file.filename}`)
 
     if (fieldType === 'logo') {
       repo.logoUrl = fileUrl
@@ -301,6 +301,40 @@ router.post('/:owner/:name/media', protect, uploadCodexMedia.single('file'), asy
   } catch (err) {
     console.error('Upload error:', err)
     res.status(500).json({ error: 'Failed to upload file' })
+  }
+})
+
+// POST /api/codexes/:owner/:name/upload — Upload a project file (up to 30 MB)
+// Accepts a single file upload (form-data, field name 'file').
+// Stored in Vercel Blob (production) or local disk (dev).
+router.post('/:owner/:name/upload', protect, uploadProjectFile.single('file'), async (req, res) => {
+  try {
+    const { owner, repo, error, status } = await findCodex(req.params.owner, req.params.name)
+    if (error) return res.status(status).json({ error })
+
+    if (!(await canEditCodex(req.user, repo))) {
+      return res.status(403).json({ error: 'Only the owner or admin collaborator can upload files' })
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' })
+    }
+
+    const fileUrl = await resolveUploadUrl(req.file, 'projects', `/uploads/projects/${req.file.filename}`)
+
+    res.status(201).json({
+      url: fileUrl,
+      filename: req.file.originalname,
+      size: req.file.size,
+      maxSize: MAX_FILE_SIZE,
+    })
+  } catch (err) {
+    console.error('Project upload error:', err)
+    // Multer file-size errors land here with a specific message.
+    if (err && err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({ error: `File too large. Max size is ${MAX_FILE_SIZE / (1024 * 1024)} MB.` })
+    }
+    res.status(500).json({ error: 'Failed to upload project file' })
   }
 })
 

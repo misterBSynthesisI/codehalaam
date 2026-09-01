@@ -75,6 +75,36 @@ class ApiClient {
     return data
   }
 
+  // Setup (first-run)
+  async getSetupStatus() {
+    return this.request<{ needsSetup: boolean; userCount: number; message: string }>('/setup/status')
+  }
+
+  async createAdmin(username: string, email: string, password: string) {
+    const data = await this.request<{ user: any; token: string; message: string }>(
+      '/setup/admin',
+      { method: 'POST', body: JSON.stringify({ username, email, password }) }
+    )
+    this.setToken(data.token)
+    return data
+  }
+
+  // Project file upload (up to 30 MB)
+  async uploadProjectFile(owner: string, name: string, file: File) {
+    const formData = new FormData()
+    formData.append('file', file)
+    const headers: Record<string, string> = {}
+    if (this.token) headers['Authorization'] = `Bearer ${this.token}`
+    const res = await fetch(`${API_BASE}/codexes/${owner}/${name}/upload`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Upload failed')
+    return data as { url: string; filename: string; size: number; maxSize: number }
+  }
+
   // Auth
   async signup(username: string, email: string, password: string) {
     const data = await this.request<{ user: any; token: string; message: string }>(

@@ -20,7 +20,7 @@ import express from 'express'
 import mongoose from 'mongoose'
 import User from '../models/User.js'
 import { generateToken, protect } from '../middleware/auth.js'
-import { uploadAvatar } from '../services/uploadService.js'
+import { uploadAvatar, resolveUploadUrl } from '../services/uploadService.js'
 
 const router = express.Router()
 
@@ -70,7 +70,7 @@ router.post('/signup', requireDB, async (req, res) => {
     user.contributionDays = contributionDays
     await user.save()
 
-    const token = generateToken(user._id)
+    const token = generateToken(user._id, { isAdmin: !!user.isAdmin })
 
     res.status(201).json({
       message: `Welcome to CODEHALAAM, ${username}`,
@@ -105,7 +105,8 @@ router.post('/login', requireDB, async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' })
     }
 
-    const token = generateToken(user._id)
+    // Admin sessions are short-lived (2d); regular users get 30d.
+    const token = generateToken(user._id, { isAdmin: !!user.isAdmin })
 
     res.json({
       message: `Signed in as ${user.username}`,
@@ -197,7 +198,7 @@ router.post('/avatar', protect, uploadAvatar.single('avatar'), async (req, res) 
       return res.status(400).json({ error: 'No file uploaded' })
     }
 
-    const avatarUrl = `/uploads/avatars/${req.file.filename}`
+    const avatarUrl = await resolveUploadUrl(req.file, 'avatars', `/uploads/avatars/${req.file.filename}`)
     const user = await User.findByIdAndUpdate(
       req.user._id,
       { avatarUrl },
@@ -243,7 +244,7 @@ router.post('/cover', protect, uploadAvatar.single('cover'), async (req, res) =>
       return res.status(400).json({ error: 'No file uploaded' })
     }
 
-    const coverUrl = `/uploads/avatars/${req.file.filename}`
+    const coverUrl = await resolveUploadUrl(req.file, 'avatars', `/uploads/avatars/${req.file.filename}`)
     const user = await User.findByIdAndUpdate(
       req.user._id,
       { coverUrl },

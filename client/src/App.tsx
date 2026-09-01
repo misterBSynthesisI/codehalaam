@@ -39,6 +39,7 @@ import { CreateRepoPage } from '@/pages/CreateRepoPage'
 import { AdminPage } from '@/pages/AdminPage'
 import { AdminBadgesPage } from '@/pages/AdminBadgesPage'
 import { AdminRoute } from '@/components/auth/AdminRoute'
+import { SetupPage } from '@/pages/SetupPage'
 
 function RepoRedirect() {
   const { username, repoName } = useParams()
@@ -70,6 +71,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
       <Route path="/auth" element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
+      <Route path="/setup" element={<SetupPage />} />
 
       <Route path="/dashboard" element={
         <ProtectedRoute>

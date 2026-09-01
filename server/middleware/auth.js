@@ -38,14 +38,20 @@ export const protect = async (req, res, next) => {
       return res.status(401).json({ error: 'Not authorized — user not found' })
     }
 
+    // Block disabled / deactivated accounts
+    if (req.user.isActive === false) {
+      return res.status(403).json({ error: 'Account is deactivated' })
+    }
+
     next()
   } catch (err) {
     return res.status(401).json({ error: 'Not authorized — token invalid' })
   }
 }
 
-export const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '30d' })
+export const generateToken = (userId, options = {}) => {
+  const expiresIn = options.isAdmin ? '2d' : '30d'
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn })
 }
 
 // Optional auth — populates req.user if token present, but does NOT require it
@@ -63,10 +69,32 @@ export const optionalAuth = async (req, res, next) => {
   next()
 }
 
+/**
+ * requireAdmin — checks that the authenticated user is an admin.
+ * Also enforces a short-lived admin session by re-verifying the token
+ * has not exceeded the admin max-age. MUST run after protect.
+ */
 export const requireAdmin = (req, res, next) => {
   if (!req.user || !req.user.isAdmin) {
     return res.status(403).json({ error: 'Forbidden: Admin access required' })
   }
+
+  // Enforce admin token freshness: admin tokens expire in 2d.
+  // We re-verify the token's decoded iat to ensure it was issued recently.
+  let token
+  if (req.headers.authorization?.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1]
+  }
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    const ageMs = Date.now() - (decoded.iat * 1000)
+    const maxAgeMs = 2 * 24 * 60 * 60 * 1000 // 2 days
+    if (ageMs > maxAgeMs) {
+      return res.status(401).json({ error: 'Admin session expired. Please sign in again.' })
+    }
+  } catch {
+    return res.status(401).json({ error: 'Admin token invalid' })
+  }
+
   next()
 }
-

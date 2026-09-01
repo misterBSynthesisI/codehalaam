@@ -85,6 +85,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
+  // First-run detection: if no token AND the DB has no users, redirect to /setup.
+  // This only runs once on mount.
+  useEffect(() => {
+    const token = localStorage.getItem('codehalaam_token')
+    if (token) return // logged in — no setup needed
+
+    let cancelled = false
+    api.getSetupStatus().then(({ needsSetup }) => {
+      if (cancelled) return
+      if (needsSetup && window.location.pathname !== '/setup') {
+        window.location.href = '/setup'
+      }
+    }).catch(() => {
+      // API unreachable — let normal auth flow handle it
+    })
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   useEffect(() => {
     refreshUser()
 

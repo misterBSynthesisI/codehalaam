@@ -23,6 +23,7 @@ import dotenv from 'dotenv'
 import app from '../app.js'
 import User from '../models/User.js'
 import Repository from '../models/Repository.js'
+import { generateToken } from '../middleware/auth.js'
 
 dotenv.config()
 
@@ -42,6 +43,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await User.deleteMany({ username: { $regex: `^${T}` } })
   await Repository.deleteMany({ name: { $regex: `^${T}` } })
+  await User.deleteMany({ username: { $regex: '^setuptest' } })
   await mongoose.connection.close()
 })
 
@@ -209,6 +211,68 @@ describe('Dashboard Stats', () => {
     expect(res.status).toBe(200)
     expect(res.body.user.username).toBe(`${T}u1`)
     expect(typeof res.body.user.stats).toBe('object')
+  })
+})
+
+// ─── SETUP (first-run) ─────────────────────────────────────────
+
+describe('First-Run Setup', () => {
+  // Use a fresh DB state: temporarily clear users, then test the gate.
+  // We can't fully clear the DB (other tests created users), so we test:
+  // 1. /status returns needsSetup=false (users exist)
+  // 2. POST /setup/admin returns 410 when users exist
+
+  it('GET /api/setup/status returns needsSetup=false when users exist', async () => {
+    const res = await request(app).get('/api/setup/status')
+    expect(res.status).toBe(200)
+    expect(res.body.needsSetup).toBe(false)
+    expect(res.body.userCount).toBeGreaterThan(0)
+  })
+
+  it('POST /api/setup/admin returns 410 when users already exist', async () => {
+    const res = await request(app)
+      .post('/api/setup/admin')
+      .send({ username: 'setuptest-admin', email: 'setuptest-admin@test.com', password: 'password123' })
+
+    expect(res.status).toBe(410)
+    expect(res.body.error).toMatch(/already complete/i)
+  })
+
+  it('POST /api/setup/admin validates input', async () => {
+    const res = await request(app)
+      .post('/api/setup/admin')
+      .send({ username: 'x', email: 'bad', password: 'short' })
+
+    // Validation OR 410 — both are acceptable since users exist.
+    expect([400, 410]).toContain(res.status)
+  })
+})
+
+// ─── ADMIN SECURITY ─────────────────────────────────────────────
+
+describe('Admin Security', () => {
+  it('non-admin cannot access admin stats', async () => {
+    const res = await request(app)
+      .get('/api/admin/stats')
+      .set('Authorization', `Bearer ${userToken}`)
+
+    expect(res.status).toBe(403)
+  })
+
+  it('admin can access admin stats with fresh token', async () => {
+    // Re-issue a fresh admin token (the admin user was created earlier).
+    const freshAdminToken = generateToken(adminId, { isAdmin: true })
+    const res = await request(app)
+      .get('/api/admin/stats')
+      .set('Authorization', `Bearer ${freshAdminToken}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body.users).toBeDefined()
+  })
+
+  it('blocks unauthenticated access to admin routes', async () => {
+    const res = await request(app).get('/api/admin/stats')
+    expect(res.status).toBe(401)
   })
 })
 

@@ -20,7 +20,7 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
-import { Zap } from 'lucide-react'
+import { Zap, Settings } from 'lucide-react'
 
 type AuthMode = 'login' | 'signup'
 
@@ -155,6 +155,14 @@ export function AuthPage() {
             <>New to CODEHALAAM? <button onClick={() => { setMode('signup'); setError(''); setEmail(''); setPassword(''); setUsername('') }} style={{ color: 'var(--color-accent-fg)' }} className="hover:underline">Create an account</button></>
           )}
         </p>
+
+        {mode === 'login' && (
+          <p className="text-center text-xs mt-3" style={{ color: 'var(--color-fg-muted)' }}>
+            <button onClick={() => navigate('/setup')} className="hover:underline inline-flex items-center gap-1" style={{ color: 'var(--color-accent-fg)' }}>
+              <Settings className="w-3 h-3" /> First-time setup
+            </button>
+          </p>
+        )}
       </motion.div>
     </div>
   )
