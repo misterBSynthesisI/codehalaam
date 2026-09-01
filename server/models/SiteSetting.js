@@ -80,11 +80,16 @@ const siteSettingSchema = new mongoose.Schema({
   },
 }, { timestamps: true })
 
-// Ensure only one document exists (upsert helper)
+// Ensure only one document exists (upsert — safe for concurrent cold starts)
 siteSettingSchema.statics.getSingleton = async function () {
   let settings = await this.findOne({ key: 'default' })
   if (!settings) {
-    settings = await this.create({ key: 'default' })
+    // Use upsert to avoid E11000 duplicate key on concurrent requests
+    settings = await this.findOneAndUpdate(
+      { key: 'default' },
+      { $setOnInsert: { key: 'default' } },
+      { upsert: true, new: true, runValidators: true }
+    )
   }
   return settings
 }

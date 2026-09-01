@@ -56,22 +56,25 @@ export function SetupPage() {
   async function runChecks() {
     setChecking(true)
     try {
-      // Health check
+      // 1. Try setup status FIRST — this is the real DB connectivity test.
+      //    If this works, the DB is connected regardless of what /api/health says.
       try {
-        const healthRes = await fetch('/api/health')
-        const health = await healthRes.json()
-        setChecks(prev => ({
-          ...prev,
-          dbReachable: health.database === 'connected',
-          dbConfigured: health.databaseConfigured !== false,
-        }))
+        const { needsSetup } = await api.getSetupStatus()
+        setChecks(prev => ({ ...prev, needsSetup, dbReachable: true }))
       } catch {
-        setChecks(prev => ({ ...prev, dbReachable: false, dbConfigured: false }))
+        // Setup status failed — try health as fallback to show a useful error
+        try {
+          const healthRes = await fetch('/api/health')
+          const health = await healthRes.json()
+          setChecks(prev => ({
+            ...prev,
+            dbReachable: health.database === 'connected',
+            dbConfigured: health.databaseConfigured !== false,
+          }))
+        } catch {
+          setChecks(prev => ({ ...prev, dbReachable: false, dbConfigured: false }))
+        }
       }
-
-      // Setup status
-      const { needsSetup } = await api.getSetupStatus()
-      setChecks(prev => ({ ...prev, needsSetup }))
     } catch {
       setChecks({ needsSetup: null, dbReachable: false, dbConfigured: false })
     } finally {
