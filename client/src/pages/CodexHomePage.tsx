@@ -23,14 +23,72 @@ import {
   ChevronRight, GitFork, FileCode2, GitPullRequest,
   AlertCircle, Eye, GitBranch, BookOpen, Users, Flame, Radio,
   Plus, Tag, ExternalLink, Settings, X, Upload, Globe, Lock,
-  File, Folder, FolderOpen, ChevronDown
+  File, Folder, FolderOpen, ChevronDown, FileText, FileImage,
+  FileJson, FileType, Code2, Terminal, Database, Settings2, Shield
 } from 'lucide-react'
+
+/* ===== FILE ICON HELPER ===== */
+function getFileIcon(name: string, isFolder: boolean) {
+  if (isFolder) return null // handled separately
+  const ext = name.split('.').pop()?.toLowerCase() || ''
+  const map: Record<string, { icon: any; color: string }> = {
+    // Code
+    js: { icon: Code2, color: '#f1e05a' },
+    jsx: { icon: Code2, color: '#61dafb' },
+    ts: { icon: Code2, color: '#3178c6' },
+    tsx: { icon: Code2, color: '#3178c6' },
+    py: { icon: Code2, color: '#3572a5' },
+    go: { icon: Code2, color: '#00add8' },
+    rs: { icon: Code2, color: '#dea584' },
+    java: { icon: Code2, color: '#b07219' },
+    rb: { icon: Code2, color: '#cc342d' },
+    php: { icon: Code2, color: '#4f5d95' },
+    c: { icon: Code2, color: '#555555' },
+    cpp: { icon: Code2, color: '#f34b7d' },
+    cs: { icon: Code2, color: '#178600' },
+    swift: { icon: Code2, color: '#f05138' },
+    kt: { icon: Code2, color: '#a97bff' },
+    // Web
+    html: { icon: FileCode2, color: '#e34c26' },
+    htm: { icon: FileCode2, color: '#e34c26' },
+    css: { icon: FileText, color: '#563d7c' },
+    scss: { icon: FileText, color: '#c6538c' },
+    // Config/Data
+    json: { icon: FileJson, color: '#f1e05a' },
+    yaml: { icon: Settings2, color: '#cb171e' },
+    yml: { icon: Settings2, color: '#cb171e' },
+    xml: { icon: FileText, color: '#0060ac' },
+    toml: { icon: Settings2, color: '#9c4221' },
+    env: { icon: Shield, color: '#ecd53f' },
+    // Docs
+    md: { icon: FileText, color: '#083fa1' },
+    txt: { icon: FileText, color: 'var(--color-fg-muted)' },
+    pdf: { icon: FileText, color: '#ff0000' },
+    // Images
+    png: { icon: FileImage, color: '#a855f7' },
+    jpg: { icon: FileImage, color: '#a855f7' },
+    jpeg: { icon: FileImage, color: '#a855f7' },
+    gif: { icon: FileImage, color: '#a855f7' },
+    svg: { icon: FileImage, color: '#ffb13b' },
+    webp: { icon: FileImage, color: '#a855f7' },
+    // Shell/Config
+    sh: { icon: Terminal, color: '#89e051' },
+    bash: { icon: Terminal, color: '#89e051' },
+    dockerfile: { icon: Database, color: '#2496ed' },
+    gitignore: { icon: Shield, color: '#f05033' },
+  }
+  // Check for Dockerfile (no extension)
+  if (name.toLowerCase() === 'dockerfile') return map.dockerfile
+  if (name.toLowerCase() === '.gitignore') return map.gitignore
+  return map[ext] || { icon: File, color: 'var(--color-fg-subtle)' }
+}
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { api } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { VerificationBadge } from '@/components/ui/UserBadge'
 import { PrivateCodexPage } from '@/pages/PrivateCodexPage'
+import { DemoLockButton } from '@/components/ui/DemoLockButton'
 
 /* ===== MARKDOWN COMPONENTS ===== */
 const markdownComponents: Record<string, any> = {
@@ -207,6 +265,8 @@ function CustomizeModal({ repo, owner, onSave, onClose }: { repo: any; owner: st
 function FileTreePreviewNode({ node, owner, name, depth = 0 }: { node: any; owner: string; name: string; depth?: number }) {
   const [expanded, setExpanded] = useState(depth < 1)
   const isFolder = node.type === 'folder' || node.children
+  const fileIcon = !isFolder ? getFileIcon(node.name, false) : null
+  const FileIcon = fileIcon?.icon || File
 
   return (
     <div>
@@ -231,7 +291,7 @@ function FileTreePreviewNode({ node, owner, name, depth = 0 }: { node: any; owne
         ) : (
           <>
             <span className="w-3 h-3 shrink-0" />
-            <File className="w-4 h-4 shrink-0" strokeWidth={1.5} style={{ color: 'var(--color-fg-subtle)' }} />
+            <FileIcon className="w-4 h-4 shrink-0" strokeWidth={1.5} style={{ color: fileIcon?.color || 'var(--color-fg-subtle)' }} />
           </>
         )}
         {isFolder ? (
@@ -377,11 +437,11 @@ export function CodexHomePage() {
         {/* Cover image or gradient */}
         {repo.coverUrl ? (
           <div className="absolute inset-0">
-            <img src={repo.coverUrl} alt="" className="w-full h-full object-cover" />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 30%, rgba(0,0,0,0.15) 60%, var(--color-canvas-default) 90%)' }} />
+            <img src={repo.coverUrl} alt="" className="w-full h-full object-cover" style={{ filter: 'brightness(0.7)' }} />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.7) 70%, var(--color-canvas-default) 95%)' }} />
           </div>
         ) : (
-          <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${accent}22 0%, ${accent}08 50%, transparent 100%)` }}>
+          <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${accent}33 0%, ${accent}11 50%, transparent 100%)` }}>
             <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 30%, var(--color-canvas-default) 80%)' }} />
           </div>
         )}
@@ -389,9 +449,15 @@ export function CodexHomePage() {
         {/* Customize button (owner only) — top right */}
         {isOwner && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} className="absolute top-3 right-3 md:top-4 md:right-4 z-10">
-            <button onClick={() => setShowCustomize(true)} className="btn btn-sm btn-default">
-              <Settings className="w-3.5 h-3.5" strokeWidth={1.5} /> <span className="hidden sm:inline">Customize</span>
-            </button>
+            {user?.demoMode ? (
+              <DemoLockButton className="btn btn-sm btn-default">
+                <Settings className="w-3.5 h-3.5" strokeWidth={1.5} /> <span className="hidden sm:inline">Customize</span>
+              </DemoLockButton>
+            ) : (
+              <button onClick={() => setShowCustomize(true)} className="btn btn-sm btn-default">
+                <Settings className="w-3.5 h-3.5" strokeWidth={1.5} /> <span className="hidden sm:inline">Customize</span>
+              </button>
+            )}
           </motion.div>
         )}          <div className="relative flex flex-col items-center pt-6 pb-4 px-4" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}>
           {/* Logo centered */}
@@ -403,19 +469,19 @@ export function CodexHomePage() {
 
           {/* Project name */}
           <motion.h1 initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', bounce: 0, duration: 0.4, delay: 0.05 }}
-            className="text-2xl sm:text-3xl font-bold tracking-tight mt-3 text-center" style={{ color: 'var(--color-fg-default)', letterSpacing: '-0.02em' }}>
+            className="text-2xl sm:text-3xl font-bold tracking-tight mt-3 text-center" style={{ color: '#ffffff', letterSpacing: '-0.02em', textShadow: '0 2px 8px rgba(0,0,0,0.8), 0 1px 3px rgba(0,0,0,0.6)' }}>
             {repo.name}
           </motion.h1>
 
           {/* Tagline */}
           {repo.tagline && (
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="text-sm mt-1 text-center max-w-md" style={{ color: 'var(--color-fg-muted)' }}>
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="text-sm mt-1 text-center max-w-md" style={{ color: 'rgba(255,255,255,0.85)', textShadow: '0 1px 4px rgba(0,0,0,0.8)' }}>
               {repo.tagline}
             </motion.p>
           )}
 
           {/* Owner info */}
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }} className="flex items-center gap-2 mt-2 text-xs" style={{ color: 'var(--color-fg-muted)' }}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }} className="flex items-center gap-2 mt-2 text-xs" style={{ color: 'rgba(255,255,255,0.8)', textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>
             <Link to={`/${owner}`} className="flex items-center gap-1.5 no-underline hover:underline" style={{ color: 'var(--color-accent-fg)' }}>
               <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium" style={{ backgroundColor: 'var(--color-success-muted)', color: 'var(--color-success-fg)' }}>{owner?.charAt(0).toUpperCase()}</span>
               {repo.owner?.displayName || owner}
@@ -429,6 +495,11 @@ export function CodexHomePage() {
             {user && (
               <>
                 {/* Watch button with sticker */}
+                {user.demoMode ? (
+                  <DemoLockButton className="btn btn-sm btn-default relative">
+                    <Eye className="w-3.5 h-3.5" strokeWidth={1.5} /> Watch <span className="Counter">{watchersCount}</span>
+                  </DemoLockButton>
+                ) : (
                 <motion.button whileTap={{ scale: 0.92 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                   onClick={handleToggleWatch} className="btn btn-sm btn-default relative">
                   <Eye className="w-3.5 h-3.5" strokeWidth={1.5} /> Watch <span className="Counter">{watchersCount}</span>
@@ -441,7 +512,13 @@ export function CodexHomePage() {
                     )}
                   </AnimatePresence>
                 </motion.button>
+                )}
                 {/* Echo button with sticker */}
+                {user.demoMode ? (
+                  <DemoLockButton className="btn btn-sm btn-default relative">
+                    <Radio className="w-3.5 h-3.5" strokeWidth={1.5} /> Echo <span className="Counter">{echoesCount}</span>
+                  </DemoLockButton>
+                ) : (
                 <motion.button whileTap={{ scale: 0.92 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                   onClick={handleToggleEcho} className="btn btn-sm btn-default relative">
                   <Radio className="w-3.5 h-3.5" strokeWidth={1.5} /> Echo <span className="Counter">{echoesCount}</span>
@@ -454,7 +531,13 @@ export function CodexHomePage() {
                     )}
                   </AnimatePresence>
                 </motion.button>
+                )}
                 {/* Ember button with sticker */}
+                {user.demoMode ? (
+                  <DemoLockButton className="btn btn-sm btn-default relative">
+                    <Flame className="w-3.5 h-3.5" strokeWidth={1.5} /> Ember <span className="Counter">{embersCount}</span>
+                  </DemoLockButton>
+                ) : (
                 <motion.button whileTap={{ scale: 0.92 }} transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                   onClick={handleToggleEmber} className="btn btn-sm btn-default relative">
                   <Flame className="w-3.5 h-3.5" strokeWidth={1.5} /> Ember <span className="Counter">{embersCount}</span>
@@ -467,6 +550,7 @@ export function CodexHomePage() {
                     )}
                   </AnimatePresence>
                 </motion.button>
+                )}
               </>
             )}
             <button onClick={() => navigate(`/codex/${owner}/${name}/code`)} className="btn btn-sm btn-primary">

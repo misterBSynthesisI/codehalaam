@@ -89,9 +89,11 @@ export function Navbar() {
           {siteSettings?.logoUrl ? (
             <img src={siteSettings.logoUrl} alt="Logo" className="h-7 w-auto object-contain" style={{ maxWidth: 120 }} />
           ) : (
-            <CodeLogo />
+            <>
+              <CodeLogo />
+              <span className="font-semibold text-base hidden sm:inline tracking-tight">{siteSettings?.siteName || 'CODEHALAAM'}</span>
+            </>
           )}
-          <span className="font-semibold text-base hidden sm:inline tracking-tight">{siteSettings?.siteName || 'CODEHALAAM'}</span>
         </Link>
 
         {/* Spacer */}
