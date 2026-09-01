@@ -84,12 +84,12 @@ app.use(express.urlencoded({ limit: '32mb', extended: true }))
  * CRITICAL: This must run after body parsing but BEFORE routes, so that
  * route handlers never see a disconnected DB and always return valid JSON.
  *
- * The /api/setup and /api/health endpoints are EXEMPT from the guard so
- * first-run setup works on a fresh (possibly schema-less) database.
+ * The /api/health endpoint is EXEMPT from the guard so the setup page
+ * can probe DB reachability before any route handler runs.
  */
 async function ensureDb(req, res, next) {
-  // Exempt health + setup so first-run flows work before DB is ready.
-  if (req.path === '/api/health' || req.path.startsWith('/api/setup')) {
+  // Exempt health so first-run flows can report status before DB is ready.
+  if (req.path === '/api/health') {
     return next()
   }
   try {
@@ -124,14 +124,20 @@ app.use('/api/forum', forumRoutes)
 // Git Smart HTTP routes
 app.all(/^\/([^/]+)\/([^/]+)\.git\/(.*)$/, gitRoutes)
 
-// Health check
-app.get('/api/health', (req, res) => {
+// Health check — actively tries to connect so cold-start reports correctly.
+app.get('/api/health', async (_req, res) => {
+  try {
+    await ensureConnected()
+  } catch {
+    // Connection failed — report degraded status below
+  }
   const dbConnected = mongoose.connection.readyState === 1
   const status = dbConnected ? 'ok' : 'degraded'
   const httpStatus = dbConnected ? 200 : 503
   res.status(httpStatus).json({
     status,
     database: dbConnected ? 'connected' : 'disconnected',
+    databaseConfigured: !!process.env.MONGODB_URI,
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
   })

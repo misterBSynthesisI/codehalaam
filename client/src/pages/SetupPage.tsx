@@ -93,11 +93,12 @@ export function SetupPage() {
       // Create admin
       const { user, token } = await api.createAdmin(username, email, password)
       api.setToken(token)
-      // Log the user in via context
-      login(email, password).catch(() => {
-        // If login fails, still navigate — token is set
-        navigate('/dashboard')
-      })
+      // Log the user in via context — must await so ProtectedRoute sees the user
+      try {
+        await login(email, password)
+      } catch {
+        // If login fails, token is already set — refreshUser will pick it up
+      }
       navigate('/dashboard')
     } catch (err: any) {
       setError(err.message || 'Failed to create admin account')

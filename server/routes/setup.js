@@ -19,6 +19,7 @@
 import express from 'express'
 import User from '../models/User.js'
 import { generateToken } from '../middleware/auth.js'
+import { ensureConnected } from '../config/db.js'
 
 const router = express.Router()
 
@@ -32,6 +33,7 @@ const router = express.Router()
  */
 router.get('/status', async (req, res) => {
   try {
+    await ensureConnected()
     const userCount = await User.countDocuments()
     const needsSetup = userCount === 0
     res.json({
@@ -64,6 +66,9 @@ router.get('/status', async (req, res) => {
  */
 router.post('/admin', async (req, res) => {
   try {
+    // Ensure DB is connected before any write
+    await ensureConnected()
+
     // ─── Security gate: only allow when DB is empty ──────────────────
     const existingCount = await User.countDocuments()
     if (existingCount > 0) {
