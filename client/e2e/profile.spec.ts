@@ -20,18 +20,18 @@ import { test, expect } from './fixtures/auth.fixture'
 
 test.describe('Profile Page', () => {
   test('shows user stats and level', async ({ authenticatedPage: page }) => {
-    await page.goto('/demo')
+    await page.goto('/kai-nakamura')
     await expect(page.getByText(/level/i).first()).toBeVisible()
     await expect(page.getByText(/contributions/i).first()).toBeVisible()
   })
 
   test('shows contribution heatmap on overview tab', async ({ authenticatedPage: page }) => {
-    await page.goto('/demo')
+    await page.goto('/kai-nakamura')
     await expect(page.getByText(/contributions in the last year/i)).toBeVisible()
   })
 
   test('can switch to repositories tab', async ({ authenticatedPage: page }) => {
-    await page.goto('/demo')
+    await page.goto('/kai-nakamura')
     await page.getByRole('button', { name: /repositories/i }).click()
     // Should show either repos or "no repositories yet"
     const content = page.getByText(/no repositories yet/i).or(page.locator('[data-testid="repo-list"]'))
@@ -39,7 +39,7 @@ test.describe('Profile Page', () => {
   })
 
   test('can switch to achievements tab', async ({ authenticatedPage: page }) => {
-    await page.goto('/demo')
+    await page.goto('/kai-nakamura')
     await page.getByRole('button', { name: /achievements/i }).click()
     // Should show either achievements or "no achievements yet"
     const content = page.getByText(/no achievements yet/i).or(page.locator('[data-testid="achievement-list"]'))

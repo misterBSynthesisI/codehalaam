@@ -108,35 +108,41 @@ const uploadsBase = path.resolve(__dirname, '../uploads')
 const avatarDir = path.join(uploadsBase, 'avatars')
 const codexDir = path.join(uploadsBase, 'codexes')
 const projectsDir = path.join(uploadsBase, 'projects')
+let diskAvailable = false
 if (!USE_BLOB) {
   try {
     fs.mkdirSync(avatarDir, { recursive: true })
     fs.mkdirSync(codexDir, { recursive: true })
     fs.mkdirSync(projectsDir, { recursive: true })
+    diskAvailable = true
   } catch {
-    // Filesystem may not be writable (e.g. some CI environments).
-    // In that case, uploads won't work locally — but the module won't crash.
+    // Filesystem is not writable (e.g. Vercel serverless, read-only /var/task/).
+    // Fall back to memory storage so multer doesn't crash on write attempts.
+    console.warn('⚠️  Disk uploads unavailable (read-only filesystem). Set BLOB_READ_WRITE_TOKEN for production uploads.')
   }
+} else {
+  diskAvailable = false
 }
 
 // ─── Memory storage for Blob uploads; disk for local dev ────────────────
-// Memory storage is used when Blob is active so we can stream the buffer
-// to Vercel Blob. Disk storage is used in local dev so files persist.
-const avatarStorage = USE_BLOB
+// Memory storage is used when Blob is active (or disk is unavailable)
+// so we can stream the buffer to Vercel Blob. Disk storage is used
+// in local dev only when the uploads directory is writable.
+const avatarStorage = (USE_BLOB || !diskAvailable)
   ? multer.memoryStorage()
   : multer.diskStorage({
       destination: (req, file, cb) => cb(null, avatarDir),
       filename: (req, file, cb) => cb(null, sanitizeFilename(file.originalname)),
     })
 
-const codexStorage = USE_BLOB
+const codexStorage = (USE_BLOB || !diskAvailable)
   ? multer.memoryStorage()
   : multer.diskStorage({
       destination: (req, file, cb) => cb(null, codexDir),
       filename: (req, file, cb) => cb(null, sanitizeFilename(file.originalname)),
     })
 
-const projectStorage = USE_BLOB
+const projectStorage = (USE_BLOB || !diskAvailable)
   ? multer.memoryStorage()
   : multer.diskStorage({
       destination: (req, file, cb) => cb(null, projectsDir),
@@ -199,6 +205,10 @@ export async function uploadToBlob(file, folder = 'uploads') {
 export async function resolveUploadUrl(file, folder, diskPathFallback) {
   if (USE_BLOB && file.buffer) {
     return uploadToBlob(file, folder)
+  }
+  // If we have a buffer but no Blob and no disk, we can't persist the file.
+  if (file.buffer && !diskAvailable) {
+    throw new Error('File uploads require BLOB_READ_WRITE_TOKEN on Vercel. See README.md for setup instructions.')
   }
   // Disk fallback (local dev): req.file.filename is set by diskStorage
   return diskPathFallback || `/uploads/${folder}/${file.filename}`

@@ -54,16 +54,20 @@ test.describe('Authentication', () => {
     })
 
     test('login with valid credentials redirects to dashboard', async ({ page }) => {
+      // First ensure the demo user exists via the demo endpoint
+      const demoRes = await page.request.post('/api/auth/demo')
+      expect(demoRes.ok()).toBeTruthy()
+
       await page.goto('/auth?mode=login')
-      await page.getByLabel(/username or email/i).fill('demo@codehalaam.local')
-      await page.getByLabel(/password/i).fill('12345678')
+      await page.getByLabel(/username or email/i).fill('kai@codehalaam.dev')
+      await page.getByLabel(/password/i).fill('password123')
       await page.getByRole('button', { name: /sign in/i }).click()
       await page.waitForURL('**/dashboard', { timeout: 10000 })
     })
 
     test('login with wrong password shows error', async ({ page }) => {
       await page.goto('/auth?mode=login')
-      await page.getByLabel(/username or email/i).fill('demo@codehalaam.local')
+      await page.getByLabel(/username or email/i).fill('kai@codehalaam.dev')
       await page.getByLabel(/password/i).fill('wrongpassword')
       await page.getByRole('button', { name: /sign in/i }).click()
       await expect(page.getByText(/invalid credentials/i)).toBeVisible({ timeout: 5000 })

@@ -258,4 +258,100 @@ router.post('/cover', protect, uploadAvatar.single('cover'), async (req, res) =>
   }
 })
 
+// POST /api/auth/demo — Auto-create demo user and log in
+// This endpoint ensures a demo user always exists, even on fresh deployments
+// where the seed script was never run.
+router.post('/demo', requireDB, async (req, res) => {
+  try {
+    const DEMO_EMAIL = 'kai@codehalaam.dev'
+    const DEMO_USERNAME = 'kai-nakamura'
+    const DEMO_PASSWORD = 'password123'
+
+    // Try to find existing demo user
+    let user = await User.findOne({ email: DEMO_EMAIL })
+
+    if (!user) {
+      // Auto-create the demo user with rich profile data
+      user = await User.create({
+        username: DEMO_USERNAME,
+        email: DEMO_EMAIL,
+        password: DEMO_PASSWORD,
+        displayName: 'Kai Nakamura',
+        bio: 'Full-stack developer. I build things with TypeScript, React, and Node. Open source enthusiast.',
+        level: 12,
+        xp: 2340,
+        xpToNext: 3000,
+        stats: { commits: 780, pullRequests: 190, reviews: 420, issues: 78, contributions: 2340 },
+        streak: 14,
+        longestStreak: 47,
+        isAdmin: false,
+        badgeColor: 'blue',
+        characterClass: 'Rogue',
+        website: 'https://kai-nakamura.dev',
+      })
+
+      // Generate contribution heatmap
+      const contributionDays = []
+      for (let i = 364; i >= 0; i--) {
+        const date = new Date()
+        date.setDate(date.getDate() - i)
+        date.setHours(0, 0, 0, 0)
+        const rand = Math.random()
+        let count = 0
+        if (rand > 0.3) count = Math.floor(Math.random() * 3) + 1
+        if (rand > 0.5) count = Math.floor(Math.random() * 5) + 3
+        if (rand > 0.7) count = Math.floor(Math.random() * 8) + 5
+        if (rand > 0.85) count = Math.floor(Math.random() * 12) + 8
+        contributionDays.push({ date, count })
+      }
+      user.contributionDays = contributionDays
+      await user.save()
+
+      // Also create a demo repo so the dashboard isn't empty
+      try {
+        const Repository = (await import('../models/Repository.js')).default
+        await Repository.create({
+          name: 'aurora-ui',
+          description: 'A sleek, accessible React component library built with Tailwind CSS and Radix primitives. Ship beautiful interfaces in minutes.',
+          owner: user._id,
+          language: 'TypeScript',
+          visibility: 'public',
+          starsCount: 3421,
+          forksCount: 587,
+          hasIssues: true,
+          topics: ['react', 'components', 'tailwindcss', 'radix', 'accessibility', 'design-system'],
+          license: 'MIT',
+          openIssuesCount: 14,
+          openPullRequestsCount: 3,
+          branches: [{ name: 'main', isDefault: true }, { name: 'develop' }],
+          fileTree: [
+            { name: 'README.md', type: 'file', content: '# ✨ Aurora UI\n\nA sleek, accessible React component library built with Tailwind CSS and Radix primitives.', size: '1.8 KB', language: 'Markdown' },
+            { name: '.gitignore', type: 'file', content: 'node_modules/\n.env\n.DS_Store\ndist/', size: '0.1 KB' },
+          ],
+          tagline: 'A blazing-fast React component library',
+          technologies: ['React', 'TypeScript', 'Tailwind', 'Framer Motion'],
+          websiteUrl: 'https://aurora-ui.dev',
+          accentColor: '#6366f1',
+        })
+      } catch (repoErr) {
+        console.warn('Demo repo creation skipped:', repoErr.message)
+      }
+
+      console.log('[DEMO] Created demo user: kai-nakamura')
+    }
+
+    // Log in as the demo user
+    const token = generateToken(user._id, { isAdmin: !!user.isAdmin })
+
+    res.json({
+      message: `Signed in as demo user: ${user.username}`,
+      user,
+      token,
+    })
+  } catch (err) {
+    console.error('Demo login error:', err)
+    res.status(500).json({ error: 'Demo login failed' })
+  }
+})
+
 export default router

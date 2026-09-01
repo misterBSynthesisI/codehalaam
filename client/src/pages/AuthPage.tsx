@@ -61,10 +61,11 @@ export function AuthPage() {
     setError('')
     setLoading(true)
     try {
-      await login('kai@codehalaam.dev', 'password123')
+      const { api } = await import('@/lib/api')
+      await api.demoLogin()
       navigate('/dashboard')
     } catch (err: any) {
-      setError(err.message || 'Quick login failed. Make sure the database is seeded.')
+      setError(err.message || 'Quick login failed. Please try again.')
     } finally {
       setLoading(false)
     }

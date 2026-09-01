@@ -19,13 +19,11 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { GitBranch, Users, Lock, Zap, Globe, ArrowRight } from 'lucide-react'
-import { useAuth } from '@/contexts/AuthContext'
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
 
 export function LandingPage() {
   const navigate = useNavigate()
-  const { login } = useAuth()
   const [demoLoading, setDemoLoading] = useState(false)
   const [stats, setStats] = useState<{ totalUsers: number; totalRepos: number } | null>(null)
 
@@ -52,7 +50,7 @@ export function LandingPage() {
                   onClick={async () => {
                     setDemoLoading(true)
                     try {
-                      await login('kai@codehalaam.dev', 'password123')
+                      await api.demoLogin()
                       navigate('/dashboard')
                     } catch { navigate('/auth?mode=login') } finally { setDemoLoading(false) }
                   }}

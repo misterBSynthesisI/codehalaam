@@ -222,6 +222,15 @@ class ApiClient {
     return data
   }
 
+  async demoLogin() {
+    const data = await this.request<{ user: any; token: string; message: string }>(
+      '/auth/demo',
+      { method: 'POST' }
+    )
+    this.setToken(data.token)
+    return data
+  }
+
   async getMe() {
     return this.request<{ user: any }>('/auth/me')
   }
@@ -694,6 +703,11 @@ class ApiClient {
     return this.request<{ message: string; user: { _id: string; username: string } }>(`/admin/users/${userId}`, {
       method: 'DELETE',
     })
+  }
+
+  async adminGetRepos(params?: { page?: number; limit?: number; search?: string; sort?: string; visibility?: string }) {
+    const query = new URLSearchParams(params as any).toString()
+    return this.request<{ repos: any[]; total: number; page: number; pages: number }>(`/admin/repos?${query}`)
   }
 }
 

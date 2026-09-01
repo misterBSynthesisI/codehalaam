@@ -30,18 +30,20 @@ type AuthFixtures = {
  */
 export const test = base.extend<AuthFixtures>({
   authenticatedPage: async ({ page }, use) => {
-    // Navigate to the auth page
-    await page.goto('/auth')
+    // Use the demo login API to create/get demo user and obtain a token
+    const response = await page.request.post('/api/auth/demo')
+    const { token } = await response.json()
 
-    // Fill and submit the login form
-    await page.getByLabel(/username or email/i).fill('demo@codehalaam.local')
-    await page.getByLabel(/password/i).fill('12345678')
-    await page.getByRole('button', { name: /sign in/i }).click()
+    // Navigate to the app and inject the token
+    await page.goto('/')
+    await page.evaluate((t: string) => {
+      localStorage.setItem('codehalaam_token', t)
+    }, token)
 
-    // Wait for redirect to dashboard
+    // Navigate to dashboard — the token is now in localStorage
+    await page.goto('/dashboard')
     await page.waitForURL('**/dashboard', { timeout: 10000 })
 
-    // The token is now in localStorage — reuse for all subsequent navigations
     await use(page)
   },
 })
