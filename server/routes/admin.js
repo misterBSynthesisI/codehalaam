@@ -22,6 +22,7 @@ import Repository from '../models/Repository.js'
 import Issue from '../models/Issue.js'
 import PullRequest from '../models/PullRequest.js'
 import ForumPost from '../models/ForumPost.js'
+import AvatarFrame from '../models/AvatarFrame.js'
 import { protect, requireAdmin } from '../middleware/auth.js'
 
 const router = express.Router()
@@ -330,6 +331,76 @@ router.patch('/forum/:postId/close', async (req, res) => {
   } catch (err) {
     console.error('Admin forum close error:', err)
     res.status(500).json({ error: 'Failed to toggle close' })
+  }
+})
+
+// ============================================================
+//  AVATAR FRAMES
+// ============================================================
+
+// GET /api/admin/frames — list all avatar frames
+router.get('/frames', async (req, res) => {
+  try {
+    const frames = await AvatarFrame.find({ isActive: true }).sort({ requiredLevel: 1, rarity: 1 })
+    res.json({ frames })
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch frames' })
+  }
+})
+
+// POST /api/admin/frames — create a new avatar frame
+router.post('/frames', async (req, res) => {
+  try {
+    const { name, description, borderStyle, borderColor, borderWidth, gradientColors, overlaySvg, requiredLevel, requiredAchievement, rarity } = req.body
+    if (!name) return res.status(400).json({ error: 'Frame name is required' })
+
+    const existing = await AvatarFrame.findOne({ name })
+    if (existing) return res.status(422).json({ error: 'Frame name already exists' })
+
+    const frame = await AvatarFrame.create({
+      name, description, borderStyle, borderColor, borderWidth,
+      gradientColors, overlaySvg, requiredLevel, requiredAchievement, rarity,
+    })
+
+    res.status(201).json({ frame })
+  } catch (err) {
+    console.error('Create frame error:', err)
+    res.status(500).json({ error: 'Failed to create frame' })
+  }
+})
+
+// PATCH /api/admin/frames/:frameId — update a frame
+router.patch('/frames/:frameId', async (req, res) => {
+  try {
+    const frame = await AvatarFrame.findByIdAndUpdate(req.params.frameId, req.body, { new: true })
+    if (!frame) return res.status(404).json({ error: 'Frame not found' })
+    res.json({ frame })
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update frame' })
+  }
+})
+
+// DELETE /api/admin/frames/:frameId — delete a frame
+router.delete('/frames/:frameId', async (req, res) => {
+  try {
+    const frame = await AvatarFrame.findByIdAndDelete(req.params.frameId)
+    if (!frame) return res.status(404).json({ error: 'Frame not found' })
+    res.json({ message: 'Frame deleted' })
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete frame' })
+  }
+})
+
+// POST /api/admin/frames/:frameId/assign/:userId — assign frame to user
+router.post('/frames/:frameId/assign/:userId', async (req, res) => {
+  try {
+    const frame = await AvatarFrame.findById(req.params.frameId)
+    if (!frame) return res.status(404).json({ error: 'Frame not found' })
+    const user = await User.findByIdAndUpdate(req.params.userId, { avatarFrame: frame.name }, { new: true }).select('-password')
+    if (!user) return res.status(404).json({ error: 'User not found' })
+    res.json({ user, frame })
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to assign frame' })
   }
 })
 

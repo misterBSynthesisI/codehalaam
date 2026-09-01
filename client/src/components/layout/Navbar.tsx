@@ -20,6 +20,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Search, Bell, ChevronDown, ShieldAlert, Sun, Moon, BadgeCheck, BadgeCheck as BadgeCheckIcon } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
+import { useSiteSettingsContext } from '@/contexts/SiteSettingsContext'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { api } from '@/lib/api'
 
@@ -36,6 +37,7 @@ export function Navbar() {
   const navigate = useNavigate()
   const { user, logout } = useAuth()
   const { theme, toggleTheme } = useTheme()
+  const siteSettings = useSiteSettingsContext()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showNotifMenu, setShowNotifMenu] = useState(false)
   const [notifications, setNotifications] = useState<any[]>([])
@@ -84,8 +86,12 @@ export function Navbar() {
       <div className="flex items-center h-[48px] px-4 gap-3" style={{ maxWidth: 1400, margin: '0 auto' }}>
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 no-underline shrink-0" style={{ color: 'var(--color-fg-default)' }}>
-          <CodeLogo />
-          <span className="font-semibold text-base hidden sm:inline tracking-tight">CODEHALAAM</span>
+          {siteSettings?.logoUrl ? (
+            <img src={siteSettings.logoUrl} alt="Logo" className="h-7 w-auto object-contain" style={{ maxWidth: 120 }} />
+          ) : (
+            <CodeLogo />
+          )}
+          <span className="font-semibold text-base hidden sm:inline tracking-tight">{siteSettings?.siteName || 'CODEHALAAM'}</span>
         </Link>
 
         {/* Spacer */}

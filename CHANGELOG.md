@@ -6,7 +6,29 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## 🔜 Upcoming
+## 🔜 Coming Soon
+
+### v2.0 — "Forge" (Q4 2026)
+
+#### Planned
+- Email integration — transactional emails via Resend
+- Codex analytics dashboard — view counts, visitor stats
+- API rate limiting — protect endpoints from abuse
+- Webhook system — trigger external services on events
+- Advanced search — full-text search across all content
+- Mobile app — React Native companion
+
+## 🔨 In Progress
+
+### v1.5 — "Ascend" (September 2026)
+
+#### Building
+- Developer documentation site — browsable docs with code examples
+- Codex insights — view counts, popular files, contributor stats
+- Forum search and tag filtering
+- Admin dashboard charts — visual XP distribution
+- Batch operations — bulk manage from admin
+- Improved mobile navigation
 
 ---
 

@@ -21,6 +21,7 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { Toaster } from 'sonner'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
+import { SiteSettingsProvider } from '@/contexts/SiteSettingsContext'
 import { XPProvider } from '@/components/gamification/XPToast'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
@@ -47,6 +48,7 @@ import { NotFoundPage, ServerErrorPage } from '@/pages/ErrorPage'
 import { ForumPage, ForumPostPage } from '@/pages/ForumPage'
 import { DocsPage } from '@/pages/DocsPage'
 import { ChangelogPage } from '@/pages/ChangelogPage'
+import { GettingStartedPage } from '@/pages/GettingStartedPage'
 import { useSiteSettings } from '@/hooks/useSiteSettings'
 
 function RepoRedirect() {
@@ -84,6 +86,7 @@ function AppRoutes() {
       <Route path="/forum/:id" element={<ForumPostPage />} />
       <Route path="/docs" element={<DocsPage />} />
       <Route path="/changelog" element={<ChangelogPage />} />
+      <Route path="/getting-started" element={<GettingStartedPage />} />
 
       <Route path="/dashboard" element={
         <ProtectedRoute>
@@ -176,9 +179,11 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <ThemeProvider>
+        <SiteSettingsProvider>
         <XPProvider>
           <AppShell />
         </XPProvider>
+        </SiteSettingsProvider>
         </ThemeProvider>
       </AuthProvider>
     </BrowserRouter>

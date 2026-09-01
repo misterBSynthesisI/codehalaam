@@ -378,7 +378,7 @@ export function CodexHomePage() {
         {repo.coverUrl ? (
           <div className="absolute inset-0">
             <img src={repo.coverUrl} alt="" className="w-full h-full object-cover" />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.2) 40%, var(--color-canvas-default) 85%)' }} />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.4) 30%, rgba(0,0,0,0.15) 60%, var(--color-canvas-default) 90%)' }} />
           </div>
         ) : (
           <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${accent}22 0%, ${accent}08 50%, transparent 100%)` }}>
@@ -393,9 +393,7 @@ export function CodexHomePage() {
               <Settings className="w-3.5 h-3.5" strokeWidth={1.5} /> <span className="hidden sm:inline">Customize</span>
             </button>
           </motion.div>
-        )}
-
-        <div className="relative flex flex-col items-center pt-6 pb-4 px-4">
+        )}          <div className="relative flex flex-col items-center pt-6 pb-4 px-4" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}>
           {/* Logo centered */}
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
             className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl flex items-center justify-center text-3xl font-bold shadow-lg"

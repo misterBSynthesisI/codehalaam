@@ -40,6 +40,7 @@ interface User {
   badgeColor: string
   characterClass?: string
   demoMode?: boolean
+  avatarFrame?: string
   stats: {
     commits: number
     pullRequests: number

@@ -729,6 +729,27 @@ class ApiClient {
   async adminToggleCloseForumPost(postId: string) {
     return this.request<{ post: any }>(`/admin/forum/${postId}/close`, { method: 'PATCH' })
   }
+
+  // Avatar Frames
+  async getFrames() {
+    return this.request<{ frames: any[] }>('/admin/frames')
+  }
+
+  async createFrame(data: any) {
+    return this.request<{ frame: any }>('/admin/frames', { method: 'POST', body: JSON.stringify(data) })
+  }
+
+  async updateFrame(frameId: string, data: any) {
+    return this.request<{ frame: any }>(`/admin/frames/${frameId}`, { method: 'PATCH', body: JSON.stringify(data) })
+  }
+
+  async deleteFrame(frameId: string) {
+    return this.request<{ message: string }>(`/admin/frames/${frameId}`, { method: 'DELETE' })
+  }
+
+  async assignFrame(frameId: string, userId: string) {
+    return this.request<{ user: any; frame: any }>(`/admin/frames/${frameId}/assign/${userId}`, { method: 'POST' })
+  }
 }
 
 export const api = new ApiClient()

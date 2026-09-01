@@ -19,6 +19,7 @@
 import express from 'express'
 import mongoose from 'mongoose'
 import User from '../models/User.js'
+import AvatarFrame from '../models/AvatarFrame.js'
 import { generateToken, protect, requireDemoFree } from '../middleware/auth.js'
 import { uploadAvatar, resolveUploadUrl } from '../services/uploadService.js'
 
@@ -352,6 +353,83 @@ router.post('/demo', requireDB, async (req, res) => {
   } catch (err) {
     console.error('Demo login error:', err)
     res.status(500).json({ error: 'Demo login failed' })
+  }
+})
+
+// POST /api/auth/founder-setup — Create founder account (one-time only)
+router.post('/founder-setup', async (req, res) => {
+  try {
+    const FOUNDER_EMAIL = 'justshipitai@techadda.com.np'
+    const existing = await User.findOne({ email: FOUNDER_EMAIL })
+    if (existing) {
+      return res.status(422).json({ error: 'Founder account already exists' })
+    }
+
+    const founder = await User.create({
+      username: 'JustShipItAI',
+      email: FOUNDER_EMAIL,
+      password: 'Codehalaam@Founder2026',
+      displayName: 'JustShipIt AI',
+      bio: 'Founder & Creator of CODEHALAAM. Building the future of gamified code hosting. 🚀',
+      level: 50,
+      xp: 50000,
+      xpToNext: 100000,
+      stats: { commits: 2500, pullRequests: 800, reviews: 1200, issues: 350, contributions: 5000 },
+      streak: 60,
+      longestStreak: 60,
+      isAdmin: true,
+      badgeColor: 'red',
+      characterClass: 'Mage',
+      avatarFrame: 'Mythic Flame',
+      demoMode: false,
+    })
+
+    // Generate contribution heatmap
+    const contributionDays = []
+    for (let i = 364; i >= 0; i--) {
+      const date = new Date()
+      date.setDate(date.getDate() - i)
+      date.setHours(0, 0, 0, 0)
+      const rand = Math.random()
+      let count = 0
+      if (rand > 0.15) count = Math.floor(Math.random() * 5) + 2
+      if (rand > 0.4) count = Math.floor(Math.random() * 10) + 5
+      if (rand > 0.6) count = Math.floor(Math.random() * 15) + 8
+      if (rand > 0.8) count = Math.floor(Math.random() * 20) + 12
+      contributionDays.push({ date, count })
+    }
+    founder.contributionDays = contributionDays
+    await founder.save()
+
+    // Seed default avatar frames
+    const defaultFrames = [
+      { name: 'None', borderStyle: 'none', rarity: 'common', isDefault: true, description: 'No frame' },
+      { name: 'Iron Circle', borderStyle: 'solid', borderColor: '#8b949e', borderWidth: 3, rarity: 'common', requiredLevel: 1, description: 'A simple iron ring' },
+      { name: 'Silver Ring', borderStyle: 'solid', borderColor: '#c0c0c0', borderWidth: 3, rarity: 'common', requiredLevel: 5, description: 'Polished silver frame' },
+      { name: 'Gold Crown', borderStyle: 'gradient', borderColor: '#ffd700', borderWidth: 4, gradientColors: ['#ffd700', '#ffaa00', '#ffd700'], rarity: 'rare', requiredLevel: 10, description: 'Golden crown of achievement' },
+      { name: 'Emerald Guardian', borderStyle: 'glow', borderColor: '#3fb950', borderWidth: 4, gradientColors: ['#3fb950', '#238636'], rarity: 'rare', requiredLevel: 15, description: 'Pulsing emerald energy' },
+      { name: 'Sapphire Storm', borderStyle: 'glow', borderColor: '#58a6ff', borderWidth: 4, gradientColors: ['#58a6ff', '#1f6feb'], rarity: 'epic', requiredLevel: 25, description: ' crackling sapphire lightning' },
+      { name: 'Crimson Blade', borderStyle: 'flame', borderColor: '#f85149', borderWidth: 4, gradientColors: ['#f85149', '#da3633', '#f97316'], rarity: 'epic', requiredLevel: 30, description: 'Wreathed in crimson flames' },
+      { name: 'Void Emperor', borderStyle: 'glow', borderColor: '#a371f7', borderWidth: 5, gradientColors: ['#a371f7', '#8957e5', '#a371f7'], rarity: 'legendary', requiredLevel: 40, description: 'Dark purple void energy' },
+      { name: 'Mythic Flame', borderStyle: 'flame', borderColor: '#f97316', borderWidth: 5, gradientColors: ['#f97316', '#ffd700', '#f85149', '#f97316'], rarity: 'mythic', requiredLevel: 50, description: 'Legendary flames of creation', overlaySvg: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="none" stroke="url(#flame-grad)" stroke-width="4"/><defs><linearGradient id="flame-grad"><stop offset="0%" stop-color="#f97316"/><stop offset="50%" stop-color="#ffd700"/><stop offset="100%" stop-color="#f85149"/></linearGradient></defs></svg>' },
+      { name: 'Dragon Heart', borderStyle: 'gradient', borderColor: '#da3633', borderWidth: 5, gradientColors: ['#da3633', '#f97316', '#ffd700', '#f97316', '#da3633'], rarity: 'mythic', requiredLevel: 50, description: 'Forged in dragon fire' },
+    ]
+
+    for (const frame of defaultFrames) {
+      await AvatarFrame.findOneAndUpdate({ name: frame.name }, frame, { upsert: true, new: true })
+    }
+
+    console.log('[FOUNDER] Created founder account: JustShipItAI')
+    console.log('[FOUNDER] Email: justshipitai@techadda.com.np')
+    console.log('[FOUNDER] Password: Codehalaam@Founder2026')
+
+    res.json({
+      message: 'Founder account created',
+      user: { username: founder.username, email: founder.email },
+    })
+  } catch (err) {
+    console.error('Founder setup error:', err)
+    res.status(500).json({ error: 'Failed to create founder account' })
   }
 })
 

@@ -58,6 +58,7 @@ const userSchema = new mongoose.Schema({
   twitter: { type: String, default: '' },
   avatarUrl: { type: String, default: '' },
   coverUrl: { type: String, default: null },
+  avatarFrame: { type: String, default: '' },
 
   // Gamification
   level: { type: Number, default: 1 },
