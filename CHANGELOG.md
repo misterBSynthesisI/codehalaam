@@ -10,6 +10,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### v1.4.0 — "Forum & Docs" (in progress)
 
+---
+
+## ✅ Released
+
+### v1.3.2 — "Vercel Setup Fix" (2026-09-01)
+
+#### Fixed
+- **Critical**: Health endpoint (`/api/health`) now actively calls `ensureConnected()` before reporting DB status. Previously it only read `mongoose.readyState`, which was always `0` on Vercel cold starts — causing the setup page to permanently show "Database Not Connected" even when MongoDB Atlas was configured and reachable.
+- **Critical**: Setup routes (`/api/setup/status`, `/api/setup/admin`) now call `ensureConnected()` before querying the DB, and are no longer exempt from the DB guard middleware. Previously they were exempt, which meant `User.countDocuments()` ran against a disconnected Mongoose instance on cold starts.
+- **Critical**: Fixed race condition in `SetupPage` — `login()` is now awaited before navigating to `/dashboard`, so `ProtectedRoute` sees the authenticated user instead of bouncing back to `/auth`.
+- Fixed `install:all` script to use `npm install --include=dev` so TypeScript is available during Vercel build (fixes "tsc: command not found" build error).
+
+### v1.3.1 — "Vercel Fix" (2026-09-01)
+
 - **Forum**: StackOverflow-style Q&A forum for developers (posts, answers, votes, accepted answers)
 - **Developer documentation page**: in-app guide for uploading projects and git pushing
 - **Changelog page**: in-app changelog viewer at `/changelog`

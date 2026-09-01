@@ -391,12 +391,13 @@ See [`docs/definition-of-done.md`](definition-of-done.md) for the full quality c
 
 | Endpoint | Method | Auth | Purpose |
 |----------|--------|------|---------|
-| `/api/setup/status` | GET | None (exempt from DB guard) | Check if setup is needed |
+| `/api/setup/status` | GET | None | Check if setup is needed |
 | `/api/setup/admin` | POST | None (only works when DB empty) | Create first admin |
 
-### Exemption from DB guard
+### DB guard behavior
 
-The DB guard in `api/index.js` and `server/app.js` exempts `/api/health` and `/api/setup/*` so the setup flow works before the DB is fully ready.
+- **`/api/health`** is exempt from the DB guard. The health endpoint itself calls `ensureConnected()` before reporting status, so it actively probes DB reachability on cold starts.
+- **`/api/setup/*`** routes go through the DB guard like any other route. The setup handlers also call `ensureConnected()` internally as a safety net. This ensures DB queries (e.g. `User.countDocuments()`) never run against a disconnected Mongoose instance.
 
 ---
 
@@ -495,13 +496,13 @@ Browser → Vercel CDN (static React SPA)
 
 ### Required Environment Variables
 
-| Variable | Required | Purpose |
-|----------|----------|---------|
-| `MONGODB_URI` | ✅ | MongoDB Atlas connection string |
-| `JWT_SECRET` | ✅ | JWT signing secret |
-| `CLIENT_URL` | ✅ | Your Vercel app URL (for CORS) |
-| `NODE_ENV` | ✅ | `production` |
-| `BLOB_READ_WRITE_TOKEN` | Optional | Vercel Blob token for persistent uploads |
+| Variable | Required | Vercel Type | Purpose |
+|----------|----------|-------------|--------|
+| `MONGODB_URI` | ✅ | **Sensitive** | MongoDB Atlas connection string |
+| `JWT_SECRET` | ✅ | **Sensitive** | JWT signing secret |
+| `CLIENT_URL` | ✅ | Plain text | Your Vercel app URL (for CORS) |
+| `NODE_ENV` | ✅ | Plain text | `production` |
+| `BLOB_READ_WRITE_TOKEN` | Optional | **Sensitive** | Vercel Blob token for persistent uploads |
 
 ### Database is NOT created inside Vercel
 

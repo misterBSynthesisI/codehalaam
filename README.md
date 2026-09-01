@@ -136,17 +136,17 @@ Import the GitHub repo. Vercel auto-detects the build via `vercel.json`:
 
 In the Vercel project **Settings → Environment Variables**, add:
 
-| Variable | Value |
-|----------|-------|
-| `MONGODB_URI` | your Atlas connection string |
-| `JWT_SECRET` | a long random string (e.g. `openssl rand -hex 32`) |
-| `CLIENT_URL` | your Vercel URL, e.g. `https://your-app.vercel.app` |
-| `NODE_ENV` | `production` |
-| `BLOB_READ_WRITE_TOKEN` | (optional) Vercel Blob token for persistent file uploads up to 30MB |
+| Variable | Vercel Type | Value |
+|----------|-------------|-------|
+| `MONGODB_URI` | **Sensitive** | your Atlas connection string |
+| `JWT_SECRET` | **Sensitive** | a long random string (e.g. `openssl rand -hex 32`) |
+| `CLIENT_URL` | Plain text | your Vercel URL, e.g. `https://your-app.vercel.app` |
+| `NODE_ENV` | Plain text | `production` |
+| `BLOB_READ_WRITE_TOKEN` | **Sensitive** | (optional) Vercel Blob token for persistent file uploads up to 30MB |
 
 ### First-run setup
 
-After deploying, visit `https://your-app.vercel.app/setup` to create your admin account. The setup page is only available when the database has zero users — it auto-disables once an admin exists.
+After deploying, visit `https://your-app.vercel.app/setup` to create your admin account. The setup page probes the database connection on load — if `MONGODB_URI` is set and Atlas is reachable, it shows the admin creation form. The setup page is only available when the database has zero users — it auto-disables once an admin exists.
 
 ### 4. Deploy
 
@@ -408,7 +408,7 @@ PATCH  /api/notifications/read       - Mark all notifications as read
 
 ### Health Check
 ```
-GET    /api/health                   - Server & database health status
+GET    /api/health                   - Server & database health (actively probes DB connection)
 ```
 
 ## 🔐 Security
