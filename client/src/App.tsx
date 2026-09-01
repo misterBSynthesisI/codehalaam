@@ -40,6 +40,9 @@ import { AdminPage } from '@/pages/AdminPage'
 import { AdminBadgesPage } from '@/pages/AdminBadgesPage'
 import { AdminRoute } from '@/components/auth/AdminRoute'
 import { SetupPage } from '@/pages/SetupPage'
+import { AdminSettingsPage } from '@/pages/AdminSettingsPage'
+import { NotFoundPage, ServerErrorPage } from '@/pages/ErrorPage'
+import { useSiteSettings } from '@/hooks/useSiteSettings'
 
 function RepoRedirect() {
   const { username, repoName } = useParams()
@@ -107,6 +110,14 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
 
+      <Route path="/admin/settings" element={
+        <ProtectedRoute>
+          <AdminRoute>
+            <AdminSettingsPage />
+          </AdminRoute>
+        </ProtectedRoute>
+      } />
+
       {/* Barry routes — must come BEFORE /:username catch-all */}
       <Route path="/codex/:owner/:name/code" element={<CodeWorkspacePage />} />
       <Route path="/codex/:owner/:name/quests/:number" element={<QuestDetailPage />} />
@@ -119,11 +130,21 @@ function AppRoutes() {
       <Route path="/:username/:repoName" element={<RepoRedirect />} />
       <Route path="/:username/:repoName/*" element={<RepoRedirect />} />
       <Route path="/:username" element={<ProfilePage />} />
+
+      {/* Error pages */}
+      <Route path="/error" element={<ServerErrorPage />} />
+      <Route path="/404" element={<NotFoundPage />} />
+
+      {/* 404 catch-all — must be LAST */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )
 }
 
 function App() {
+  // Apply site branding (favicon, title, meta) on load — admin-configurable
+  useSiteSettings()
+
   return (
     <ErrorBoundary>
     <BrowserRouter>

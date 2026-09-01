@@ -1,10 +1,107 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>⚡</text></svg>" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CODEHALAAM</title>
+
+    <!-- Favicon (overridable by admin site settings) -->
+    <link id="favicon-link" rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="apple-touch-icon" href="/favicon.svg" />
+
+    <!-- Viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <meta name="theme-color" content="#0969da" />
+
+    <!-- Primary Meta Tags (SEO) -->
+    <title>CODEHALAAM — Free Code Hosting with XP Rewards</title>
+    <meta id="meta-description" name="description" content="CODEHALAAM is a gamified code hosting platform. Free private repos, unlimited collaborators, pull requests, issues, and XP rewards. Everything GitHub charges for, free." />
+    <meta name="keywords" content="code hosting, git, github alternative, open source, private repositories, free, gamification, xp, pull requests, issues, version control, collaboration" />
+    <meta name="author" content="JustShipitAI" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <link rel="canonical" href="https://codehalaam.vercel.app/" />
+
+    <!-- OpenGraph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://codehalaam.vercel.app/" />
+    <meta property="og:title" content="CODEHALAAM — Free Code Hosting with XP Rewards" />
+    <meta property="og:description" content="A gamified code hosting platform. Free private repos, unlimited collaborators, and XP rewards. Everything GitHub charges for, free." />
+    <meta property="og:site_name" content="CODEHALAAM" />
+    <meta property="og:image" content="https://codehalaam.vercel.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://codehalaam.vercel.app/" />
+    <meta name="twitter:title" content="CODEHALAAM — Free Code Hosting with XP Rewards" />
+    <meta name="twitter:description" content="A gamified code hosting platform. Free private repos, unlimited collaborators, and XP rewards. Everything GitHub charges for, free." />
+    <meta name="twitter:image" content="https://codehalaam.vercel.app/og-image.png" />
+
+    <!-- AEO (Answer Engine Optimization) — structured data for AI search -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "CODEHALAAM",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web",
+      "description": "CODEHALAAM is a gamified code hosting platform that combines the best of GitHub with XP-based rewards. Free private repos, unlimited collaborators, pull requests, and issues.",
+      "url": "https://codehalaam.vercel.app",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "JustShipitAI"
+      },
+      "featureList": [
+        "Unlimited public and private repositories",
+        "Unlimited collaborators",
+        "Pull requests with reviews",
+        "Issues with labels and assignees",
+        "Gamification: XP, levels, achievements, streaks",
+        "Contribution heatmap",
+        "Verified badges",
+        "Role-based access control"
+      ]
+    }
+    </script>
+
+    <!-- FAQ structured data (AEO) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Is CODEHALAAM really free?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. CODEHALAAM offers unlimited private repositories, unlimited collaborators, pull requests, issues, and code review at no cost. There is no per-seat pricing."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between CODEHALAAM and GitHub?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "CODEHALAAM offers the same core features as GitHub — repositories, pull requests, issues, code review — but adds a gamification layer with XP, levels, and achievements. Everything GitHub charges for (private repos, unlimited collaborators) is free on CODEHALAAM."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does CODEHALAAM support private repositories?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. CODEHALAAM supports both public and private repositories. Private codexes are hidden from unauthorized viewers and return a 404 (not 403) to maintain privacy."
+          }
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

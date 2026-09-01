@@ -75,6 +75,61 @@ class ApiClient {
     return data
   }
 
+  // Site settings (public read, admin write)
+  async getSettings() {
+    return this.request<{ settings: any }>('/settings')
+  }
+
+  async updateSettings(data: {
+    siteName?: string; tagline?: string; logoUrl?: string; faviconUrl?: string;
+    ogImageUrl?: string; description?: string; footerText?: string;
+    signupEnabled?: boolean; maintenanceMode?: boolean
+  }) {
+    return this.request<{ settings: any }>('/settings', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async uploadLogo(file: File) {
+    const formData = new FormData()
+    formData.append('logo', file)
+    const headers: Record<string, string> = {}
+    if (this.token) headers['Authorization'] = `Bearer ${this.token}`
+    const res = await fetch(`${API_BASE}/settings/logo`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Upload failed')
+    return data as { logoUrl: string; settings: any }
+  }
+
+  async uploadFavicon(file: File) {
+    const formData = new FormData()
+    formData.append('favicon', file)
+    const headers: Record<string, string> = {}
+    if (this.token) headers['Authorization'] = `Bearer ${this.token}`
+    const res = await fetch(`${API_BASE}/settings/favicon`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Upload failed')
+    return data as { faviconUrl: string; settings: any }
+  }
+
+  // Admin stats (additional admin endpoints)
+  async adminGetStats() {
+    return this.request<any>('/admin/stats')
+  }
+
+  async adminGetActivity() {
+    return this.request<{ activity: any[] }>('/admin/activity')
+  }
+
   // Setup (first-run)
   async getSetupStatus() {
     return this.request<{ needsSetup: boolean; userCount: number; message: string }>('/setup/status')

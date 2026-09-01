@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)](CONTRIBUTING.md)
-[![Discord](https://img.shields.io/badge/Discord-7289da?logo=discord&logoColor=white)](https://discord.gg/codehalaam)
+[![Live](https://img.shields.io/badge/LIVE-codehalaam.vercel.app-brightgreen)](https://codehalaam.vercel.app/)
 
 ---
 
@@ -80,6 +80,34 @@ CODEHALAAM is a gamified code hosting platform that combines the best of GitHub 
 - **Centralized Permissions** — single reusable permission layer (`canViewCodex`, `canEditCodex`, etc.)
 - **Optional Auth** — public routes recognize logged-in users without requiring tokens
 - **Viewer-Aware Profiles** — profile pages show private codexes only to owners and collaborators
+- **Admin Token Security** — short-lived 2-day admin tokens, freshness re-verification, disabled-account blocking
+- **First-Run Setup** — admin account created via `/setup` page (auto-disabled once any user exists)
+
+### 🎨 Admin & Branding
+- **Fully Functional Admin Panel** — real DB-backed user management (not mock data)
+- **Site Settings** — admin can change logo, favicon, site name, tagline, and meta description
+- **Feature Flags** — toggle signup and maintenance mode from the admin panel
+- **Custom Badges** — blue (verified), red (admin), black (stealth) badges, managed from admin
+
+### 🔍 SEO & AEO
+- **Meta Tags** — OpenGraph, Twitter Cards, canonical URLs
+- **Structured Data** — JSON-LD `SoftwareApplication` + `FAQPage` schema for AI answer engines
+- **Sitemap & Robots** — `sitemap.xml` and `robots.txt` in `client/public/`
+- **Dynamic Branding** — favicon, title, and meta applied from admin-configured site settings
+
+### 📄 Error Pages
+- **GitHub-style error pages** for 400, 401, 403, 404, 500, 503
+- **Client-side catch-all** — unknown routes show a friendly 404 with a ghost illustration
+- **Server-side JSON errors** — every API response is valid JSON, even on failure
+- **Global ErrorBoundary** — uncaught React errors render a 500 page
+
+## 🌐 Live Deployment
+
+**CODEHALAAM is live at [https://codehalaam.vercel.app/](https://codehalaam.vercel.app/)**
+
+Visit `/setup` on a fresh deployment to create your admin account (auto-disabled once any user exists).
+
+---
 
 ## 🚀 One-Tap Deploy to Vercel (Free Tier)
 
@@ -114,6 +142,11 @@ In the Vercel project **Settings → Environment Variables**, add:
 | `JWT_SECRET` | a long random string (e.g. `openssl rand -hex 32`) |
 | `CLIENT_URL` | your Vercel URL, e.g. `https://your-app.vercel.app` |
 | `NODE_ENV` | `production` |
+| `BLOB_READ_WRITE_TOKEN` | (optional) Vercel Blob token for persistent file uploads up to 30MB |
+
+### First-run setup
+
+After deploying, visit `https://your-app.vercel.app/setup` to create your admin account. The setup page is only available when the database has zero users — it auto-disables once an admin exists.
 
 ### 4. Deploy
 
@@ -121,7 +154,9 @@ Click **Deploy**. That's it — one server, one database, free tier.
 
 > **Realtime:** Socket.io WebSocket support is disabled on Vercel serverless (functions can't hold open connections). Local development keeps full realtime support via `npm run dev`. The REST API and all features work identically on Vercel.
 >
-> **File uploads:** Disk-based uploads are ephemeral on Vercel. For persistent avatar/codex media, swap `multer.diskStorage` for a blob store (S3 / Vercel Blob) in `server/services/uploadService.js`.
+> **File uploads:** With `BLOB_READ_WRITE_TOKEN` set, uploads (avatars, codex media, project files up to 30MB) persist in Vercel Blob (free tier: 1GB storage). Without it, uploads fall back to local disk (ephemeral on Vercel).
+>
+> **Database:** MongoDB Atlas is an external managed service — Vercel does not host the database. Create a free M0 cluster, set `MONGODB_URI`, then visit `/setup` to create the admin account inside that database.
 
 ---
 
@@ -347,7 +382,22 @@ GET    /api/admin/users              - List all users (paginated, searchable)
 GET    /api/admin/repos              - List all repos (paginated, searchable)
 GET    /api/admin/activity           - Recent activity feed
 PATCH  /api/admin/users/:userId      - Update user (level, xp, badge, class)
+PATCH  /api/admin/users/:userId/badge - Update user badge (backward compat)
 DELETE /api/admin/users/:userId      - Delete user permanently
+```
+
+### Site Settings
+```
+GET    /api/settings                 - Public: read site branding (logo, favicon, name)
+PUT    /api/settings                 - Admin: update site name, tagline, description, flags
+POST   /api/settings/logo            - Admin: upload custom logo
+POST   /api/settings/favicon         - Admin: upload custom favicon
+```
+
+### Setup (first-run only)
+```
+GET    /api/setup/status             - Check if setup is needed (no users in DB)
+POST   /api/setup/admin              - Create first admin (disabled once any user exists)
 ```
 
 ### Notifications

@@ -134,9 +134,16 @@ CODEHALAAM is a gamified, collaborative code hosting platform. This document des
 
 | Middleware | Behavior |
 |-----------|----------|
-| `protect` (requireAuth) | Returns 401 if no valid JWT |
+| `protect` | Returns 401 if no valid JWT; blocks `isActive: false` accounts |
 | `optionalAuth` | Attaches `req.user` if JWT present, continues with `req.user = null` if not |
-| `requireAdmin` | Returns 403 if `req.user.isAdmin` is false |
+| `requireAdmin` | Returns 403 if `req.user.isAdmin` is false; enforces 2-day admin token freshness |
+
+### Admin Token Security (v1.2)
+
+- Admin tokens expire in **2 days** (vs 30 days for regular users).
+- `requireAdmin` re-verifies the token `iat` and rejects stale admin sessions.
+- `generateToken(userId, { isAdmin: true })` issues short-lived admin tokens.
+- `protect` middleware blocks deactivated accounts (`isActive: false`).
 
 ### Private Codex Rules
 
@@ -292,50 +299,54 @@ agents:
 
 ## Upload Persistence (MANDATORY)
 
-> **All uploaded images must survive page refresh AND server restart.**
-> Never use `memoryStorage` or `URL.createObjectURL()` for persisted images.
+> **All uploaded files must survive page refresh AND server restart.**
+> On Vercel, uploads go to **Vercel Blob** (persistent CDN storage). In local dev, they go to disk.
 
 ### Architecture
 
-| Component | Config | Path |
-|-----------|--------|------|
-| Multer | `multer.diskStorage()` | `server/uploads/avatars/`, `server/uploads/codexes/` |
-| Express | `express.static('uploads')` | `GET /uploads/*` |
-| DB | `User.avatarUrl`, `User.coverUrl`, `Repository.coverUrl/logoUrl` | Stores `/uploads/avatars/...` path |
+| Component | Config | Path / Destination |
+|-----------|--------|--------------------|
+| Vercel Blob (prod) | `@vercel/blob` `put()` | Persistent CDN URL (`https://...public.blob.vercel-storage.com/...`) |
+| Multer (dev) | `multer.diskStorage()` | `server/uploads/avatars/`, `server/uploads/codexes/`, `server/uploads/projects/` |
+| Express (dev) | `express.static('uploads')` | `GET /uploads/*` |
+| DB | `User.avatarUrl`, `Repository.coverUrl/logoUrl` | Stores the Blob URL or disk path |
 
 ### Upload Endpoints
 
-| Endpoint | Saves To | DB Field |
+| Endpoint | Saves To | DB Field / Response |
 |----------|----------|----------|
-| `POST /api/auth/avatar` | `server/uploads/avatars/` | `User.avatarUrl` |
-| `POST /api/auth/cover` | `server/uploads/avatars/` | `User.coverUrl` |
-| `POST /api/codexes/:owner/:name/media` | `server/uploads/codexes/` | `Repository.coverUrl` or `Repository.logoUrl` |
+| `POST /api/auth/avatar` | Vercel Blob or `uploads/avatars/` | `User.avatarUrl` |
+| `POST /api/auth/cover` | Vercel Blob or `uploads/avatars/` | `User.coverUrl` |
+| `POST /api/codexes/:owner/:name/media` | Vercel Blob or `uploads/codexes/` | `Repository.coverUrl` or `Repository.logoUrl` |
+| `POST /api/codexes/:owner/:name/upload` | Vercel Blob or `uploads/projects/` | `{ url, filename, size, maxSize }` |
+| `POST /api/settings/logo` | Vercel Blob or `uploads/site/` | `SiteSetting.logoUrl` |
+| `POST /api/settings/favicon` | Vercel Blob or `uploads/site/` | `SiteSetting.faviconUrl` |
+
+### Upload Limits
+
+| Upload type | Max size |
+|-------------|----------|
+| Avatars | 2 MB |
+| Codex covers/logos | 5 MB |
+| Project files | **30 MB** |
+| Logo/favicon | 2 MB |
 
 ### Rules
 
-1. **Never use `multer.memoryStorage()`** — files must be written to persistent disk.
-2. **Never use `URL.createObjectURL()` for persisted images** — use the server-returned URL directly.
-3. **Always capture the server URL in a local variable** before passing to parent component:
-   ```js
-   let savedAvatarUrl = profile.avatarUrl
-   if (avatarFile) {
-     const res = await api.uploadAvatar(avatarFile)
-     savedAvatarUrl = res.avatarUrl  // capture server URL
-   }
-   onSave({ ...profile, avatarUrl: savedAvatarUrl })
-   ```
-4. **Ensure upload directories exist** — use `fs.mkdirSync(dir, { recursive: true })`.
-5. **Verify `express.static`** is registered BEFORE any catch-all route.
-6. **`server/uploads/`** must be in `.gitignore`.
+1. **When `BLOB_READ_WRITE_TOKEN` is set**, uploads use `multer.memoryStorage()` + Vercel Blob `put()`.
+2. **When `BLOB_READ_WRITE_TOKEN` is NOT set** (local dev), uploads use `multer.diskStorage()`.
+3. **Always use `resolveUploadUrl(file, folder, diskPath)`** to get the correct URL in either mode.
+4. **Never use `URL.createObjectURL()` for persisted images** — use the server-returned URL directly.
+5. **Ensure upload directories exist** — use `fs.mkdirSync(dir, { recursive: true })` (handled in `uploadService.js`).
 
-### Diagnostic Checklist (Vault)
+### Diagnostic Checklist
 
 Before shipping any upload feature, verify all 5 links:
-1. Multer uses `diskStorage` (not `memoryStorage`)
-2. File exists on disk after upload (`fs.existsSync`)
+1. `BLOB_READ_WRITE_TOKEN` is set on Vercel OR disk storage works locally
+2. File is uploaded (check Vercel Blob dashboard OR `fs.existsSync`)
 3. URL is saved to DB (not just returned in response)
 4. Frontend uses server URL (not blob URL)
-5. `express.static` returns HTTP 200 for the URL
+5. The URL returns HTTP 200
 
 ---
 
@@ -346,7 +357,7 @@ Before shipping any upload feature, verify all 5 links:
 | Command | Location | What it does |
 |---------|----------|--------------|
 | `npm run check` | `client/` | TypeScript strict check + Vite build |
-| `npm run check` | `server/` | Vitest test suite (16 tests) |
+| `npm run check` | `server/` | Vitest test suite (22 tests) |
 | `npm run build` | `client/` | Production build |
 | `npm test` | `server/` | Run API tests |
 
@@ -362,3 +373,174 @@ Before shipping any upload feature, verify all 5 links:
 ### Definition of Done
 
 See [`docs/definition-of-done.md`](definition-of-done.md) for the full quality checklist.
+
+---
+
+## First-Run Setup Flow (v1.2)
+
+> **Fresh deployments show a setup page where the admin creates the first account.**
+
+### How it works
+
+1. When the database has **zero users**, `GET /api/setup/status` returns `{ needsSetup: true }`.
+2. The frontend auto-redirects to `/setup` (see `AuthContext.tsx`).
+3. The admin enters username + email + password → `POST /api/setup/admin` creates the first admin.
+4. Once any user exists, `POST /api/setup/admin` permanently returns **410 Gone** — it cannot be used to inject admins.
+
+### Routes
+
+| Endpoint | Method | Auth | Purpose |
+|----------|--------|------|---------|
+| `/api/setup/status` | GET | None (exempt from DB guard) | Check if setup is needed |
+| `/api/setup/admin` | POST | None (only works when DB empty) | Create first admin |
+
+### Exemption from DB guard
+
+The DB guard in `api/index.js` and `server/app.js` exempts `/api/health` and `/api/setup/*` so the setup flow works before the DB is fully ready.
+
+---
+
+## Site Settings & Branding (v1.2)
+
+> **Admins can customize the logo, favicon, site name, and meta tags from the admin panel.**
+
+### Routes
+
+| Endpoint | Method | Auth | Purpose |
+|----------|--------|------|---------|
+| `/api/settings` | GET | Public | Read site branding (applied on frontend load) |
+| `/api/settings` | PUT | Admin | Update site name, tagline, description, feature flags |
+| `/api/settings/logo` | POST | Admin | Upload custom logo (Vercel Blob or disk) |
+| `/api/settings/favicon` | POST | Admin | Upload custom favicon |
+
+### Frontend application
+
+- `useSiteSettings()` hook fetches settings on app mount.
+- Applies favicon to `<link id="favicon-link">`, sets `document.title`, updates meta description and og:image.
+- Admin page: `/admin/settings`.
+
+---
+
+## Error Pages (v1.2)
+
+> **GitHub-style error pages for 400, 401, 403, 404, 500, 503.**
+
+| Route | Component | When |
+|-------|-----------|------|
+| `*` (catch-all) | `NotFoundPage` (404) | Unknown route |
+| `/error` | `ServerErrorPage` (500) | Client-side uncaught errors |
+| API 503 | JSON `{ error, status: 'degraded', database: 'disconnected' }` | Database unreachable |
+
+The `ErrorBoundary` component wraps the entire app and renders the 500 page for uncaught React errors.
+
+---
+
+## SEO & AEO (v1.2)
+
+> **CODEHALAAM is optimized for search engines (SEO) and AI answer engines (AEO).**
+
+### Files
+
+| File | Purpose |
+|------|---------|
+| `client/index.html` | Meta tags, OpenGraph, Twitter cards, JSON-LD structured data |
+| `client/public/robots.txt` | Crawl directives for search bots |
+| `client/public/sitemap.xml` | Sitemap for search engines |
+| `client/public/site.webmanifest` | PWA manifest |
+| `client/public/favicon.svg` | Default favicon |
+
+### Structured data (JSON-LD)
+
+- `SoftwareApplication` schema with features, pricing (free), and publisher.
+- `FAQPage` schema with common questions (Is it free? vs GitHub? private repos?).
+
+---
+
+## Email / Mail System
+
+> **CODEHALAAM does NOT currently have a mail server.** There is no SMTP, transactional email, or email-sending service integrated.
+
+### What exists
+
+- The `User` model stores an `email` field and has an `emailNotifications` boolean (default `true`).
+- The `Invitation` model generates shareable invite **links** (not emails) — the admin copies the link and shares it manually.
+- The `setupStatus` / `password` endpoints reference email but never send email.
+
+### What does NOT exist
+
+- No password reset email flow (users change passwords via `PUT /api/auth/password` with their current password).
+- No email verification on signup.
+- No notification emails (notifications are in-app only, via the `/api/notifications` endpoint).
+- No SMTP config (e.g. `nodemailer`, SendGrid, Postmark, Resend).
+
+### To add email later
+
+1. Install `nodemailer` or a transactional email SDK (Resend, SendGrid).
+2. Add `SMTP_URL`, `SMTP_FROM` env vars.
+3. Create `server/services/emailService.js`.
+4. Wire into signup (verification), password reset, and invitation flows.
+
+---
+
+## Vercel Deployment Architecture
+
+> **CODEHALAAM deploys as a single Vercel app with zero external servers.**
+
+```
+Browser → Vercel CDN (static React SPA)
+       → Vercel Serverless Function (api/index.js — single Express app)
+       → MongoDB Atlas (network database)
+       → Vercel Blob (file storage, when BLOB_READ_WRITE_TOKEN is set)
+```
+
+### Required Environment Variables
+
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `MONGODB_URI` | ✅ | MongoDB Atlas connection string |
+| `JWT_SECRET` | ✅ | JWT signing secret |
+| `CLIENT_URL` | ✅ | Your Vercel app URL (for CORS) |
+| `NODE_ENV` | ✅ | `production` |
+| `BLOB_READ_WRITE_TOKEN` | Optional | Vercel Blob token for persistent uploads |
+
+### Database is NOT created inside Vercel
+
+The database (MongoDB Atlas) is an **external managed service**. Vercel does not host the database. You create a free M0 cluster at [MongoDB Atlas](https://www.mongodb.com/atlas), get the connection string, and set it as `MONGODB_URI` in the Vercel dashboard. The setup page (`/setup`) then creates the first admin user *inside* that database.
+
+### Live deployment
+
+- **URL:** https://codehalaam.vercel.app/
+- **Live:** Yes (production on `main` branch)
+
+---
+
+## Admin Panel Capabilities (v1.2)
+
+> **The admin panel is fully functional — not mock data. All changes persist to MongoDB.**
+
+### What the admin can do
+
+| Feature | Endpoint | Effect |
+|---------|----------|--------|
+| View platform stats | `GET /api/admin/stats` | Real-time counts of users, repos, issues, PRs, stars |
+| Search users | `GET /api/admin/users?search=` | Paginated, searchable user list from DB |
+| Edit user level/XP | `PATCH /api/admin/users/:userId` | Updates `level`, `xp`, `characterClass` in DB |
+| Grant badges | `PATCH /api/admin/users/:userId/badge` | Sets `badgeColor` (blue/black/red/none) — visible immediately on client |
+| Delete users | `DELETE /api/admin/users/:userId` | Permanently removes user from DB |
+| View activity feed | `GET /api/admin/activity` | Recent users/repos/issues/PRs |
+| Customize branding | `PUT /api/settings` + upload endpoints | Changes logo, favicon, site name — applied across the site |
+| Toggle signup | `PUT /api/settings` | Enable/disable new signups platform-wide |
+| Toggle maintenance mode | `PUT /api/settings` | Shows 503 to non-admins |
+
+### Client-side sync
+
+When an admin changes a user's badge, level, or class, the change is written to MongoDB. The client sees it because:
+1. The `/api/auth/me` endpoint reads the current user from DB on every load.
+2. The `AuthContext` re-fetches the user on window focus (`refreshUser`).
+3. Badge changes appear immediately on the user's profile, navbar, and any populated user reference.
+
+### Admin route protection
+
+- Frontend: `<AdminRoute>` component checks `user.isAdmin` and redirects to `/dashboard` if false.
+- Backend: `requireAdmin` middleware checks `req.user.isAdmin` and returns 403 if false.
+- Admin tokens expire in 2 days.
