@@ -72,6 +72,7 @@ router.get('/:username', optionalAuth, async (req, res) => {
   try {
     const user = await User.findOne({ username: req.params.username })
       .select('-password -email -emailNotifications')
+      .lean()
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' })
@@ -113,6 +114,7 @@ router.get('/:username', optionalAuth, async (req, res) => {
       .sort({ starsCount: -1 })
       .limit(20)
       .populate('owner', 'username displayName avatarUrl')
+      .lean()
 
     res.json({ user, repos })
   } catch (err) {

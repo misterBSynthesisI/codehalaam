@@ -23,6 +23,7 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { XPProvider } from '@/components/gamification/XPToast'
 import { Navbar } from '@/components/layout/Navbar'
+import { Footer } from '@/components/layout/Footer'
 import { CommandPalette } from '@/components/command/CommandPalette'
 import { LandingPage } from '@/pages/LandingPage'
 import { AuthPage } from '@/pages/AuthPage'
@@ -158,10 +159,13 @@ function App() {
       <AuthProvider>
         <ThemeProvider>
         <XPProvider>
-          <div className="min-h-screen" style={{backgroundColor: 'var(--color-canvas-default)', color: 'var(--color-fg-default)'}}>
+          <div className="flex flex-col min-h-screen" style={{backgroundColor: 'var(--color-canvas-default)', color: 'var(--color-fg-default)'}}>
             <CommandPalette />
             <Navbar />
-            <AppRoutes />
+            <div className="flex-1">
+              <AppRoutes />
+            </div>
+            <Footer />
             <Toaster position="top-right" richColors closeButton />
           </div>
         </XPProvider>

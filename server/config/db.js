@@ -75,6 +75,9 @@ export const ensureConnected = async () => {
     .connect(process.env.MONGODB_URI, {
       serverSelectionTimeoutMS: 10000,
       bufferCommands: true,
+      maxPoolSize: 10,
+      minPoolSize: 2,
+      autoIndex: true,
     })
     .then((conn) => {
       console.log(`✅ MongoDB connected: ${conn.connection.db?.databaseName}`)

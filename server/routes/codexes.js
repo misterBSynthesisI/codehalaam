@@ -37,9 +37,12 @@ const router = express.Router()
 // --- Helper: find owner + repo by params ---
 async function findCodex(ownerUsername, codexName) {
   const owner = await User.findOne({ username: ownerUsername })
+    .select('username displayName avatarUrl badgeColor')
+    .lean()
   if (!owner) return { error: 'User not found', status: 404 }
   const repo = await Repository.findOne({ owner: owner._id, name: codexName })
     .populate('owner', 'username displayName avatarUrl badgeColor')
+    .lean()
   if (!repo) return { error: 'Codex not found', status: 404 }
   return { owner, repo }
 }

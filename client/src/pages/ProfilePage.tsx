@@ -27,6 +27,7 @@ import { VerificationBadge } from '@/components/ui/UserBadge'
 import { Lock } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from 'sonner'
+import { NotFoundPage } from '@/pages/ErrorPage'
 
 export function ProfilePage() {
   const { username } = useParams()
@@ -45,7 +46,7 @@ export function ProfilePage() {
   const isOwnProfile = currentUser && profile && currentUser.username === profile.username
 
   if (loading) return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-canvas-default)' }}><div style={{ color: 'var(--color-fg-muted)' }}>Loading profile...</div></div>
-  if (!profile) return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-canvas-default)' }}><div className="text-center"><h2 className="text-xl font-semibold mb-2" style={{ color: 'var(--color-fg-default)' }}>User not found</h2></div></div>
+  if (!profile) return <NotFoundPage />
 
   const contributionHeatmap = profile.contributionDays?.reduce((acc: number[][], day: any) => {
     if (acc.length === 0 || acc[acc.length - 1].length === 7) acc.push([day.count])

@@ -134,6 +134,8 @@ repositorySchema.index({ owner: 1, name: 1 }, { unique: true })
 // slug index already created by unique: true on field definition
 repositorySchema.index({ visibility: 1, starsCount: -1 })
 repositorySchema.index({ owner: 1, updatedAt: -1 })
+repositorySchema.index({ owner: 1, visibility: 1 })
+repositorySchema.index({ starsCount: -1 })
 
 // Pre-save: generate slug
 repositorySchema.pre('save', function (next) {
