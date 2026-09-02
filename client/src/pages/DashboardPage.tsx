@@ -20,7 +20,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  GitPullRequest, AlertCircle, Check, Clock, ArrowUpRight, Plus, Zap, Lock, Swords, Gift
+  GitPullRequest, AlertCircle, Check, Clock, ArrowUpRight, Plus, Zap, Lock, Swords, Gift, Flame, TrendingUp, Shield
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
@@ -66,21 +66,80 @@ export function DashboardPage() {
   return (
     <div className="flex-1" style={{ backgroundColor: 'var(--color-canvas-default)', color: 'var(--color-fg-default)' }}>
       <div className="px-6 py-5" style={{ maxWidth: 1200, margin: '0 auto' }}>
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-xl font-semibold flex items-center gap-2" style={{ color: 'var(--color-fg-default)' }}>
-              Welcome back, {user.displayName || user.username}
-              <VerificationBadge badgeColor={user.badgeColor} size={20} />
-            </h1>
-            <p className="text-sm mt-0.5" style={{ color: 'var(--color-fg-muted)' }}>
-              Here's your workspace at a glance.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link to="/new" className="btn btn-primary btn-sm no-underline flex items-center gap-1.5">
-              <Plus className="w-3.5 h-3.5" /> New Codex
-            </Link>
+        {/* Header — User Welcome Card */}
+        <div className="rounded-xl p-5 mb-6" style={{ backgroundColor: 'var(--color-canvas-subtle)', border: '1px solid var(--color-border-default)' }}>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            {/* Avatar + Badge */}
+            <div className="relative shrink-0">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold overflow-hidden"
+                style={{ backgroundColor: 'var(--color-accent-muted)', color: 'var(--color-accent-fg)', border: '2px solid var(--color-border-default)' }}>
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.username} className="w-full h-full object-cover" />
+                ) : (
+                  (user.displayName || user.username).charAt(0).toUpperCase()
+                )}
+              </div>
+              <div className="absolute -bottom-1 -right-1">
+                <VerificationBadge badgeColor={user.badgeColor} />
+              </div>
+            </div>
+
+            {/* User Info + Progress */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h1 className="text-lg font-semibold" style={{ color: 'var(--color-fg-default)' }}>
+                  Welcome back, {user.displayName || user.username}
+                </h1>
+                {user.characterClass && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                    style={{ backgroundColor: 'var(--color-accent-muted)', color: 'var(--color-accent-fg)', border: '1px solid var(--color-accent-fg)' }}>
+                    {user.characterClass}
+                  </span>
+                )}
+              </div>
+
+              {/* Level + XP Bar */}
+              <div className="flex items-center gap-3 mb-2">
+                <div className="flex items-center gap-1.5">
+                  <Shield className="w-3.5 h-3.5" style={{ color: 'var(--color-success-fg)' }} />
+                  <span className="text-sm font-semibold" style={{ color: 'var(--color-success-fg)' }}>Level {user.level}</span>
+                </div>
+                <div className="flex-1 max-w-xs">
+                  <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-border-default)' }}>
+                    <div className="h-full rounded-full transition-all duration-500" style={{
+                      width: `${user.xpToNext > 0 ? Math.min((user.xp / user.xpToNext) * 100, 100) : 0}%`,
+                      background: 'linear-gradient(90deg, var(--color-success-fg), var(--color-success-emphasis))'
+                    }} />
+                  </div>
+                  <div className="text-[10px] mt-0.5" style={{ color: 'var(--color-fg-muted)' }}>
+                    {user.xp?.toLocaleString() || 0} / {user.xpToNext?.toLocaleString() || 100} XP
+                  </div>
+                </div>
+              </div>
+
+              {/* Streak + Quick Stats */}
+              <div className="flex items-center gap-4 text-xs" style={{ color: 'var(--color-fg-muted)' }}>
+                <span className="flex items-center gap-1">
+                  <Flame className="w-3 h-3" style={{ color: 'var(--color-attention-fg)' }} />
+                  {user.streak || 0}d streak
+                </span>
+                <span className="flex items-center gap-1">
+                  <TrendingUp className="w-3 h-3" style={{ color: 'var(--color-success-fg)' }} />
+                  {(user.stats?.contributions || 0).toLocaleString()} contributions
+                </span>
+                <span className="flex items-center gap-1">
+                  <Zap className="w-3 h-3" style={{ color: 'var(--color-attention-fg)' }} />
+                  {(user.xp || 0).toLocaleString()} XP
+                </span>
+              </div>
+            </div>
+
+            {/* New Codex Button */}
+            <div className="shrink-0">
+              <Link to="/new" className="btn btn-primary btn-sm no-underline flex items-center gap-1.5">
+                <Plus className="w-3.5 h-3.5" /> New Codex
+              </Link>
+            </div>
           </div>
         </div>
 
