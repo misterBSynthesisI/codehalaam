@@ -210,11 +210,11 @@ export function Navbar() {
 
               {/* User avatar */}
               <div className="relative" ref={menuRef}>
-                <button onClick={() => setShowUserMenu(!showUserMenu)} className="flex items-center gap-1 p-0.5 rounded-full transition-colors">
+                <button onClick={() => setShowUserMenu(!showUserMenu)} className="flex items-center gap-1 p-0.5 rounded-full transition-colors overflow-hidden">
                   <AvatarWithFrame
                     user={user}
                     size="sm"
-                    className="rounded-full overflow-hidden"
+                    className="rounded-full"
                   />
                   <ChevronDown className="w-3 h-3" style={{ color: 'var(--color-fg-muted)' }} />
                 </button>
@@ -224,7 +224,7 @@ export function Navbar() {
                     style={{ border: '1px solid var(--color-border-default)', boxShadow: 'var(--color-shadow-large)' }}>
                     <div className="px-3 py-2 border-b" style={{ borderColor: 'var(--color-border-default)' }}>
                       <p className="text-sm font-medium flex items-center gap-1.5" style={{ color: 'var(--color-fg-default)' }}>
-                        <AvatarWithFrame user={user} size="sm" className="rounded-full overflow-hidden shrink-0" style={{ width: 20, height: 20 }} />
+                        <AvatarWithFrame user={user} size="sm" className="rounded-full shrink-0" />
                         {user.displayName || user.username}
                         {user.badgeColor && user.badgeColor !== 'none' && (
                           <BadgeCheck
