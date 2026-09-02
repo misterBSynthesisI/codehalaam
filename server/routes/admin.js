@@ -509,4 +509,84 @@ router.post('/frames/:frameId/assign/:userId', async (req, res) => {
   }
 })
 
+// PATCH /api/admin/founder/reseed — re-seed founder frame + codex (idempotent, admin only)
+router.patch('/founder/reseed', async (req, res) => {
+  try {
+    const founder = await User.findOne({ isFounder: true })
+    if (!founder) return res.status(404).json({ error: 'No founder account found.' })
+
+    // Ensure AvatarFrame model is imported
+    // Link Mythic Flame frame if missing
+    if (!founder.avatarFrameRef) {
+      const mythicFrame = await AvatarFrame.findOne({ name: 'Mythic Flame' })
+      if (mythicFrame) {
+        founder.avatarFrameRef = mythicFrame._id
+        founder.avatarFrame = 'Mythic Flame'
+        await founder.save()
+      }
+    }
+
+    // Create CODEHALAAM codex if missing
+    const Repository = (await import('../models/Repository.js')).default
+    const existingCodex = await Repository.findOne({ name: 'codehalaam', owner: founder._id })
+    if (!existingCodex) {
+      await Repository.create({
+        name: 'codehalaam',
+        description: 'The gamified code hosting platform — free private repos, unlimited collaborators, XP rewards.',
+        owner: founder._id,
+        language: 'TypeScript',
+        visibility: 'public',
+        starsCount: 4512,
+        forksCount: 789,
+        hasIssues: true,
+        topics: ['code-hosting', 'gamification', 'react', 'node', 'mongodb'],
+        license: 'MIT',
+        openIssuesCount: 32,
+        tagline: 'A gamified, immersive alternative to GitHub',
+        technologies: ['React', 'TypeScript', 'Node.js', 'MongoDB', 'Tailwind', 'Framer Motion'],
+        websiteUrl: 'https://codehalaam.vercel.app',
+        accentColor: '#58a6ff',
+        branches: [{ name: 'main', isDefault: true }, { name: 'develop' }],
+        fileTree: [
+          { name: 'README.md', type: 'file', content: '# CODEHALAAM\n\n> A gamified, immersive code hosting platform — free private repos, unlimited collaborators, XP rewards.\n\n## Quick Start\n\n```bash\nnpm install\nnpm run dev\n```\n\n## Architecture\n\n- **Client:** React + TypeScript + Tailwind CSS + Framer Motion\n- **Server:** Node.js + Express + MongoDB\n- **Deployment:** Vercel (serverless)', size: '1.2 KB', language: 'Markdown' },
+          { name: 'package.json', type: 'file', content: JSON.stringify({ name: 'codehalaam', version: '1.6.0', scripts: { dev: 'concurrently "npm run server" "npm run client"', build: 'cd client && npm run build' } }, null, 2), size: '0.4 KB', language: 'JSON' },
+          { name: 'server', type: 'folder', children: [
+            { name: 'app.js', type: 'file', content: '// Express app — cors, JSON, routes', size: '0.2 KB', language: 'JavaScript' },
+            { name: 'seed.js', type: 'file', content: '// Seed script — demo users, repos, quests, offerings', size: '0.1 KB', language: 'JavaScript' },
+            { name: 'models', type: 'folder', children: [
+              { name: 'User.js', type: 'file', content: '// User model — isFounder, title, avatarFrameRef', size: '0.1 KB', language: 'JavaScript' },
+              { name: 'Repository.js', type: 'file', content: '// Repository model — fileTree, branches, stars, forks', size: '0.1 KB', language: 'JavaScript' },
+              { name: 'AvatarFrame.js', type: 'file', content: '// AvatarFrame model — imageUrl, blend, animation', size: '0.1 KB', language: 'JavaScript' },
+            ]},
+            { name: 'routes', type: 'folder', children: [
+              { name: 'auth.js', type: 'file', content: '// Auth — founder-setup with strict guards', size: '0.1 KB', language: 'JavaScript' },
+              { name: 'admin.js', type: 'file', content: '// Admin — founder protection, frame CRUD', size: '0.1 KB', language: 'JavaScript' },
+            ]},
+          ]},
+          { name: 'client', type: 'folder', children: [
+            { name: 'src', type: 'folder', children: [
+              { name: 'components', type: 'folder', children: [
+                { name: 'AvatarWithFrame.tsx', type: 'file', content: '// Frame rendering — image overlay, CSS frames, pulse glow', size: '0.1 KB', language: 'TypeScript' },
+                { name: 'Navbar.tsx', type: 'file', content: '// Navbar with AvatarWithFrame', size: '0.1 KB', language: 'TypeScript' },
+              ]},
+              { name: 'pages', type: 'folder', children: [
+                { name: 'ProfilePage.tsx', type: 'file', content: '// Founder profile layer — FOUNDER chip, mythic card, achievements', size: '0.1 KB', language: 'TypeScript' },
+              ]},
+            ]},
+          ]},
+          { name: 'docs', type: 'folder', children: [
+            { name: 'design.md', type: 'file', content: '# Design System — GitHub Primer + Apple Fluid Motion', size: '0.2 KB', language: 'Markdown' },
+            { name: 'agent.md', type: 'file', content: '# Agent Docs — permissions, founder system, verified badges', size: '0.1 KB', language: 'Markdown' },
+          ]},
+        ],
+      })
+    }
+
+    res.json({ message: 'Founder data reseeded.', founder: { username: founder.username, avatarFrameRef: founder.avatarFrameRef } })
+  } catch (err) {
+    console.error('Founder reseed error:', err)
+    res.status(500).json({ error: 'Failed to reseed founder data' })
+  }
+})
+
 export default router
