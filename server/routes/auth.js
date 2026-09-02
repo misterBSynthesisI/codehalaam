@@ -492,9 +492,16 @@ router.post('/founder-setup', async (req, res) => {
 
     // Link the Mythic Flame frame ref to the founder user
     const mythicFrame = await AvatarFrame.findOne({ name: 'Mythic Flame' })
-    if (mythicFrame && !founder.avatarFrameRef) {
-      founder.avatarFrameRef = mythicFrame._id
-      await founder.save()
+    if (mythicFrame) {
+      // Always ensure founder has the frame linked (even if old frame was linked without imageUrl)
+      const needsUpdate = !founder.avatarFrameRef ||
+        founder.avatarFrameRef.toString() !== mythicFrame._id.toString() ||
+        founder.avatarFrame !== 'Mythic Flame'
+      if (needsUpdate) {
+        founder.avatarFrameRef = mythicFrame._id
+        founder.avatarFrame = 'Mythic Flame'
+        await founder.save()
+      }
     }
 
     // Create CODEHALAAM source codex under founder's profile (idempotent)

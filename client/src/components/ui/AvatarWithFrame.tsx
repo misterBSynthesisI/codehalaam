@@ -41,103 +41,105 @@ interface AvatarWithFrameProps {
   style?: React.CSSProperties
 }
 
-const SIZE_MAP = {
-  sm: 32,
-  md: 48,
-  lg: 96,
-  xl: 160,
-}
-
-const FONT_SIZE_MAP = {
-  sm: 12,
-  md: 16,
-  lg: 32,
-  xl: 56,
-}
-
-const FRAME_BORDER_WIDTH: Record<string, number> = {
-  solid: 3,
-  gradient: 4,
-  glow: 4,
-  flame: 5,
-  electric: 5,
-  crystal: 4,
-}
-
-function getFrameBorderStyle(frame: FrameRef | Record<string, any> | null | undefined): string {
-  if (!frame) return 'none'
-  const style = frame.borderStyle || 'none'
-  if (style === 'none' || !style) return 'none'
-  return style
-}
-
-function getFrameGradientCSS(frame: FrameRef | Record<string, any> | null | undefined): string {
-  if (!frame) return ''
-  const colors = frame.gradientColors || []
-  if (colors.length < 2) return ''
-  return `linear-gradient(135deg, ${colors.join(', ')})`
-}
+const SIZE_MAP = { sm: 32, md: 48, lg: 96, xl: 160 }
+const FONT_SIZE_MAP = { sm: 12, md: 16, lg: 32, xl: 56 }
 
 function prefersReducedMotion(): boolean {
   if (typeof window === 'undefined') return false
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
+/**
+ * The founder frame colors — used for the Mythic Flame / Grandmaster Founder
+ * visual fallback when no image URL is set.
+ */
+const MYTHIC_COLORS = ['#f97316', '#ffd700', '#f85149']
+
 export function AvatarWithFrame({ user, size = 'md', className = '', style: overrideStyle }: AvatarWithFrameProps) {
   const px = SIZE_MAP[size]
   const fontSize = FONT_SIZE_MAP[size]
   const frameRef: Record<string, any> | null = user.avatarFrameRef || null
-  const borderStyle = getFrameBorderStyle(frameRef)
-  const borderWidth = frameRef?.borderWidth || FRAME_BORDER_WIDTH[borderStyle] || 0
+  const frameName = user.avatarFrame || ''
   const reducedMotion = useMemo(() => prefersReducedMotion(), [])
 
   const hasImageFrame = !!frameRef?.imageUrl
+  const hasFrame = !!frameRef || !!frameName
   const hasAnimation = frameRef?.animation && frameRef.animation !== 'none' && !reducedMotion
   const useBlend = frameRef?.blend === 'screen'
 
-  // Image frame extends well beyond avatar so it's clearly visible as a ring/crown
-  const imageFrameExtra = hasImageFrame ? Math.round(px * 0.4) : 0
-  const wrapperSize = px + borderWidth * 2 + (hasAnimation ? 8 : 0) + imageFrameExtra * 2
+  // Frame ring extends 40% beyond the avatar
+  const ringExtra = hasFrame ? Math.round(px * 0.4) : 0
+  const borderWidth = frameRef?.borderWidth || 4
 
-  // Outer wrapper with glow animation — NO overflow hidden, NO border radius
+  // Colors for gradient/glow fallback
+  const colors = frameRef?.gradientColors?.length
+    ? frameRef.gradientColors
+    : frameName.toLowerCase().includes('mythic') || frameName.toLowerCase().includes('flame')
+      ? MYTHIC_COLORS
+      : [frameRef?.borderColor || '#58a6ff']
+
+  const primaryColor = colors[0] || '#f97316'
+  const secondaryColor = colors[1] || primaryColor
+
+  const wrapperSize = px + ringExtra * 2 + (hasAnimation ? 8 : 0)
+
+  // Outer wrapper with glow animation — no overflow clipping
   const Wrapper = hasAnimation ? motion.div : 'div'
   const wrapperProps: any = hasAnimation
     ? {
         animate: {
           boxShadow: [
-            `0 0 8px 2px ${frameRef?.gradientColors?.[0] || '#f97316'}40`,
-            `0 0 16px 6px ${frameRef?.gradientColors?.[0] || '#f97316'}60`,
-            `0 0 8px 2px ${frameRef?.gradientColors?.[0] || '#f97316'}40`,
+            `0 0 12px 4px ${primaryColor}50`,
+            `0 0 24px 8px ${primaryColor}70`,
+            `0 0 12px 4px ${primaryColor}50`,
           ],
         },
         transition: { duration: 2.5, repeat: Infinity, ease: 'easeInOut' },
       }
     : {}
 
+  // The ring is a full circle around the avatar
+  const ringSize = px + ringExtra * 2
+
   return (
     <Wrapper
       className={`relative inline-flex items-center justify-center ${className}`}
-      style={{
-        width: wrapperSize,
-        height: wrapperSize,
-        // No border-radius here — the frame image must not be clipped
-        ...overrideStyle,
-      }}
+      style={{ width: wrapperSize, height: wrapperSize, ...overrideStyle }}
       {...wrapperProps}
     >
-      {/* Image-based frame overlay — fully visible, extends beyond avatar */}
+      {/* ── CSS gradient ring (always visible when frame is set) ── */}
+      {hasFrame && !hasImageFrame && (
+        <div
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            width: ringSize,
+            height: ringSize,
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            background: `conic-gradient(from 0deg, ${colors.join(', ')}, ${colors[0]})`,
+            padding: borderWidth,
+            zIndex: 0,
+          }}
+        >
+          {/* Inner transparent circle to create ring effect */}
+          <div
+            className="w-full h-full rounded-full"
+            style={{ backgroundColor: 'var(--color-canvas-default)' }}
+          />
+        </div>
+      )}
+
+      {/* ── Image-based frame overlay ── */}
       {hasImageFrame && (
         <img
           src={frameRef!.imageUrl!}
           alt=""
           className="absolute pointer-events-none"
-          onError={(e) => {
-            // If the image fails to load, hide it gracefully
-            ;(e.target as HTMLImageElement).style.display = 'none'
-          }}
+          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
           style={{
-            width: px + imageFrameExtra * 2,
-            height: px + imageFrameExtra * 2,
+            width: ringSize,
+            height: ringSize,
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
@@ -148,7 +150,23 @@ export function AvatarWithFrame({ user, size = 'md', className = '', style: over
         />
       )}
 
-      {/* Avatar circle — the only clipped, rounded element */}
+      {/* ── Glow ring for glow/flame styles (CSS-only, no image needed) ── */}
+      {hasFrame && !hasImageFrame && (frameRef?.borderStyle === 'glow' || frameRef?.borderStyle === 'flame') && (
+        <div
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            width: ringSize + 8,
+            height: ringSize + 8,
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            boxShadow: `0 0 20px 6px ${primaryColor}50, inset 0 0 12px 4px ${primaryColor}20`,
+            zIndex: 0,
+          }}
+        />
+      )}
+
+      {/* ── Avatar circle ── */}
       <div
         className="relative rounded-full overflow-hidden flex items-center justify-center"
         style={{
@@ -156,15 +174,9 @@ export function AvatarWithFrame({ user, size = 'md', className = '', style: over
           height: px,
           zIndex: 1,
           backgroundColor: 'var(--color-canvas-subtle)',
-          border: borderStyle !== 'none' && !hasImageFrame
-            ? `${borderWidth}px ${borderStyle === 'double' ? 'double' : 'solid'} ${frameRef?.borderColor || '#58a6ff'}`
+          border: hasFrame && !hasImageFrame
+            ? `${Math.max(borderWidth, 2)}px solid ${primaryColor}`
             : 'none',
-          ...(borderStyle === 'glow' && !hasImageFrame
-            ? { boxShadow: `0 0 10px 2px ${frameRef?.borderColor || '#58a6ff'}60` }
-            : {}),
-          ...(borderStyle === 'gradient' && !hasImageFrame
-            ? { borderImage: `${getFrameGradientCSS(frameRef)} 1`, borderStyle: 'solid', borderWidth }
-            : {}),
           color: 'var(--color-fg-default)',
           fontSize,
           fontWeight: 600,
@@ -176,18 +188,6 @@ export function AvatarWithFrame({ user, size = 'md', className = '', style: over
           user.username.charAt(0).toUpperCase()
         )}
       </div>
-
-      {/* CSS flame overlay for frame.animation === 'flame' (non-image frames) */}
-      {frameRef?.animation === 'flame' && !reducedMotion && !hasImageFrame && (
-        <div
-          className="absolute inset-0 rounded-full pointer-events-none"
-          style={{
-            width: px + borderWidth * 2,
-            height: px + borderWidth * 2,
-            background: `radial-gradient(circle, transparent 60%, ${frameRef?.gradientColors?.[0] || '#f97316'}30 100%)`,
-          }}
-        />
-      )}
     </Wrapper>
   )
 }

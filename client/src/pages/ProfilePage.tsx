@@ -91,7 +91,7 @@ export function ProfilePage() {
         <div className="grid grid-cols-1 lg:grid-cols-[296px_1fr] gap-6">
           {/* Sidebar */}
           <div>
-            <div className="sticky top-24" style={{ backgroundColor: 'var(--color-surface-default)', zIndex: 2 }}>
+            <div className="sticky top-24 rounded-lg p-4" style={{ backgroundColor: 'var(--color-canvas-default)', border: '1px solid var(--color-border-default)', zIndex: 2 }}>
               {/* Avatar with frame */}
               <div className="flex justify-center mb-4" style={{ paddingTop: profile.isFounder ? 8 : 0 }}>
                 <AvatarWithFrame user={profile} size="xl" />

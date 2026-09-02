@@ -35,7 +35,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **Admin Achievements Tab**: Manage user achievements — view, add (with presets or custom), and remove achievements per user.
 - **Frame Image Upload**: `POST /api/admin/frames/upload` and `POST /api/admin/frames/:frameId/upload` — upload frame overlay images with Vercel Blob / disk fallback.
 - **Achievement API**: `POST /api/admin/achievements` and `DELETE /api/admin/achievements` — assign/remove achievements from users.
-- **AvatarWithFrame fix**: Image-based frames now render as a proper overlay ring extending 40% beyond the avatar, with responsive `object-fit: contain`, no overflow clipping, and `onError` fallback. Frame image is always fully visible.
+- **AvatarWithFrame rewrite**: Frame is now ALWAYS visible when `avatarFrame` is set — uses CSS `conic-gradient` ring as fallback when no image URL is present, with glow overlay for flame/glow styles. Image-based frames extend 40% beyond avatar. No overflow clipping. Founder frame guaranteed visible.
 - **Profile page SEO**: Dynamic `<title>`, `og:title`, `og:description`, `og:image`, and Twitter Card meta tags — profile pages now show the username/display name in browser tab and social previews.
 - **Codex page SEO**: Dynamic `<title>`, `og:title`, `og:description`, `og:image` — codex pages show the codex name and owner in browser tab and social shares.
 - **useSEO hook**: Reusable hook for any page to set document title and Open Graph meta tags dynamically.
