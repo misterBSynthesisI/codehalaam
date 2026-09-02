@@ -20,6 +20,7 @@ import express from 'express'
 import mongoose from 'mongoose'
 import User from '../models/User.js'
 import AvatarFrame from '../models/AvatarFrame.js'
+import Repository from '../models/Repository.js'
 import { generateToken, protect, requireDemoFree } from '../middleware/auth.js'
 import { uploadAvatar, resolveUploadUrl } from '../services/uploadService.js'
 
@@ -487,6 +488,93 @@ router.post('/founder-setup', async (req, res) => {
 
     for (const frame of defaultFrames) {
       await AvatarFrame.findOneAndUpdate({ name: frame.name }, frame, { upsert: true, new: true })
+    }
+
+    // Link the Mythic Flame frame ref to the founder user
+    const mythicFrame = await AvatarFrame.findOne({ name: 'Mythic Flame' })
+    if (mythicFrame && !founder.avatarFrameRef) {
+      founder.avatarFrameRef = mythicFrame._id
+      await founder.save()
+    }
+
+    // Create CODEHALAAM source codex under founder's profile (idempotent)
+    const existingCodex = await Repository.findOne({ name: 'codehalaam', owner: founder._id })
+    if (!existingCodex) {
+      await Repository.create({
+        name: 'codehalaam',
+        description: 'The gamified code hosting platform — free private repos, unlimited collaborators, XP rewards. Built with React, Node.js, and MongoDB.',
+        owner: founder._id,
+        language: 'TypeScript',
+        visibility: 'public',
+        starsCount: 4512,
+        forksCount: 789,
+        hasIssues: true,
+        topics: ['code-hosting', 'gamification', 'react', 'node', 'mongodb', 'open-source'],
+        license: 'MIT',
+        openIssuesCount: 32,
+        openPullRequestsCount: 7,
+        tagline: 'A gamified, immersive alternative to GitHub',
+        technologies: ['React', 'TypeScript', 'Node.js', 'MongoDB', 'Tailwind', 'Framer Motion'],
+        websiteUrl: 'https://codehalaam.vercel.app',
+        accentColor: '#58a6ff',
+        branches: [{ name: 'main', isDefault: true }, { name: 'develop' }],
+        fileTree: [
+          { name: 'README.md', type: 'file', content: '# CODEHALAAM\n\n> A gamified, immersive code hosting platform — free private repos, unlimited collaborators, XP rewards.\n\n## Quick Start\n\n```bash\nnpm install\nnpm run dev\n```\n\n## Architecture\n\n- **Client:** React + TypeScript + Tailwind CSS + Framer Motion\n- **Server:** Node.js + Express + MongoDB\n- **Deployment:** Vercel (serverless)\n\n## Features\n\n- Gamified code hosting with XP, levels, streaks\n- Quests & Offerings (gamified issues & PRs)\n- Avatar frames with game-style prestige\n- Real-time notifications\n- Admin panel with user/repo management', size: '1.4 KB', language: 'Markdown' },
+          { name: 'package.json', type: 'file', content: JSON.stringify({ name: 'codehalaam', version: '1.6.0', description: 'Gamified code hosting platform', scripts: { dev: 'concurrently "npm run server" "npm run client"', server: 'cd server && node index.js', client: 'cd client && npm run dev', build: 'cd client && npm run build', test: 'cd server && npm test', check: 'cd client && npx tsc --noEmit' }, license: 'MIT' }, null, 2), size: '0.5 KB', language: 'JSON' },
+          { name: 'vercel.json', type: 'file', content: JSON.stringify({ rewrites: [{ source: '/api/(.*)', destination: '/api' }] }, null, 2), size: '0.1 KB', language: 'JSON' },
+          { name: 'server', type: 'folder', children: [
+            { name: 'app.js', type: 'file', content: '// Express app configuration\nimport express from \'express\'\nimport cors from \'cors\'\nimport routes from \'./routes/index.js\'\n\nconst app = express()\napp.use(cors())\napp.use(express.json())\napp.use(\'/api\', routes)\nexport default app', size: '0.3 KB', language: 'JavaScript' },
+            { name: 'seed.js', type: 'file', content: '// Database seed script — creates demo users, repos, quests, offerings\n// Run: node seed.js\n// Creates: founder account, 5 demo users, repos, issues, PRs, quests', size: '0.2 KB', language: 'JavaScript' },
+            { name: 'models', type: 'folder', children: [
+              { name: 'User.js', type: 'file', content: '// User model — username, email, password, level, xp, achievements, isFounder\n// Fields: isFounder, title, avatarFrameRef for founder prestige', size: '0.2 KB', language: 'JavaScript' },
+              { name: 'Repository.js', type: 'file', content: '// Repository model — name, description, fileTree, branches, stars, forks\n// Supports: public/private visibility, cover/logo images', size: '0.2 KB', language: 'JavaScript' },
+              { name: 'AvatarFrame.js', type: 'file', content: '// AvatarFrame model — borderStyle, imageUrl, blend mode, animation\n// Rarities: common, rare, epic, legendary, mythic', size: '0.2 KB', language: 'JavaScript' },
+              { name: 'Quest.js', type: 'file', content: '// Quest model — gamified issues with XP bounties', size: '0.1 KB', language: 'JavaScript' },
+              { name: 'Offering.js', type: 'file', content: '// Offering model — gamified code contributions (bound = merged)', size: '0.1 KB', language: 'JavaScript' },
+            ]},
+            { name: 'routes', type: 'folder', children: [
+              { name: 'auth.js', type: 'file', content: '// Auth routes — signup, login, founder-setup, profile update\n// Founder-setup: strict guards, first-admin-only, one-time genesis', size: '0.2 KB', language: 'JavaScript' },
+              { name: 'users.js', type: 'file', content: '// User routes — public profiles, leaderboard, contributions\n// Case-insensitive username lookup', size: '0.1 KB', language: 'JavaScript' },
+              { name: 'admin.js', type: 'file', content: '// Admin routes — user/repo management, frame CRUD, forum moderation\n// Founder protection: cannot delete, demote, or modify founder', size: '0.2 KB', language: 'JavaScript' },
+              { name: 'codexes.js', type: 'file', content: '// Codex routes — quests, offerings, releases, paths, collaborators', size: '0.1 KB', language: 'JavaScript' },
+            ]},
+            { name: 'middleware', type: 'folder', children: [
+              { name: 'auth.js', type: 'file', content: '// JWT auth middleware — protect, optionalAuth, requireAdmin, requireDemoFree', size: '0.1 KB', language: 'JavaScript' },
+            ]},
+            { name: 'services', type: 'folder', children: [
+              { name: 'uploadService.js', type: 'file', content: '// Upload service — Vercel Blob (prod) or disk storage (dev)', size: '0.1 KB', language: 'JavaScript' },
+            ]},
+          ]},
+          { name: 'client', type: 'folder', children: [
+            { name: 'src', type: 'folder', children: [
+              { name: 'App.tsx', type: 'file', content: '// Main app — React Router with protected routes', size: '0.2 KB', language: 'TypeScript' },
+              { name: 'pages', type: 'folder', children: [
+                { name: 'ProfilePage.tsx', type: 'file', content: '// Profile page — founder prestige layer with FOUNDER chip, mythic level card\n// AvatarWithFrame component for game-style avatar rendering', size: '0.2 KB', language: 'TypeScript' },
+                { name: 'DashboardPage.tsx', type: 'file', content: '// Dashboard — welcome card, quests, offerings, activity feed', size: '0.1 KB', language: 'TypeScript' },
+                { name: 'AdminPage.tsx', type: 'file', content: '// Admin panel — user/repo management with avatar frames', size: '0.1 KB', language: 'TypeScript' },
+              ]},
+              { name: 'components', type: 'folder', children: [
+                { name: 'AvatarWithFrame.tsx', type: 'file', content: '// Core frame rendering — image overlays, CSS frames, pulse glow animation\n// Sizes: sm(32), md(48), lg(96), xl(160)\n// Respects prefers-reduced-motion', size: '0.2 KB', language: 'TypeScript' },
+                { name: 'VerifiedBadge.tsx', type: 'file', content: '// Verified badge — blue/red/black badge colors', size: '0.1 KB', language: 'TypeScript' },
+                { name: 'Navbar.tsx', type: 'file', content: '// Navbar — search, notifications, avatar with frame, user menu', size: '0.1 KB', language: 'TypeScript' },
+                { name: 'Footer.tsx', type: 'file', content: '// Footer — product links, download source → founder profile', size: '0.1 KB', language: 'TypeScript' },
+              ]},
+              { name: 'contexts', type: 'folder', children: [
+                { name: 'AuthContext.tsx', type: 'file', content: '// Auth context — user state, login/logout, refreshUser on focus', size: '0.1 KB', language: 'TypeScript' },
+              ]},
+              { name: 'lib', type: 'folder', children: [
+                { name: 'api.ts', type: 'file', content: '// API client — typed fetch wrapper for all backend endpoints', size: '0.1 KB', language: 'TypeScript' },
+              ]},
+            ]},
+          ]},
+          { name: 'docs', type: 'folder', children: [
+            { name: 'design.md', type: 'file', content: '# Design System — GitHub Primer + Apple Fluid Motion\n\n## Palette\n- Canvas: #0d1117\n- Accent: #58a6ff\n- Success: #3fb950\n- Danger: #f85149\n\n## Motion\n- Framer Motion springs\n- prefers-reduced-motion respected', size: '0.3 KB', language: 'Markdown' },
+            { name: 'agent.md', type: 'file', content: '# Agent Documentation — permission system, API endpoints, deployment\n\n## Verified Badges\n- blue = Verified\n- red = Admin\n- black = Stealth\n\n## Founder\n- isFounder flag, locked to first admin\n- Mythic Flame avatar frame', size: '0.2 KB', language: 'Markdown' },
+          ]},
+        ],
+        defaultReadme: '# CODEHALAAM\n\n> A gamified, immersive code hosting platform.\n\n## Quick Start\n\n```bash\nnpm install\nnpm run dev\n```',
+      })
+      console.log('[FOUNDER] Created CODEHALAAM source codex')
     }
 
     console.log('[FOUNDER] Created/converged founder account: JustShipItAI')

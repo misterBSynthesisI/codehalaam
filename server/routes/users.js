@@ -71,7 +71,7 @@ router.get('/me', protect, async (req, res) => {
 // GET /api/users/:username - Public profile (viewer-aware)
 router.get('/:username', optionalAuth, async (req, res) => {
   try {
-    const user = await User.findOne({ username: req.params.username })
+    const user = await User.findOne({ username: { $regex: new RegExp(`^${req.params.username}$`, 'i') } })
       .select('-password -email -emailNotifications')
       .populate('avatarFrameRef')
       .lean()
@@ -128,7 +128,7 @@ router.get('/:username', optionalAuth, async (req, res) => {
 // GET /api/users/:username/contributions
 router.get('/:username/contributions', async (req, res) => {
   try {
-    const user = await User.findOne({ username: req.params.username })
+    const user = await User.findOne({ username: { $regex: new RegExp(`^${req.params.username}$`, 'i') } })
       .select('contributionDays stats.contributions')
 
     if (!user) {

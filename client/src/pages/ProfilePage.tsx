@@ -105,7 +105,7 @@ export function ProfilePage() {
                     </span>
                   )}
                 </h1>
-                <p className="text-xl" style={{ color: 'var(--color-fg-muted)' }}>{profile.username}</p>
+                <p className="text-xl" style={{ color: 'var(--color-fg-muted)' }}>@{profile.username}</p>
                 {profile.isFounder && profile.title && (
                   <p className="text-sm mt-1 font-medium" style={{ color: '#ffd700' }}>{profile.title}</p>
                 )}
