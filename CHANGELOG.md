@@ -20,6 +20,22 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## 🔨 In Progress
 
+### v1.6 — "Forge" (September 2026)
+
+#### Building
+- Developer documentation site — browsable docs with code examples
+- Codex insights — view counts, popular files, contributor stats
+- Forum search and tag filtering
+- Admin dashboard charts — visual XP distribution
+- Batch operations — bulk manage from admin
+- Improved mobile navigation
+
+#### Added (v1.6)
+- **Mobile Code Workspace**: 3-pane code workspace is now responsive — file tree becomes a slide-out drawer on mobile with backdrop overlay. Hamburger toggle in top bar. Auto-closes on file select.
+- **Admin Codex CRUD**: Admins can now edit any codex (description, visibility, language, tagline) and delete any codex with full cascade cleanup from the Control Room. Edit drawer and delete confirmation modal added to the Codexes tab.
+- **Admin Codex Endpoints**: `PATCH /api/admin/repos/:repoId` and `DELETE /api/admin/repos/:repoId` — admin bypass for owner permission checks.
+- **Dashboard Welcome Card**: Enhanced dashboard header with user avatar, verified badge overlay, character class pill, animated XP progress bar, streak/contributions/XP quick stats.
+
 ### v1.5 — "Ascend" (September 2026)
 
 #### Building

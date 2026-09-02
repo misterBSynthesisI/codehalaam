@@ -246,9 +246,24 @@ GET    /api/codexes/:owner/:name/collaborators - List collaborators
 ### Admin Endpoints (requireAdmin)
 
 ```
-PATCH  /api/admin/users/:userId/badge         - Set verified badge
 GET    /api/admin/stats                       - Platform stats
-GET    /api/admin/users                       - List all users
+GET    /api/admin/users                       - List all users (paginated, searchable)
+PATCH  /api/admin/users/:userId               - Update user (level, xp, badge, class)
+PATCH  /api/admin/users/:userId/badge         - Set verified badge (backward compat)
+DELETE /api/admin/users/:userId               - Delete user permanently
+GET    /api/admin/repos                       - List all codexes (paginated, searchable)
+PATCH  /api/admin/repos/:repoId               - Update any codex (admin bypass)
+DELETE /api/admin/repos/:repoId               - Delete any codex with cascade (admin bypass)
+GET    /api/admin/activity                    - Recent activity feed
+GET    /api/admin/forum                       - List forum posts (paginated, searchable)
+PATCH  /api/admin/forum/:postId/pin           - Toggle pin on forum post
+PATCH  /api/admin/forum/:postId/close         - Toggle close on forum post
+DELETE /api/admin/forum/:postId               - Delete any forum post
+GET    /api/admin/frames                      - List avatar frames
+POST   /api/admin/frames                      - Create avatar frame
+PATCH  /api/admin/frames/:frameId             - Update avatar frame
+DELETE /api/admin/frames/:frameId             - Delete avatar frame
+POST   /api/admin/frames/:frameId/assign/:userId - Assign frame to user
 ```
 
 ## Authentication
@@ -543,11 +558,14 @@ The database (MongoDB Atlas) is an **external managed service**. Vercel does not
 | Grant badges | `PATCH /api/admin/users/:userId/badge` | Sets `badgeColor` (blue/black/red/none) — visible immediately on client |
 | Delete users | `DELETE /api/admin/users/:userId` | Permanently removes user from DB |
 | Browse codexes | `GET /api/admin/repos?search=` | Paginated, searchable codex list with visibility filters |
+| Edit any codex | `PATCH /api/admin/repos/:repoId` | Admin bypass — update description, visibility, language, tagline on any codex |
+| Delete any codex | `DELETE /api/admin/repos/:repoId` | Admin bypass — cascade delete quests, offerings, releases, collaborators, comments |
 | Manage forum | `GET /api/admin/forum` | Paginated, searchable forum post list |
 | Pin/unpin forum posts | `PATCH /api/admin/forum/:postId/pin` | Toggle pin status on any forum post |
 | Close/reopen forum posts | `PATCH /api/admin/forum/:postId/close` | Toggle close status on any forum post |
 | Delete forum posts | `DELETE /api/admin/forum/:postId` | Permanently delete any forum post |
 | View activity feed | `GET /api/admin/activity` | Recent users/codexes/quests/offerings |
+| Manage avatar frames | CRUD on `/api/admin/frames` | Create, update, delete, assign avatar frames to users |
 | Customize branding | `PUT /api/settings` + upload endpoints | Changes logo, favicon, site name — applied across the site |
 | Toggle signup | `PUT /api/settings` | Enable/disable new signups platform-wide |
 | Toggle maintenance mode | `PUT /api/settings` | Shows 503 to non-admins |
