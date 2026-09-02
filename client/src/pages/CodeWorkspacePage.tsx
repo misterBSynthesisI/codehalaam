@@ -22,7 +22,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronRight, File, Folder, FolderOpen, FileCode2,
   GitBranch, ChevronDown, BookOpen, AlertCircle, GitPullRequest,
-  MessageSquare
+  MessageSquare, Menu, X
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -128,6 +128,7 @@ export function CodeWorkspacePage() {
   const [paths, setPaths] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showPathDropdown, setShowPathDropdown] = useState(false)
+  const [mobileTreeOpen, setMobileTreeOpen] = useState(false)
 
   // Load codex data
   useEffect(() => {
@@ -173,6 +174,7 @@ export function CodeWorkspacePage() {
     const filePath = node.path || node.name
     setSelectedFile(node)
     setSearchParams({ ref, path: filePath })
+    setMobileTreeOpen(false) // Close mobile drawer on file select
   }, [ref, setSearchParams])
 
   const handleSwitchRef = useCallback((newRef: string) => {
@@ -194,11 +196,16 @@ export function CodeWorkspacePage() {
     <div style={{ backgroundColor: 'var(--color-canvas-default)', minHeight: '100vh' }}>
       {/* Top bar */}
       <div className="border-b flex items-center h-10 px-3 gap-2" style={{ borderColor: 'var(--color-border-default)' }}>
+        {/* Mobile tree toggle */}
+        <button onClick={() => setMobileTreeOpen(!mobileTreeOpen)} className="md:hidden p-1 rounded" style={{ color: 'var(--color-fg-muted)' }}>
+          {mobileTreeOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+        </button>
+
         <Link to={`/codex/${owner}/${name}`} className="text-xs no-underline hover:underline flex items-center gap-1" style={{ color: 'var(--color-accent-fg)' }}>
-          <BookOpen className="w-3.5 h-3.5" strokeWidth={1.5} />{owner}/{name}
+          <BookOpen className="w-3.5 h-3.5" strokeWidth={1.5} /><span className="hidden sm:inline">{owner}/{name}</span><span className="sm:hidden">Code</span>
         </Link>
-        <ChevronRight className="w-3 h-3" strokeWidth={1.5} style={{ color: 'var(--color-fg-subtle)' }} />
-        <span className="text-xs font-semibold" style={{ color: 'var(--color-fg-default)' }}>Code</span>
+        <ChevronRight className="w-3 h-3 hidden sm:block" strokeWidth={1.5} style={{ color: 'var(--color-fg-subtle)' }} />
+        <span className="text-xs font-semibold hidden sm:block" style={{ color: 'var(--color-fg-default)' }}>Code</span>
 
         {/* Branch selector */}
         <div className="relative ml-2">
@@ -227,12 +234,29 @@ export function CodeWorkspacePage() {
             {selectedPath}
           </span>
         )}
-      </div>
+      </div>      {/* Mobile file tree overlay */}
+      {mobileTreeOpen && (
+        <div className="fixed inset-0 z-30 md:hidden" style={{ top: 40 }}>
+          <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.3)' }} onClick={() => setMobileTreeOpen(false)} />
+          <motion.div
+            initial={{ x: -280 }} animate={{ x: 0 }} exit={{ x: -280 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+            className="absolute left-0 top-0 bottom-0 w-[280px] overflow-y-auto z-40"
+            style={{ backgroundColor: 'var(--color-canvas-default)', borderRight: '1px solid var(--color-border-default)', boxShadow: '4px 0 24px rgba(0,0,0,0.3)' }}
+          >
+            <div className="py-2">
+              {fileTree.map((node: any) => (
+                <FileTreeNode key={node.name} node={node} depth={0} onSelect={handleSelectFile} selectedPath={selectedPath} />
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       {/* 3-pane layout */}
-      <div className="grid grid-cols-[240px_1fr] lg:grid-cols-[240px_1fr_280px] h-[calc(100vh-40px)]">
-        {/* Left: File tree */}
-        <div className="border-r overflow-y-auto" style={{ borderColor: 'var(--color-border-default)', maxHeight: 'calc(100vh - 40px)' }}>
+      <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] lg:grid-cols-[240px_1fr_280px] h-[calc(100vh-40px)]">
+        {/* Left: File tree (hidden on mobile, shown on md+) */}
+        <div className="hidden md:block border-r overflow-y-auto" style={{ borderColor: 'var(--color-border-default)', maxHeight: 'calc(100vh - 40px)' }}>
           <div className="py-2">
             {fileTree.map((node: any) => (
               <FileTreeNode key={node.name} node={node} depth={0} onSelect={handleSelectFile} selectedPath={selectedPath} />
@@ -241,7 +265,7 @@ export function CodeWorkspacePage() {
         </div>
 
         {/* Center: File content */}
-        <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 40px)' }}>
+        <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh-40px)' }}>
           {selectedFile ? (
             <div>
               {/* File header */}
