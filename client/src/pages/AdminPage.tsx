@@ -22,7 +22,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Search,  Pencil, Trash2, X, ShieldAlert, Users, ChevronLeft, ChevronRight,
   AlertTriangle, CheckCircle2, BarChart3, GitBranch, Settings, Activity,
-  Eye, EyeOff, Star, Flame, Radio, Lock, Globe, ExternalLink, MessageSquare, Pin
+  Eye, EyeOff, Star, Flame, Radio, Lock, Globe, ExternalLink, MessageSquare, Pin, Image as ImageIcon
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { VerifiedBadge } from '@/components/ui/VerifiedBadge'
@@ -38,7 +38,7 @@ interface Toast {
 let toastId = 0
 
 /* ── Types ── */
-type TabId = 'overview' | 'users' | 'repos' | 'forum' | 'settings'
+type TabId = 'overview' | 'users' | 'repos' | 'forum' | 'frames' | 'achievements' | 'settings'
 
 interface AdminUser {
   _id: string
@@ -123,6 +123,8 @@ export function AdminPage() {
     { id: 'users', label: 'Users', icon: <Users className="w-4 h-4" /> },
     { id: 'repos', label: 'Codexes', icon: <GitBranch className="w-4 h-4" /> },
     { id: 'forum', label: 'Forum', icon: <MessageSquare className="w-4 h-4" /> },
+    { id: 'frames', label: 'Frames', icon: <Radio className="w-4 h-4" /> },
+    { id: 'achievements', label: 'Achievements', icon: <Star className="w-4 h-4" /> },
     { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> },
   ]
 
@@ -186,6 +188,8 @@ export function AdminPage() {
           {activeTab === 'users' && <UsersTab key="users" showToast={showToast} />}
           {activeTab === 'repos' && <ReposTab key="repos" showToast={showToast} />}
           {activeTab === 'forum' && <ForumTab key="forum" showToast={showToast} />}
+          {activeTab === 'frames' && <FramesTab key="frames" showToast={showToast} />}
+          {activeTab === 'achievements' && <AchievementsTab key="achievements" showToast={showToast} />}
         </AnimatePresence>
       </div>
     </div>
@@ -1151,4 +1155,533 @@ function formatRelativeTime(date: string): string {
   const days = Math.floor(hrs / 24)
   if (days < 30) return `${days}d ago`
   return new Date(date).toLocaleDateString()
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FRAMES TAB — Avatar frame management
+   ═══════════════════════════════════════════════════════════════════════════ */
+function FramesTab({ showToast }: { showToast: (m: string, t?: 'success' | 'error') => void }) {
+  const [frames, setFrames] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showCreate, setShowCreate] = useState(false)
+  const [users, setUsers] = useState<any[]>([])
+
+  // Create frame form
+  const [newName, setNewName] = useState('')
+  const [newDesc, setNewDesc] = useState('')
+  const [newBorderStyle, setNewBorderStyle] = useState('solid')
+  const [newBorderColor, setNewBorderColor] = useState('#58a6ff')
+  const [newBorderWidth, setNewBorderWidth] = useState(3)
+  const [newRarity, setNewRarity] = useState('common')
+  const [newLevel, setNewLevel] = useState(0)
+  const [newBlend, setNewBlend] = useState('normal')
+  const [newAnimation, setNewAnimation] = useState('none')
+  const [newImageFile, setNewImageFile] = useState<File | null>(null)
+  const [newImagePreview, setNewImagePreview] = useState('')
+  const [creating, setCreating] = useState(false)
+
+  // Assign frame
+  const [assignFrameId, setAssignFrameId] = useState('')
+  const [assignUserId, setAssignUserId] = useState('')
+  const [assigning, setAssigning] = useState(false)
+  const [searchUser, setSearchUser] = useState('')
+
+  const fetchFrames = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await api.getFrames()
+      setFrames(data.frames || [])
+    } catch (err: any) {
+      showToast(err.message || 'Failed to fetch frames', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }, [showToast])
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      const data = await api.adminGetUsers({ limit: 100 })
+      setUsers(data.users || [])
+    } catch { /* ignore */ }
+  }, [])
+
+  useEffect(() => { fetchFrames(); fetchUsers() }, [fetchFrames, fetchUsers])
+
+  const handleCreate = async () => {
+    if (!newName.trim()) return showToast('Frame name is required', 'error')
+    setCreating(true)
+    try {
+      let imageUrl = ''
+      if (newImageFile) {
+        const uploaded = await api.uploadNewFrameImage(newImageFile)
+        imageUrl = uploaded.imageUrl
+      }
+      const { frame } = await api.createFrame({
+        name: newName, description: newDesc, borderStyle: newBorderStyle,
+        borderColor: newBorderColor, borderWidth: newBorderWidth,
+        rarity: newRarity, requiredLevel: newLevel, blend: newBlend,
+        animation: newAnimation, imageUrl,
+      })
+      setFrames(prev => [...prev, frame])
+      setShowCreate(false)
+      setNewName(''); setNewDesc(''); setNewImageFile(null); setNewImagePreview('')
+      showToast(`✅ Frame "${frame.name}" created`)
+    } catch (err: any) {
+      showToast(err.message || 'Failed to create frame', 'error')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const handleDelete = async (frame: any) => {
+    if (!confirm(`Delete frame "${frame.name}"?`)) return
+    try {
+      await api.deleteFrame(frame._id)
+      setFrames(prev => prev.filter(f => f._id !== frame._id))
+      showToast(`🗑️ Frame "${frame.name}" deleted`)
+    } catch (err: any) {
+      showToast(err.message || 'Failed to delete frame', 'error')
+    }
+  }
+
+  const handleImageUpload = async (frameId: string, file: File) => {
+    try {
+      const { imageUrl, frame: updated } = await api.uploadFrameImage(frameId, file)
+      setFrames(prev => prev.map(f => f._id === frameId ? { ...f, imageUrl } : f))
+      showToast('🖼️ Frame image updated')
+    } catch (err: any) {
+      showToast(err.message || 'Failed to upload image', 'error')
+    }
+  }
+
+  const handleAssign = async () => {
+    if (!assignFrameId || !assignUserId) return showToast('Select a frame and user', 'error')
+    setAssigning(true)
+    try {
+      await api.assignFrame(assignFrameId, assignUserId)
+      showToast('✅ Frame assigned to user')
+      setAssignFrameId(''); setAssignUserId(''); setSearchUser('')
+    } catch (err: any) {
+      showToast(err.message || 'Failed to assign frame', 'error')
+    } finally {
+      setAssigning(false)
+    }
+  }
+
+  const filteredUsers = searchUser
+    ? users.filter(u => u.username.toLowerCase().includes(searchUser.toLowerCase()) || (u.displayName || '').toLowerCase().includes(searchUser.toLowerCase()))
+    : users
+
+  const RARITY_COLORS: Record<string, string> = {
+    common: 'var(--color-fg-muted)',
+    rare: 'var(--color-accent-fg)',
+    epic: '#a371f7',
+    legendary: '#f97316',
+    mythic: '#ffd700',
+  }
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-base font-semibold flex items-center gap-2" style={{ color: 'var(--color-fg-default)' }}>
+          <Radio className="w-4 h-4" /> Avatar Frames
+        </h2>
+        <button onClick={() => setShowCreate(!showCreate)} className="btn btn-primary btn-sm">
+          {showCreate ? 'Cancel' : '+ New Frame'}
+        </button>
+      </div>
+
+      {/* Create Frame Form */}
+      <AnimatePresence>
+        {showCreate && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden mb-4">
+            <div className="Box">
+              <div className="Box-header"><h3 className="Box-title text-sm">Create New Frame</h3></div>
+              <div className="Box-body space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Frame Name *</label>
+                    <input type="text" value={newName} onChange={e => setNewName(e.target.value)} className="form-control" placeholder="e.g. Dragon Heart" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Rarity</label>
+                    <select value={newRarity} onChange={e => setNewRarity(e.target.value)} className="form-control">
+                      <option value="common">Common</option>
+                      <option value="rare">Rare</option>
+                      <option value="epic">Epic</option>
+                      <option value="legendary">Legendary</option>
+                      <option value="mythic">Mythic</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Description</label>
+                  <input type="text" value={newDesc} onChange={e => setNewDesc(e.target.value)} className="form-control" placeholder="Brief description..." />
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Border Style</label>
+                    <select value={newBorderStyle} onChange={e => setNewBorderStyle(e.target.value)} className="form-control">
+                      <option value="none">None</option>
+                      <option value="solid">Solid</option>
+                      <option value="dashed">Dashed</option>
+                      <option value="double">Double</option>
+                      <option value="gradient">Gradient</option>
+                      <option value="glow">Glow</option>
+                      <option value="flame">Flame</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Border Color</label>
+                    <input type="color" value={newBorderColor} onChange={e => setNewBorderColor(e.target.value)} className="form-control h-10" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Width ({newBorderWidth}px)</label>
+                    <input type="range" min={1} max={8} value={newBorderWidth} onChange={e => setNewBorderWidth(parseInt(e.target.value))} className="w-full" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Min Level</label>
+                    <input type="number" min={0} max={100} value={newLevel} onChange={e => setNewLevel(parseInt(e.target.value) || 0)} className="form-control" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Blend Mode</label>
+                    <select value={newBlend} onChange={e => setNewBlend(e.target.value)} className="form-control">
+                      <option value="normal">Normal</option>
+                      <option value="screen">Screen</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Animation</label>
+                    <select value={newAnimation} onChange={e => setNewAnimation(e.target.value)} className="form-control">
+                      <option value="none">None</option>
+                      <option value="pulse">Pulse</option>
+                      <option value="flame">Flame</option>
+                    </select>
+                  </div>
+                </div>
+                {/* Frame Image Upload */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">Frame Image (overlay)</label>
+                  <div className="flex items-center gap-4">
+                    <div
+                      className="w-20 h-20 rounded-lg flex items-center justify-center cursor-pointer overflow-hidden"
+                      style={{ backgroundColor: 'var(--color-canvas-subtle)', border: '2px dashed var(--color-border-default)' }}
+                      onClick={() => document.getElementById('new-frame-image')?.click()}
+                    >
+                      {newImagePreview ? (
+                        <img src={newImagePreview} alt="Preview" className="w-full h-full object-contain" style={{ mixBlendMode: newBlend === 'screen' ? 'screen' : 'normal' }} />
+                      ) : (
+                        <span className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>Upload</span>
+                      )}
+                    </div>
+                    <div>
+                      <input id="new-frame-image" type="file" accept="image/*" className="hidden" onChange={e => {
+                        const f = e.target.files?.[0]
+                        if (f) { setNewImageFile(f); setNewImagePreview(URL.createObjectURL(f)) }
+                      }} />
+                      <p className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>PNG with transparency recommended. Uses blend mode: {newBlend}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <button onClick={handleCreate} disabled={creating} className="btn btn-primary btn-sm">
+                    {creating ? 'Creating...' : 'Create Frame'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Frames List */}
+      <div className="Box overflow-hidden">
+        {loading ? (
+          <div className="px-4 py-12 text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>Loading frames...</div>
+        ) : frames.length === 0 ? (
+          <div className="px-4 py-12 text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>No frames yet. Create one above.</div>
+        ) : (
+          <div>
+            {frames.map((frame, i) => (
+              <motion.div key={frame._id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}
+                className="flex items-center gap-4 px-4 py-3"
+                style={{ borderBottom: i < frames.length - 1 ? '1px solid var(--color-border-default)' : 'none' }}>
+                {/* Frame preview */}
+                <div className="relative w-12 h-12 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
+                  style={{ backgroundColor: 'var(--color-canvas-subtle)' }}>
+                  {frame.imageUrl ? (
+                    <img src={frame.imageUrl} alt="" className="absolute inset-0 w-full h-full object-contain"
+                      style={{ mixBlendMode: frame.blend === 'screen' ? 'screen' : 'normal' }} />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full" style={{
+                      border: frame.borderStyle !== 'none' ? `${frame.borderWidth || 3}px solid ${frame.borderColor || '#58a6ff'}` : '2px solid var(--color-border-default)',
+                    }} />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold" style={{ color: 'var(--color-fg-default)' }}>{frame.name}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{
+                      color: RARITY_COLORS[frame.rarity] || 'var(--color-fg-muted)',
+                      border: `1px solid ${RARITY_COLORS[frame.rarity] || 'var(--color-border-default)'}`,
+                    }}>{frame.rarity}</span>
+                    {frame.animation && frame.animation !== 'none' && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: 'var(--color-canvas-subtle)', color: 'var(--color-fg-muted)' }}>✨ {frame.animation}</span>
+                    )}
+                  </div>
+                  <span className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>{frame.description || 'No description'}</span>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <label className="p-1.5 rounded-md cursor-pointer transition-colors" style={{ color: 'var(--color-fg-muted)' }}
+                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-accent-fg)'; e.currentTarget.style.backgroundColor = 'var(--color-accent-muted)' }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-fg-muted)'; e.currentTarget.style.backgroundColor = 'transparent' }}
+                    title="Upload image">
+                    <ImageIcon className="w-4 h-4" />
+                    <input type="file" accept="image/*" className="hidden" onChange={e => {
+                      const f = e.target.files?.[0]
+                      if (f) handleImageUpload(frame._id, f)
+                    }} />
+                  </label>
+                  <button onClick={() => handleDelete(frame)} className="p-1.5 rounded-md transition-colors" style={{ color: 'var(--color-fg-muted)' }}
+                    onMouseEnter={e => { e.currentTarget.style.color = 'var(--color-danger-fg)'; e.currentTarget.style.backgroundColor = 'var(--color-danger-muted)' }}
+                    onMouseLeave={e => { e.currentTarget.style.color = 'var(--color-fg-muted)'; e.currentTarget.style.backgroundColor = 'transparent' }}
+                    title="Delete frame"><Trash2 className="w-4 h-4" /></button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Assign Frame to User */}
+      <div className="Box mt-4">
+        <div className="Box-header"><h3 className="Box-title text-sm">Assign Frame to User</h3></div>
+        <div className="Box-body space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium mb-1">Frame</label>
+              <select value={assignFrameId} onChange={e => setAssignFrameId(e.target.value)} className="form-control">
+                <option value="">Select frame...</option>
+                {frames.map(f => <option key={f._id} value={f._id}>{f.name} ({f.rarity})</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">User</label>
+              <input type="text" value={searchUser} onChange={e => { setSearchUser(e.target.value); setAssignUserId('') }} className="form-control" placeholder="Search user..." />
+              {searchUser && !assignUserId && (
+                <div className="absolute z-50 mt-1 w-full max-w-sm rounded-md max-h-48 overflow-auto" style={{ backgroundColor: 'var(--color-canvas-default)', border: '1px solid var(--color-border-default)', boxShadow: 'var(--color-shadow-large)' }}>
+                  {filteredUsers.slice(0, 10).map(u => (
+                    <button key={u._id} onClick={() => { setAssignUserId(u._id); setSearchUser(u.username) }}
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-[var(--color-canvas-subtle)]">
+                      {u.displayName || u.username} <span style={{ color: 'var(--color-fg-muted)' }}>@{u.username}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <button onClick={handleAssign} disabled={assigning || !assignFrameId || !assignUserId} className="btn btn-primary btn-sm">
+              {assigning ? 'Assigning...' : 'Assign Frame'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ACHIEVEMENTS TAB — Manage user achievements
+   ═══════════════════════════════════════════════════════════════════════════ */
+function AchievementsTab({ showToast }: { showToast: (m: string, t?: 'success' | 'error') => void }) {
+  const [users, setUsers] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedUser, setSelectedUser] = useState<any>(null)
+  const [newAchievementId, setNewAchievementId] = useState('')
+  const [newAchievementName, setNewAchievementName] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const PRESET_ACHIEVEMENTS = [
+    { id: 'genesis', name: 'Genesis' },
+    { id: 'world-builder', name: 'World Builder' },
+    { id: 'mythic-flame', name: 'Mythic Flame' },
+    { id: 'first-commit', name: 'First Commit' },
+    { id: 'streak-7', name: '7-Day Streak' },
+    { id: 'streak-30', name: '30-Day Streak' },
+    { id: 'team-player', name: 'Team Player' },
+    { id: 'ship-it', name: 'Ship It' },
+    { id: 'code-reviewer', name: 'Code Reviewer' },
+    { id: 'mentor', name: 'Mentor' },
+    { id: 'open-source-hero', name: 'Open Source Hero' },
+    { id: 'bug-hunter', name: 'Bug Hunter' },
+  ]
+
+  const fetchUsers = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await api.adminGetUsers({ limit: 100, search: searchQuery })
+      setUsers(data.users || [])
+    } catch (err: any) {
+      showToast(err.message || 'Failed to fetch users', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }, [showToast, searchQuery])
+
+  useEffect(() => { fetchUsers() }, [fetchUsers])
+
+  const handleAddAchievement = async () => {
+    if (!selectedUser || !newAchievementId || !newAchievementName) return showToast('Fill in all fields', 'error')
+    setSaving(true)
+    try {
+      const { user: updated } = await api.addAchievement(selectedUser._id, newAchievementId, newAchievementName)
+      setSelectedUser(updated)
+      setUsers(prev => prev.map(u => u._id === updated._id ? updated : u))
+      setNewAchievementId(''); setNewAchievementName('')
+      showToast(`🏆 Achievement "${newAchievementName}" added`)
+    } catch (err: any) {
+      showToast(err.message || 'Failed to add achievement', 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleRemoveAchievement = async (achievementId: string) => {
+    if (!selectedUser) return
+    try {
+      const { user: updated } = await api.removeAchievement(selectedUser._id, achievementId)
+      setSelectedUser(updated)
+      setUsers(prev => prev.map(u => u._id === updated._id ? updated : u))
+      showToast('Achievement removed')
+    } catch (err: any) {
+      showToast(err.message || 'Failed to remove achievement', 'error')
+    }
+  }
+
+  const filteredUsers = searchQuery
+    ? users.filter(u => u.username.toLowerCase().includes(searchQuery.toLowerCase()) || (u.displayName || '').toLowerCase().includes(searchQuery.toLowerCase()))
+    : users
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-base font-semibold flex items-center gap-2" style={{ color: 'var(--color-fg-default)' }}>
+          <Star className="w-4 h-4" /> Achievement Management
+        </h2>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4">
+        {/* User list */}
+        <div className="Box overflow-hidden">
+          <div className="Box-header">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'var(--color-fg-subtle)' }} />
+              <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search users..." className="form-control pl-9" style={{ fontSize: 13 }} />
+            </div>
+          </div>
+          <div style={{ maxHeight: 500, overflowY: 'auto' }}>
+            {loading ? (
+              <div className="px-4 py-8 text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>Loading...</div>
+            ) : filteredUsers.map(u => (
+              <button key={u._id} onClick={() => setSelectedUser(u)}
+                className="w-full text-left px-4 py-2.5 flex items-center gap-3 transition-colors"
+                style={{
+                  borderBottom: '1px solid var(--color-border-default)',
+                  backgroundColor: selectedUser?._id === u._id ? 'var(--color-accent-muted)' : 'transparent',
+                  color: selectedUser?._id === u._id ? 'var(--color-accent-fg)' : 'var(--color-fg-default)',
+                }}>
+                <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                  style={{ backgroundColor: 'var(--color-canvas-subtle)', color: 'var(--color-fg-muted)' }}>
+                  {u.username?.charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-medium truncate">{u.displayName || u.username}</div>
+                  <div className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>{u.achievements?.length || 0} achievements</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Achievement editor */}
+        <div className="Box">
+          {!selectedUser ? (
+            <div className="px-4 py-16 text-center text-sm" style={{ color: 'var(--color-fg-muted)' }}>Select a user to manage their achievements</div>
+          ) : (
+            <>
+              <div className="Box-header flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
+                  style={{ backgroundColor: 'var(--color-accent-muted)', color: 'var(--color-accent-fg)' }}>
+                  {selectedUser.username?.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <span className="text-sm font-semibold">{selectedUser.displayName || selectedUser.username}</span>
+                  <span className="text-xs ml-1" style={{ color: 'var(--color-fg-muted)' }}>@{selectedUser.username}</span>
+                </div>
+              </div>
+
+              {/* Current achievements */}
+              <div className="px-4 py-3">
+                <h4 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--color-fg-muted)' }}>Current Achievements</h4>
+                {(!selectedUser.achievements || selectedUser.achievements.length === 0) ? (
+                  <p className="text-xs" style={{ color: 'var(--color-fg-subtle)' }}>No achievements yet</p>
+                ) : (
+                  <div className="space-y-1">
+                    {selectedUser.achievements.map((ach: any) => (
+                      <div key={ach.id} className="flex items-center justify-between py-1.5 px-2 rounded" style={{ backgroundColor: 'var(--color-canvas-subtle)' }}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium">{ach.name}</span>
+                          <span className="text-[10px]" style={{ color: 'var(--color-fg-muted)' }}>ID: {ach.id}</span>
+                        </div>
+                        <button onClick={() => handleRemoveAchievement(ach.id)} className="text-xs" style={{ color: 'var(--color-danger-fg)' }}>
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Add achievement */}
+              <div className="px-4 py-3 border-t" style={{ borderColor: 'var(--color-border-default)' }}>
+                <h4 className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--color-fg-muted)' }}>Add Achievement</h4>
+                <div className="space-y-2">
+                  <div>
+                    <label className="block text-xs font-medium mb-1">Quick Select</label>
+                    <div className="flex flex-wrap gap-1">
+                      {PRESET_ACHIEVEMENTS.filter(p => !(selectedUser.achievements || []).find((a: any) => a.id === p.id)).map(preset => (
+                        <button key={preset.id} onClick={() => { setNewAchievementId(preset.id); setNewAchievementName(preset.name) }}
+                          className="text-[11px] px-2 py-1 rounded transition-colors"
+                          style={{ backgroundColor: 'var(--color-canvas-subtle)', color: 'var(--color-fg-muted)', border: '1px solid var(--color-border-default)' }}>
+                          {preset.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input type="text" value={newAchievementId} onChange={e => setNewAchievementId(e.target.value)}
+                      className="form-control" placeholder="Achievement ID" style={{ fontSize: 12 }} />
+                    <input type="text" value={newAchievementName} onChange={e => setNewAchievementName(e.target.value)}
+                      className="form-control" placeholder="Display Name" style={{ fontSize: 12 }} />
+                  </div>
+                  <div className="flex justify-end">
+                    <button onClick={handleAddAchievement} disabled={saving || !newAchievementId || !newAchievementName}
+                      className="btn btn-primary btn-sm">
+                      {saving ? 'Adding...' : 'Add Achievement'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  )
 }

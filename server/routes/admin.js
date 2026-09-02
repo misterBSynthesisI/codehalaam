@@ -24,6 +24,7 @@ import PullRequest from '../models/PullRequest.js'
 import ForumPost from '../models/ForumPost.js'
 import AvatarFrame from '../models/AvatarFrame.js'
 import { protect, requireAdmin } from '../middleware/auth.js'
+import { uploadAvatar, resolveUploadUrl } from '../services/uploadService.js'
 
 const router = express.Router()
 
@@ -474,6 +475,32 @@ router.post('/frames', async (req, res) => {
   }
 })
 
+// POST /api/admin/frames/upload — upload a frame image
+router.post('/frames/upload', uploadAvatar.single('frame'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' })
+    const imageUrl = await resolveUploadUrl(req.file, 'frames', `/uploads/frames/${req.file.filename}`)
+    res.json({ imageUrl })
+  } catch (err) {
+    console.error('Frame upload error:', err)
+    res.status(500).json({ error: 'Failed to upload frame image' })
+  }
+})
+
+// POST /api/admin/frames/:frameId/upload — upload/update frame image
+router.post('/frames/:frameId/upload', uploadAvatar.single('frame'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' })
+    const imageUrl = await resolveUploadUrl(req.file, 'frames', `/uploads/frames/${req.file.filename}`)
+    const frame = await AvatarFrame.findByIdAndUpdate(req.params.frameId, { imageUrl }, { new: true })
+    if (!frame) return res.status(404).json({ error: 'Frame not found' })
+    res.json({ imageUrl, frame })
+  } catch (err) {
+    console.error('Frame image upload error:', err)
+    res.status(500).json({ error: 'Failed to upload frame image' })
+  }
+})
+
 // PATCH /api/admin/frames/:frameId — update a frame
 router.patch('/frames/:frameId', async (req, res) => {
   try {
@@ -506,6 +533,40 @@ router.post('/frames/:frameId/assign/:userId', async (req, res) => {
     res.json({ user, frame })
   } catch (err) {
     res.status(500).json({ error: 'Failed to assign frame' })
+  }
+})
+
+// POST /api/admin/achievements — create/assign achievement to user
+router.post('/achievements', async (req, res) => {
+  try {
+    const { userId, id, name } = req.body
+    if (!userId || !id || !name) return res.status(400).json({ error: 'userId, id, and name are required' })
+    const user = await User.findById(userId)
+    if (!user) return res.status(404).json({ error: 'User not found' })
+    const existing = (user.achievements || []).find(a => a.id === id)
+    if (existing) return res.status(422).json({ error: 'Achievement already unlocked' })
+    user.achievements = [...(user.achievements || []), { id, name, unlockedAt: new Date() }]
+    await user.save()
+    res.json({ user: user.toJSON() })
+  } catch (err) {
+    console.error('Add achievement error:', err)
+    res.status(500).json({ error: 'Failed to add achievement' })
+  }
+})
+
+// DELETE /api/admin/achievements — remove achievement from user
+router.delete('/achievements', async (req, res) => {
+  try {
+    const { userId, achievementId } = req.body
+    if (!userId || !achievementId) return res.status(400).json({ error: 'userId and achievementId are required' })
+    const user = await User.findById(userId)
+    if (!user) return res.status(404).json({ error: 'User not found' })
+    user.achievements = (user.achievements || []).filter(a => a.id !== achievementId)
+    await user.save()
+    res.json({ user: user.toJSON() })
+  } catch (err) {
+    console.error('Remove achievement error:', err)
+    res.status(500).json({ error: 'Failed to remove achievement' })
   }
 })
 

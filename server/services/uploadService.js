@@ -108,12 +108,14 @@ const uploadsBase = path.resolve(__dirname, '../uploads')
 const avatarDir = path.join(uploadsBase, 'avatars')
 const codexDir = path.join(uploadsBase, 'codexes')
 const projectsDir = path.join(uploadsBase, 'projects')
+const framesDir = path.join(uploadsBase, 'frames')
 let diskAvailable = false
 if (!USE_BLOB) {
   try {
     fs.mkdirSync(avatarDir, { recursive: true })
     fs.mkdirSync(codexDir, { recursive: true })
     fs.mkdirSync(projectsDir, { recursive: true })
+    fs.mkdirSync(framesDir, { recursive: true })
     diskAvailable = true
   } catch {
     // Filesystem is not writable (e.g. Vercel serverless, read-only /var/task/).

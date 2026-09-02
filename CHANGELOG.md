@@ -31,6 +31,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Improved mobile navigation
 
 #### Added (v1.6)
+- **Admin Frames Tab**: Full CRUD management for avatar frames — create, edit, delete, upload frame images, and assign frames to users from the Control Room.
+- **Admin Achievements Tab**: Manage user achievements — view, add (with presets or custom), and remove achievements per user.
+- **Frame Image Upload**: `POST /api/admin/frames/upload` and `POST /api/admin/frames/:frameId/upload` — upload frame overlay images with Vercel Blob / disk fallback.
+- **Achievement API**: `POST /api/admin/achievements` and `DELETE /api/admin/achievements` — assign/remove achievements from users.
+- **AvatarWithFrame fix**: Image-based frames now render as a proper overlay ring extending beyond the avatar (35% padding), with responsive `object-fit: contain` and correct centering. No longer breaks at top or shows as a plain glow.
 - **Mobile Code Workspace**: 3-pane code workspace is now responsive — file tree becomes a slide-out drawer on mobile with backdrop overlay. Hamburger toggle in top bar. Auto-closes on file select.
 - **Admin Codex CRUD**: Admins can now edit any codex (description, visibility, language, tagline) and delete any codex with full cascade cleanup from the Control Room. Edit drawer and delete confirmation modal added to the Codexes tab.
 - **Admin Codex Endpoints**: `PATCH /api/admin/repos/:repoId` and `DELETE /api/admin/repos/:repoId` — admin bypass for owner permission checks.

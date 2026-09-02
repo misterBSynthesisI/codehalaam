@@ -96,6 +96,9 @@ export function AvatarWithFrame({ user, size = 'md', className = '', style: over
   const hasAnimation = frameRef?.animation && frameRef.animation !== 'none' && !reducedMotion
   const useBlend = frameRef?.blend === 'screen'
 
+  // Image frame: extend beyond avatar to create a visible frame ring
+  const imageFramePadding = hasImageFrame ? Math.round(px * 0.35) : 0
+
   // Outer wrapper with glow animation
   const Wrapper = hasAnimation ? motion.div : 'div'
   const wrapperProps: any = hasAnimation
@@ -115,27 +118,48 @@ export function AvatarWithFrame({ user, size = 'md', className = '', style: over
       }
     : {}
 
+  const wrapperSize = px + borderWidth * 2 + (hasAnimation ? 8 : 0) + imageFramePadding * 2
+
   return (
     <Wrapper
-      className={`relative inline-flex items-center justify-center rounded-full ${className}`}
+      className={`relative inline-flex items-center justify-center ${className}`}
       style={{
-        width: px + borderWidth * 2 + (hasAnimation ? 8 : 0),
-        height: px + borderWidth * 2 + (hasAnimation ? 8 : 0),
+        width: wrapperSize,
+        height: wrapperSize,
+        borderRadius: '50%',
         ...overrideStyle,
       }}
       {...wrapperProps}
     >
+      {/* Image-based frame overlay — behind the avatar */}
+      {hasImageFrame && (
+        <img
+          src={frameRef!.imageUrl!}
+          alt=""
+          className="absolute pointer-events-none"
+          style={{
+            width: px + imageFramePadding * 2,
+            height: px + imageFramePadding * 2,
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            objectFit: 'contain',
+            mixBlendMode: useBlend ? 'screen' : 'normal',
+            zIndex: 0,
+          }}
+        />
+      )}
+
       {/* Avatar circle */}
       <div
         className="relative rounded-full overflow-hidden flex items-center justify-center"
         style={{
           width: px,
           height: px,
+          zIndex: 1,
           backgroundColor: 'var(--color-canvas-subtle)',
           border: borderStyle !== 'none' && !hasImageFrame
             ? `${borderWidth}px ${borderStyle === 'double' ? 'double' : 'solid'} ${frameRef?.borderColor || '#58a6ff'}`
-            : borderStyle !== 'none' && hasImageFrame
-            ? 'none'
             : 'none',
           ...(borderStyle === 'glow' && !hasImageFrame
             ? { boxShadow: `0 0 10px 2px ${frameRef?.borderColor || '#58a6ff'}60` }
@@ -155,21 +179,7 @@ export function AvatarWithFrame({ user, size = 'md', className = '', style: over
         )}
       </div>
 
-      {/* Image-based frame overlay */}
-      {hasImageFrame && (
-        <img
-          src={frameRef!.imageUrl!}
-          alt=""
-          className="absolute inset-0 w-full h-full pointer-events-none"
-          style={{
-            width: px + borderWidth * 2,
-            height: px + borderWidth * 2,
-            mixBlendMode: useBlend ? 'screen' : 'normal',
-          }}
-        />
-      )}
-
-      {/* CSS flame overlay for frame.animation === 'flame' */}
+      {/* CSS flame overlay for frame.animation === 'flame' (non-image frames) */}
       {frameRef?.animation === 'flame' && !reducedMotion && !hasImageFrame && (
         <div
           className="absolute inset-0 rounded-full pointer-events-none"

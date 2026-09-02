@@ -763,6 +763,51 @@ class ApiClient {
   async assignFrame(frameId: string, userId: string) {
     return this.request<{ user: any; frame: any }>(`/admin/frames/${frameId}/assign/${userId}`, { method: 'POST' })
   }
+
+  async uploadFrameImage(frameId: string, file: File) {
+    const formData = new FormData()
+    formData.append('frame', file)
+    const headers: Record<string, string> = {}
+    if (this.token) headers['Authorization'] = `Bearer ${this.token}`
+    const res = await fetch(`${API_BASE}/admin/frames/${frameId}/upload`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Upload failed')
+    return data as { imageUrl: string; frame: any }
+  }
+
+  async uploadNewFrameImage(file: File) {
+    const formData = new FormData()
+    formData.append('frame', file)
+    const headers: Record<string, string> = {}
+    if (this.token) headers['Authorization'] = `Bearer ${this.token}`
+    const res = await fetch(`${API_BASE}/admin/frames/upload`, {
+      method: 'POST',
+      headers,
+      body: formData,
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Upload failed')
+    return data as { imageUrl: string }
+  }
+
+  // Achievements
+  async addAchievement(userId: string, id: string, name: string) {
+    return this.request<{ user: any }>('/admin/achievements', {
+      method: 'POST',
+      body: JSON.stringify({ userId, id, name }),
+    })
+  }
+
+  async removeAchievement(userId: string, achievementId: string) {
+    return this.request<{ user: any }>('/admin/achievements', {
+      method: 'DELETE',
+      body: JSON.stringify({ userId, achievementId }),
+    })
+  }
 }
 
 export const api = new ApiClient()
