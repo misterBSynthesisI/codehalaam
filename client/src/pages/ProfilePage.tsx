@@ -27,6 +27,7 @@ import { VerificationBadge } from '@/components/ui/UserBadge'
 import { AvatarWithFrame } from '@/components/ui/AvatarWithFrame'
 import { Lock } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useSEO } from '@/hooks/useSEO'
 import { toast } from 'sonner'
 import { NotFoundPage } from '@/pages/ErrorPage'
 
@@ -45,6 +46,15 @@ export function ProfilePage() {
   }, [username])
 
   const isOwnProfile = currentUser && profile && currentUser.username === profile.username
+
+  // SEO: always call hooks before any early returns
+  useSEO({
+    title: profile ? `${profile.displayName || profile.username}` : username || '',
+    description: profile?.bio || (profile ? `${profile.displayName || profile.username}'s profile on CODEHALAAM — Level ${profile.level || 1}` : ''),
+    url: typeof window !== 'undefined' && profile ? `${window.location.origin}/${profile.username}` : undefined,
+    image: profile?.avatarUrl || undefined,
+    type: 'profile',
+  })
 
   if (loading) return <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-canvas-default)' }}><div style={{ color: 'var(--color-fg-muted)' }}>Loading profile...</div></div>
   if (!profile) return <NotFoundPage />
@@ -83,7 +93,7 @@ export function ProfilePage() {
           <div>
             <div className="sticky top-24" style={{ backgroundColor: 'var(--color-surface-default)', zIndex: 2 }}>
               {/* Avatar with frame */}
-              <div className="flex justify-center mb-4">
+              <div className="flex justify-center mb-4" style={{ paddingTop: profile.isFounder ? 8 : 0 }}>
                 <AvatarWithFrame user={profile} size="xl" />
               </div>
 

@@ -86,6 +86,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { api } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
+import { useSEO } from '@/hooks/useSEO'
 import { VerificationBadge } from '@/components/ui/UserBadge'
 import { AvatarWithFrame } from '@/components/ui/AvatarWithFrame'
 import { PrivateCodexPage } from '@/pages/PrivateCodexPage'
@@ -353,6 +354,15 @@ export function CodexHomePage() {
   const [paths, setPaths] = useState<any[]>([])
   const [collaborators, setCollaborators] = useState<any[]>([])
   const [fileTree, setFileTree] = useState<any[]>([])
+
+  // SEO: set title and meta tags when codex loads
+  useSEO({
+    title: repo ? `${repo.name} by ${repo.owner?.username || owner}` : name ? `${name} — Codex` : '',
+    description: repo?.description || repo?.tagline || `${name} codex on CODEHALAAM`,
+    url: typeof window !== 'undefined' && name ? `${window.location.origin}/codex/${owner}/${name}` : undefined,
+    image: repo?.coverUrl || repo?.logoUrl || undefined,
+    type: 'article',
+  })
 
   useEffect(() => {
     if (!owner || !name) return

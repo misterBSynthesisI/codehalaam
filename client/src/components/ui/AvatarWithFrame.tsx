@@ -64,7 +64,7 @@ const FRAME_BORDER_WIDTH: Record<string, number> = {
   crystal: 4,
 }
 
-function getFrameBorderStyle(frame: FrameRef | Record<string, any> | null | undefined, frameName?: string): string {
+function getFrameBorderStyle(frame: FrameRef | Record<string, any> | null | undefined): string {
   if (!frame) return 'none'
   const style = frame.borderStyle || 'none'
   if (style === 'none' || !style) return 'none'
@@ -87,8 +87,7 @@ export function AvatarWithFrame({ user, size = 'md', className = '', style: over
   const px = SIZE_MAP[size]
   const fontSize = FONT_SIZE_MAP[size]
   const frameRef: Record<string, any> | null = user.avatarFrameRef || null
-  const frameName = user.avatarFrame || ''
-  const borderStyle = getFrameBorderStyle(frameRef, frameName)
+  const borderStyle = getFrameBorderStyle(frameRef)
   const borderWidth = frameRef?.borderWidth || FRAME_BORDER_WIDTH[borderStyle] || 0
   const reducedMotion = useMemo(() => prefersReducedMotion(), [])
 
@@ -96,10 +95,11 @@ export function AvatarWithFrame({ user, size = 'md', className = '', style: over
   const hasAnimation = frameRef?.animation && frameRef.animation !== 'none' && !reducedMotion
   const useBlend = frameRef?.blend === 'screen'
 
-  // Image frame: extend beyond avatar to create a visible frame ring
-  const imageFramePadding = hasImageFrame ? Math.round(px * 0.35) : 0
+  // Image frame extends well beyond avatar so it's clearly visible as a ring/crown
+  const imageFrameExtra = hasImageFrame ? Math.round(px * 0.4) : 0
+  const wrapperSize = px + borderWidth * 2 + (hasAnimation ? 8 : 0) + imageFrameExtra * 2
 
-  // Outer wrapper with glow animation
+  // Outer wrapper with glow animation — NO overflow hidden, NO border radius
   const Wrapper = hasAnimation ? motion.div : 'div'
   const wrapperProps: any = hasAnimation
     ? {
@@ -110,15 +110,9 @@ export function AvatarWithFrame({ user, size = 'md', className = '', style: over
             `0 0 8px 2px ${frameRef?.gradientColors?.[0] || '#f97316'}40`,
           ],
         },
-        transition: {
-          duration: 2.5,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        },
+        transition: { duration: 2.5, repeat: Infinity, ease: 'easeInOut' },
       }
     : {}
-
-  const wrapperSize = px + borderWidth * 2 + (hasAnimation ? 8 : 0) + imageFramePadding * 2
 
   return (
     <Wrapper
@@ -126,20 +120,24 @@ export function AvatarWithFrame({ user, size = 'md', className = '', style: over
       style={{
         width: wrapperSize,
         height: wrapperSize,
-        borderRadius: '50%',
+        // No border-radius here — the frame image must not be clipped
         ...overrideStyle,
       }}
       {...wrapperProps}
     >
-      {/* Image-based frame overlay — behind the avatar */}
+      {/* Image-based frame overlay — fully visible, extends beyond avatar */}
       {hasImageFrame && (
         <img
           src={frameRef!.imageUrl!}
           alt=""
           className="absolute pointer-events-none"
+          onError={(e) => {
+            // If the image fails to load, hide it gracefully
+            ;(e.target as HTMLImageElement).style.display = 'none'
+          }}
           style={{
-            width: px + imageFramePadding * 2,
-            height: px + imageFramePadding * 2,
+            width: px + imageFrameExtra * 2,
+            height: px + imageFrameExtra * 2,
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
@@ -150,7 +148,7 @@ export function AvatarWithFrame({ user, size = 'md', className = '', style: over
         />
       )}
 
-      {/* Avatar circle */}
+      {/* Avatar circle — the only clipped, rounded element */}
       <div
         className="relative rounded-full overflow-hidden flex items-center justify-center"
         style={{
@@ -165,7 +163,7 @@ export function AvatarWithFrame({ user, size = 'md', className = '', style: over
             ? { boxShadow: `0 0 10px 2px ${frameRef?.borderColor || '#58a6ff'}60` }
             : {}),
           ...(borderStyle === 'gradient' && !hasImageFrame
-            ? { borderImage: `${frameRef ? getFrameGradientCSS(frameRef) : ''} 1`, borderStyle: 'solid', borderWidth }
+            ? { borderImage: `${getFrameGradientCSS(frameRef)} 1`, borderStyle: 'solid', borderWidth }
             : {}),
           color: 'var(--color-fg-default)',
           fontSize,
