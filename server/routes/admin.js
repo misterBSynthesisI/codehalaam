@@ -262,6 +262,92 @@ router.delete('/users/:userId', async (req, res) => {
 })
 
 // ============================================================
+//  CODEX (REPOSITORY) MANAGEMENT
+// ============================================================
+
+// PATCH /api/admin/repos/:repoId — update any codex (admin bypass)
+router.patch('/repos/:repoId', async (req, res) => {
+  try {
+    const { description, visibility, language, tagline, websiteUrl, technologies, accentColor } = req.body
+    const update = {}
+
+    if (description !== undefined) update.description = description
+    if (visibility !== undefined) {
+      const validVis = ['public', 'private']
+      if (!validVis.includes(visibility)) {
+        return res.status(400).json({ error: 'Invalid visibility value' })
+      }
+      update.visibility = visibility
+    }
+    if (language !== undefined) update.language = language
+    if (tagline !== undefined) update.tagline = tagline
+    if (websiteUrl !== undefined) update.websiteUrl = websiteUrl
+    if (technologies !== undefined) update.technologies = technologies
+    if (accentColor !== undefined) update.accentColor = accentColor
+
+    const repo = await Repository.findByIdAndUpdate(
+      req.params.repoId,
+      update,
+      { new: true }
+    ).populate('owner', 'username displayName avatarUrl badgeColor')
+
+    if (!repo) return res.status(404).json({ error: 'Codex not found' })
+
+    res.json({ repo })
+  } catch (err) {
+    console.error('Admin repo update error:', err)
+    res.status(500).json({ error: 'Failed to update codex' })
+  }
+})
+
+// DELETE /api/admin/repos/:repoId — delete any codex (admin bypass)
+router.delete('/repos/:repoId', async (req, res) => {
+  try {
+    const repo = await Repository.findById(req.params.repoId)
+    if (!repo) return res.status(404).json({ error: 'Codex not found' })
+
+    // Import models for cascade delete
+    const Quest = (await import('../models/Quest.js')).default
+    const Offering = (await import('../models/Offering.js')).default
+    const Release = (await import('../models/Release.js')).default
+    const Path = (await import('../models/Path.js')).default
+    const Collaborator = (await import('../models/Collaborator.js')).default
+    const Invitation = (await import('../models/Invitation.js')).default
+    const Comment = (await import('../models/Comment.js')).default
+
+    // Cascade delete related data
+    const [questIds, offeringIds, releaseIds] = await Promise.all([
+      Quest.find({ codex: repo._id }).distinct('_id'),
+      Offering.find({ codex: repo._id }).distinct('_id'),
+      Release.find({ codex: repo._id }).distinct('_id'),
+    ])
+    await Promise.all([
+      Quest.deleteMany({ codex: repo._id }),
+      Offering.deleteMany({ codex: repo._id }),
+      Path.deleteMany({ codex: repo._id }),
+      Release.deleteMany({ codex: repo._id }),
+      Collaborator.deleteMany({ codex: repo._id }),
+      Invitation.deleteMany({ codex: repo._id }),
+    ])
+    if (questIds.length || offeringIds.length || releaseIds.length) {
+      await Comment.deleteMany({
+        $or: [
+          { targetType: 'Quest', targetId: { $in: questIds } },
+          { targetType: 'Offering', targetId: { $in: offeringIds } },
+          { targetType: 'Release', targetId: { $in: releaseIds } },
+        ],
+      })
+    }
+    await repo.deleteOne()
+
+    res.json({ message: `Codex ${repo.name} has been deleted`, repo: { _id: repo._id, name: repo.name } })
+  } catch (err) {
+    console.error('Admin repo delete error:', err)
+    res.status(500).json({ error: 'Failed to delete codex' })
+  }
+})
+
+// ============================================================
 //  FORUM MANAGEMENT
 // ============================================================
 

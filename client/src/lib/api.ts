@@ -712,6 +712,19 @@ class ApiClient {
     return this.request<{ repos: any[]; total: number; page: number; pages: number }>(`/admin/repos?${query}`)
   }
 
+  async adminUpdateRepo(repoId: string, data: { description?: string; visibility?: string; language?: string; tagline?: string; websiteUrl?: string; technologies?: string[]; accentColor?: string }) {
+    return this.request<{ repo: any }>(`/admin/repos/${repoId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    })
+  }
+
+  async adminDeleteRepo(repoId: string) {
+    return this.request<{ message: string; repo: { _id: string; name: string } }>(`/admin/repos/${repoId}`, {
+      method: 'DELETE',
+    })
+  }
+
   // Admin Forum Management
   async adminGetForumPosts(params?: { page?: number; limit?: number; search?: string; sort?: string }) {
     const query = new URLSearchParams(params as any).toString()

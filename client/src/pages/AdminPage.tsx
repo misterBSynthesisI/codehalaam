@@ -63,6 +63,8 @@ interface AdminRepo {
   visibility: string
   starsCount: number
   forksCount: number
+  tagline?: string
+  websiteUrl?: string
   owner: { username: string; displayName?: string; avatarUrl?: string; badgeColor?: string }
   createdAt: string
 }
@@ -655,6 +657,20 @@ function ReposTab({ showToast }: { showToast: (m: string, t?: 'success' | 'error
   const [visibilityFilter, setVisibilityFilter] = useState('')
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
 
+  // Edit drawer state
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [drawerRepo, setDrawerRepo] = useState<AdminRepo | null>(null)
+  const [editDescription, setEditDescription] = useState('')
+  const [editVisibility, setEditVisibility] = useState('public')
+  const [editLanguage, setEditLanguage] = useState('')
+  const [editTagline, setEditTagline] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  // Delete modal state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<AdminRepo | null>(null)
+  const [deleting, setDeleting] = useState(false)
+
   const fetchRepos = useCallback(async (p: number, q: string, vis: string) => {
     setLoading(true)
     try {
@@ -681,6 +697,54 @@ function ReposTab({ showToast }: { showToast: (m: string, t?: 'success' | 'error
 
   useEffect(() => { fetchRepos(1, debouncedSearch, visibilityFilter) }, [debouncedSearch, visibilityFilter, fetchRepos])
 
+  const openDrawer = (repo: AdminRepo) => {
+    setDrawerRepo(repo)
+    setEditDescription(repo.description || '')
+    setEditVisibility(repo.visibility)
+    setEditLanguage(repo.language || '')
+    setEditTagline(repo.tagline || '')
+    setDrawerOpen(true)
+  }
+
+  const closeDrawer = () => { setDrawerOpen(false); setTimeout(() => setDrawerRepo(null), 300) }
+
+  const handleSave = async () => {
+    if (!drawerRepo) return
+    setSaving(true)
+    try {
+      const { repo: updated } = await api.adminUpdateRepo(drawerRepo._id, {
+        description: editDescription,
+        visibility: editVisibility,
+        language: editLanguage || undefined,
+        tagline: editTagline || undefined,
+      })
+      setRepos(prev => prev.map(r => r._id === updated._id ? { ...r, ...updated } : r))
+      closeDrawer()
+      showToast(`✅ ${updated.name} updated`)
+    } catch (err: any) {
+      showToast(err.message || 'Failed to update codex', 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
+    try {
+      const { repo: deleted } = await api.adminDeleteRepo(deleteTarget._id)
+      setRepos(prev => prev.filter(r => r._id !== deleted._id))
+      setTotal(prev => prev - 1)
+      setDeleteModalOpen(false)
+      setTimeout(() => setDeleteTarget(null), 300)
+      showToast(`🗑️ Codex ${deleted.name} has been deleted`)
+    } catch (err: any) {
+      showToast(err.message || 'Failed to delete codex', 'error')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
       {/* ── Filters ── */}
@@ -701,7 +765,7 @@ function ReposTab({ showToast }: { showToast: (m: string, t?: 'success' | 'error
       {/* ── Repos Table ── */}
       <div className="Box overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full" style={{ minWidth: 700 }}>
+          <table className="w-full" style={{ minWidth: 750 }}>
             <thead>
               <tr style={{ backgroundColor: 'var(--color-canvas-subtle)', borderBottom: '1px solid var(--color-border-default)' }}>
                 <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-fg-muted)' }}>Codex</th>
@@ -709,7 +773,7 @@ function ReposTab({ showToast }: { showToast: (m: string, t?: 'success' | 'error
                 <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-fg-muted)' }}>Language</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-fg-muted)' }}>Visibility</th>
                 <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-fg-muted)' }}>Embers</th>
-                <th className="text-left px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-fg-muted)' }}>Echoes</th>
+                <th className="text-right px-4 py-3 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-fg-muted)' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -763,9 +827,16 @@ function ReposTab({ showToast }: { showToast: (m: string, t?: 'success' | 'error
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="flex items-center gap-1 text-sm" style={{ color: 'var(--color-fg-muted)' }}>
-                        <Radio className="w-3 h-3" /> {repo.forksCount.toLocaleString()}
-                      </span>
+                      <div className="flex items-center justify-end gap-1">
+                        <button onClick={() => openDrawer(repo)} className="p-1.5 rounded-md transition-colors" style={{ color: 'var(--color-fg-muted)' }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-accent-fg)'; e.currentTarget.style.backgroundColor = 'var(--color-accent-muted)' }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-fg-muted)'; e.currentTarget.style.backgroundColor = 'transparent' }}
+                          title="Edit codex"><Pencil className="w-4 h-4" /></button>
+                        <button onClick={() => { setDeleteTarget(repo); setDeleteModalOpen(true) }} className="p-1.5 rounded-md transition-colors" style={{ color: 'var(--color-fg-muted)' }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = 'var(--color-danger-fg)'; e.currentTarget.style.backgroundColor = 'var(--color-danger-muted)' }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = 'var(--color-fg-muted)'; e.currentTarget.style.backgroundColor = 'transparent' }}
+                          title="Delete codex"><Trash2 className="w-4 h-4" /></button>
+                      </div>
                     </td>
                   </motion.tr>
                 ))
@@ -787,6 +858,108 @@ function ReposTab({ showToast }: { showToast: (m: string, t?: 'success' | 'error
           </div>
         </div>
       )}
+
+      {/* ── Edit Drawer ── */}
+      <AnimatePresence>
+        {drawerOpen && drawerRepo && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-40"
+              style={{ backgroundColor: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }} onClick={closeDrawer} />
+            <motion.div initial={{ x: 400 }} animate={{ x: 0 }} exit={{ x: 400 }} transition={{ type: 'spring', stiffness: 350, damping: 35 }}
+              className="fixed top-0 right-0 bottom-0 z-50 w-full max-w-md material-toolbar overflow-y-auto"
+              style={{ borderLeft: '1px solid var(--color-border-default)', boxShadow: 'var(--color-shadow-extra-large)' }}>
+              <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--color-border-default)' }}>
+                <h2 className="text-base font-semibold">Edit Codex</h2>
+                <button onClick={closeDrawer} className="p-1 rounded-md" style={{ color: 'var(--color-fg-muted)' }}><X className="w-4 h-4" /></button>
+              </div>
+              <div className="px-5 py-5 space-y-5">
+                <div className="flex items-center gap-3 pb-4 border-b" style={{ borderColor: 'var(--color-border-default)' }}>
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: 'var(--color-accent-muted)', color: 'var(--color-accent-fg)' }}>
+                    <GitBranch className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-base font-semibold" style={{ color: 'var(--color-fg-default)' }}>{drawerRepo.name}</span>
+                    <div className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>{drawerRepo.owner?.username}</div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Description</label>
+                  <textarea value={editDescription} onChange={(e) => setEditDescription(e.target.value)}
+                    className="form-control" rows={3} placeholder="Brief description of this codex..."
+                    style={{ resize: 'vertical' }} />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Tagline</label>
+                  <input type="text" value={editTagline} onChange={(e) => setEditTagline(e.target.value)}
+                    className="form-control" placeholder="One-line tagline..." />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Language</label>
+                  <input type="text" value={editLanguage} onChange={(e) => setEditLanguage(e.target.value)}
+                    className="form-control" placeholder="TypeScript, JavaScript, Python..." />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Visibility</label>
+                  <div className="flex gap-2">
+                    {[{ value: 'public', label: 'Public', icon: <Globe className="w-4 h-4" /> }, { value: 'private', label: 'Private', icon: <Lock className="w-4 h-4" /> }].map(opt => (
+                      <button key={opt.value} onClick={() => setEditVisibility(opt.value)}
+                        className="flex-1 py-2.5 px-3 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2"
+                        style={{ backgroundColor: editVisibility === opt.value ? 'var(--color-accent-muted)' : 'var(--color-canvas-subtle)', color: editVisibility === opt.value ? 'var(--color-accent-fg)' : 'var(--color-fg-muted)', border: `1px solid ${editVisibility === opt.value ? 'var(--color-accent-fg)' : 'var(--color-border-default)'}` }}>
+                        {opt.icon}
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="px-5 py-4 border-t flex items-center gap-3" style={{ borderColor: 'var(--color-border-default)' }}>
+                <button onClick={closeDrawer} className="btn btn-default flex-1">Cancel</button>
+                <button onClick={handleSave} disabled={saving} className="btn btn-primary flex-1">{saving ? 'Saving...' : 'Save Changes'}</button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ── Delete Modal ── */}
+      <AnimatePresence>
+        {deleteModalOpen && deleteTarget && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50"
+              style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}
+              onClick={() => { setDeleteModalOpen(false); setTimeout(() => setDeleteTarget(null), 300) }} />
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+              className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md material-toolbar rounded-lg"
+              style={{ border: '1px solid var(--color-border-default)', boxShadow: 'var(--color-shadow-extra-large)' }}>
+              <div className="px-6 py-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: 'var(--color-danger-muted)', color: 'var(--color-danger-fg)' }}>
+                    <AlertTriangle className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-semibold">Delete Codex</h3>
+                    <p className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>This action cannot be undone.</p>
+                  </div>
+                </div>
+                <p className="text-sm mt-4" style={{ color: 'var(--color-fg-muted)' }}>
+                  Are you sure you want to delete <strong style={{ color: 'var(--color-fg-default)' }}>{deleteTarget.owner?.username}/{deleteTarget.name}</strong>?
+                  All quests, offerings, releases, and collaborators will be permanently removed.
+                </p>
+              </div>
+              <div className="px-6 py-4 border-t flex items-center gap-3" style={{ borderColor: 'var(--color-border-default)' }}>
+                <button onClick={() => { setDeleteModalOpen(false); setTimeout(() => setDeleteTarget(null), 300) }} className="btn btn-default flex-1">Cancel</button>
+                <button onClick={handleDelete} disabled={deleting} className="btn btn-danger flex-1">{deleting ? 'Deleting...' : 'Yes, Delete'}</button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </motion.div>
   )
 }
