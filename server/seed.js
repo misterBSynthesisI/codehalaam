@@ -20,6 +20,7 @@ import mongoose from 'mongoose'
 import bcrypt from 'bcryptjs'
 import dotenv from 'dotenv'
 import User from './models/User.js'
+import AvatarFrame from './models/AvatarFrame.js'
 import Repository from './models/Repository.js'
 import Issue from './models/Issue.js'
 import PullRequest from './models/PullRequest.js'
@@ -54,12 +55,37 @@ function generateContributions() {
 }
 
 const seedUsers = [
+  // Founder account — must be first (earliest createdAt = first admin)
+  {
+    username: 'JustShipItAI',
+    email: 'justshipitai@techadda.com.np',
+    password: 'Codehalaam@Founder2026',
+    displayName: 'Just Ship It AI',
+    bio: 'Founder & Creator of CODEHALAAM. Building the future of gamified code hosting. 🚀',
+    level: 50,
+    xp: 50000,
+    xpToNext: 100000,
+    stats: { commits: 2500, pullRequests: 800, reviews: 1200, issues: 350, contributions: 5000 },
+    streak: 60,
+    longestStreak: 60,
+    isAdmin: true,
+    badgeColor: 'red',
+    characterClass: 'Mage',
+    isFounder: true,
+    title: 'Grandmaster Founder',
+    avatarFrame: 'Mythic Flame',
+    achievements: [
+      { id: 'genesis', name: 'Genesis', unlockedAt: new Date('2026-01-01') },
+      { id: 'world-builder', name: 'World Builder', unlockedAt: new Date('2026-01-01') },
+      { id: 'mythic-flame', name: 'Mythic Flame', unlockedAt: new Date('2026-01-01') },
+    ],
+  },
   {
     username: 'bishesh',
     email: 'bishesh@codehalaam.dev',
     password: 'password123',
     displayName: 'Bishesh',
-    bio: 'Founder & Admin of CODEHALAAM.',
+    bio: 'Admin of CODEHALAAM.',
     level: 20,
     xp: 5000,
     xpToNext: 6000,
@@ -1192,6 +1218,36 @@ async function seed() {
     demoCodex.accentColor = '#6366f1'
     await demoCodex.save()
     console.log('  Updated codex counters and social data')
+
+    // ─── Seed Avatar Frames (including Mythic Flame for founder) ────────
+    console.log('[SEED] Creating avatar frames...')
+    const defaultFrames = [
+      { name: 'None', borderStyle: 'none', rarity: 'common', isDefault: true, description: 'No frame' },
+      { name: 'Iron Circle', borderStyle: 'solid', borderColor: '#8b949e', borderWidth: 3, rarity: 'common', requiredLevel: 1, description: 'A simple iron ring' },
+      { name: 'Silver Ring', borderStyle: 'solid', borderColor: '#c0c0c0', borderWidth: 3, rarity: 'common', requiredLevel: 5, description: 'Polished silver frame' },
+      { name: 'Gold Crown', borderStyle: 'gradient', borderColor: '#ffd700', borderWidth: 4, gradientColors: ['#ffd700', '#ffaa00', '#ffd700'], rarity: 'rare', requiredLevel: 10, description: 'Golden crown of achievement' },
+      { name: 'Emerald Guardian', borderStyle: 'glow', borderColor: '#3fb950', borderWidth: 4, gradientColors: ['#3fb950', '#238636'], rarity: 'rare', requiredLevel: 15, description: 'Pulsing emerald energy' },
+      { name: 'Sapphire Storm', borderStyle: 'glow', borderColor: '#58a6ff', borderWidth: 4, gradientColors: ['#58a6ff', '#1f6feb'], rarity: 'epic', requiredLevel: 25, description: 'Crackling sapphire lightning' },
+      { name: 'Crimson Blade', borderStyle: 'flame', borderColor: '#f85149', borderWidth: 4, gradientColors: ['#f85149', '#da3633', '#f97316'], rarity: 'epic', requiredLevel: 30, description: 'Wreathed in crimson flames' },
+      { name: 'Void Emperor', borderStyle: 'glow', borderColor: '#a371f7', borderWidth: 5, gradientColors: ['#a371f7', '#8957e5', '#a371f7'], rarity: 'legendary', requiredLevel: 40, description: 'Dark purple void energy' },
+      { name: 'Mythic Flame', borderStyle: 'flame', borderColor: '#f97316', borderWidth: 5, gradientColors: ['#f97316', '#ffd700', '#f85149', '#f97316'], rarity: 'mythic', requiredLevel: 50, description: 'Legendary flames of creation', overlaySvg: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="none" stroke="url(#flame-grad)" stroke-width="4"/><defs><linearGradient id="flame-grad"><stop offset="0%" stop-color="#f97316"/><stop offset="50%" stop-color="#ffd700"/><stop offset="100%" stop-color="#f85149"/></linearGradient></defs></svg>', imageUrl: '/frames/mythic-founder.png', blend: 'screen', animation: 'pulse' },
+      { name: 'Dragon Heart', borderStyle: 'gradient', borderColor: '#da3633', borderWidth: 5, gradientColors: ['#da3633', '#f97316', '#ffd700', '#f97316', '#da3633'], rarity: 'mythic', requiredLevel: 50, description: 'Forged in dragon fire' },
+    ]
+    for (const frame of defaultFrames) {
+      await AvatarFrame.findOneAndUpdate({ name: frame.name }, frame, { upsert: true, new: true })
+    }
+    console.log(`  Created ${defaultFrames.length} avatar frames`)
+
+    // Assign Mythic Flame frame ref to founder
+    const mythicFrame = await AvatarFrame.findOne({ name: 'Mythic Flame' })
+    if (mythicFrame) {
+      const founderUser = await User.findOne({ isFounder: true })
+      if (founderUser) {
+        founderUser.avatarFrameRef = mythicFrame._id
+        await founderUser.save()
+        console.log('  Assigned Mythic Flame frame to founder')
+      }
+    }
 
     console.log('\n[SEED] ✅ Seed completed successfully!')
     console.log('[SEED] ─────────────────────────────────────────')

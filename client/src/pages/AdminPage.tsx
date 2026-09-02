@@ -26,6 +26,7 @@ import {
 } from 'lucide-react'
 import { api } from '@/lib/api'
 import { VerifiedBadge } from '@/components/ui/VerifiedBadge'
+import { AvatarWithFrame } from '@/components/ui/AvatarWithFrame'
 
 /* ── Toast system ── */
 interface Toast {
@@ -470,9 +471,8 @@ function UsersTab({ showToast }: { showToast: (m: string, t?: 'success' | 'error
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-                          style={{ backgroundColor: u.avatarUrl ? 'transparent' : 'var(--color-accent-muted)', color: 'var(--color-accent-fg)' }}>
-                          {u.avatarUrl ? <img src={u.avatarUrl} alt="" className="w-8 h-8 rounded-full object-cover" /> : u.username.charAt(0).toUpperCase()}
+                        <div className="shrink-0">
+                          <AvatarWithFrame user={u} size="md" />
                         </div>
                         <div>
                           <div className="flex items-center gap-1.5">
@@ -547,9 +547,8 @@ function UsersTab({ showToast }: { showToast: (m: string, t?: 'success' | 'error
               </div>
               <div className="px-5 py-5 space-y-6">
                 <div className="flex items-center gap-3 pb-4 border-b" style={{ borderColor: 'var(--color-border-default)' }}>
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold shrink-0"
-                    style={{ backgroundColor: 'var(--color-accent-muted)', color: 'var(--color-accent-fg)' }}>
-                    {drawerUser.avatarUrl ? <img src={drawerUser.avatarUrl} alt="" className="w-12 h-12 rounded-full object-cover" /> : drawerUser.username.charAt(0).toUpperCase()}
+                  <div className="shrink-0">
+                    <AvatarWithFrame user={drawerUser} size="lg" />
                   </div>
                   <div>
                     <div className="flex items-center gap-1.5">

@@ -25,6 +25,7 @@ import {
 import { api } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { VerificationBadge } from '@/components/ui/UserBadge'
+import { AvatarWithFrame } from '@/components/ui/AvatarWithFrame'
 
 export function DashboardPage() {
   const { user } = useAuth()
@@ -69,16 +70,8 @@ export function DashboardPage() {
         {/* Header — User Welcome Card */}
         <div className="rounded-xl p-5 mb-6" style={{ backgroundColor: 'var(--color-canvas-subtle)', border: '1px solid var(--color-border-default)' }}>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            {/* Avatar + Badge */}
-            <div className="relative shrink-0">
-              <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold overflow-hidden"
-                style={{ backgroundColor: 'var(--color-accent-muted)', color: 'var(--color-accent-fg)', border: '2px solid var(--color-border-default)' }}>
-                {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user.username} className="w-full h-full object-cover" />
-                ) : (
-                  (user.displayName || user.username).charAt(0).toUpperCase()
-                )}
-              </div>
+            {/* Avatar + Badge */}              <div className="relative shrink-0">
+              <AvatarWithFrame user={user} size="lg" />
               <div className="absolute -bottom-1 -right-1">
                 <VerificationBadge badgeColor={user.badgeColor} />
               </div>

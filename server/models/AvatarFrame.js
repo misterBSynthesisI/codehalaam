@@ -67,6 +67,21 @@ const avatarFrameSchema = new mongoose.Schema({
     enum: ['common', 'rare', 'epic', 'legendary', 'mythic'],
     default: 'common',
   },
+  // Image-based frame overlay
+  imageUrl: {
+    type: String,
+    default: null,
+  },
+  blend: {
+    type: String,
+    enum: ['normal', 'screen'],
+    default: 'normal',
+  },
+  animation: {
+    type: String,
+    enum: ['none', 'pulse', 'flame'],
+    default: 'none',
+  },
   // Whether this frame is available to all users or admin-only
   isDefault: {
     type: Boolean,

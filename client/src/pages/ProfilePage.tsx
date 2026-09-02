@@ -19,11 +19,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MapPin, Building, LinkIcon, Calendar, TrendingUp, Flame, BookOpen, Settings, Upload, X } from 'lucide-react'
+import { MapPin, Building, LinkIcon, Calendar, TrendingUp, Flame, BookOpen, Settings, Upload, X, Crown } from 'lucide-react'
 import { api } from '@/lib/api'
 import { StarMap } from '@/components/dashboard/StarMap'
 import { VerifiedBadge } from '@/components/ui/VerifiedBadge'
 import { VerificationBadge } from '@/components/ui/UserBadge'
+import { AvatarWithFrame } from '@/components/ui/AvatarWithFrame'
 import { Lock } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from 'sonner'
@@ -81,21 +82,33 @@ export function ProfilePage() {
           {/* Sidebar */}
           <div>
             <div className="sticky top-24" style={{ backgroundColor: 'var(--color-surface-default)', zIndex: 2 }}>
-              {/* Avatar */}
-              <div className="w-[180px] h-[180px] rounded-full flex items-center justify-center text-6xl font-semibold mb-4 overflow-hidden" style={{
-                backgroundColor: 'var(--color-canvas-subtle)',
-                border: '4px solid var(--color-canvas-default)',
-                color: 'var(--color-fg-default)',
-                boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
-              }}>
-                {profile.avatarUrl ? <img src={profile.avatarUrl} className="w-full h-full object-cover" alt={profile.username} /> : profile.username.charAt(0).toUpperCase()}
+              {/* Avatar with frame */}
+              <div className="flex justify-center mb-4">
+                <AvatarWithFrame user={profile} size="xl" />
               </div>
 
-              <div className="mb-4">                  <h1 className="text-2xl font-semibold leading-tight flex items-center gap-2" style={{ color: 'var(--color-fg-default)' }}>
+              <div className="mb-4">
+                <h1 className="text-2xl font-semibold leading-tight flex items-center gap-2 flex-wrap" style={{ color: 'var(--color-fg-default)' }}>
                   {profile.displayName || profile.username}
                   <VerificationBadge badgeColor={profile.badgeColor} size={22} />
+                  {profile.isFounder && (
+                    <span
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider"
+                      style={{
+                        background: 'linear-gradient(135deg, #f97316, #ffd700)',
+                        color: '#0d1117',
+                        letterSpacing: '0.05em',
+                      }}
+                    >
+                      <Crown className="w-3 h-3" strokeWidth={1.5} />
+                      FOUNDER
+                    </span>
+                  )}
                 </h1>
                 <p className="text-xl" style={{ color: 'var(--color-fg-muted)' }}>{profile.username}</p>
+                {profile.isFounder && profile.title && (
+                  <p className="text-sm mt-1 font-medium" style={{ color: '#ffd700' }}>{profile.title}</p>
+                )}
                 {profile.bio && <p className="text-sm mt-2" style={{ color: 'var(--color-fg-default)' }}>{profile.bio}</p>}
                 {profile.characterClass && (
                   <span className="Label Label-purple mt-2" style={{ fontSize: 11 }}>
@@ -122,13 +135,25 @@ export function ProfilePage() {
                 </button>
               )}
 
-              <div className="Box p-4 mb-4">
+              {/* Level card — mythic skin for founder */}
+              <div
+                className="Box p-4 mb-4"
+                style={profile.isFounder ? {
+                  border: '1px solid transparent',
+                  backgroundImage: 'linear-gradient(var(--color-canvas-default), var(--color-canvas-default)), linear-gradient(135deg, #f97316, #ffd700, #f85149, #f97316)',
+                  backgroundOrigin: 'border-box',
+                  backgroundClip: 'padding-box, border-box',
+                } : undefined}
+              >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium" style={{ color: 'var(--color-fg-default)' }}>Level {profile.level}</span>
+                  <span className="text-sm font-medium flex items-center gap-1.5" style={{ color: 'var(--color-fg-default)' }}>
+                    Level {profile.level}
+                    {profile.isFounder && <Flame className="w-3.5 h-3.5" style={{ color: '#f97316' }} strokeWidth={1.5} />}
+                  </span>
                   <span className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>{profile.xp.toLocaleString()} / {profile.xpToNext.toLocaleString()} XP</span>
                 </div>
                 <div className="h-2 rounded-full overflow-hidden mb-3" style={{ backgroundColor: 'var(--color-counter-bg)' }}>
-                  <motion.div initial={{ width: 0 }} animate={{ width: `${Math.round((profile.xp / profile.xpToNext) * 100)}%` }} transition={{ type: 'spring', bounce: 0, duration: 0.8 }} className="h-full rounded-full" style={{ backgroundColor: 'var(--color-success-fg)' }} />
+                  <motion.div initial={{ width: 0 }} animate={{ width: `${Math.round((profile.xp / profile.xpToNext) * 100)}%` }} transition={{ type: 'spring', bounce: 0, duration: 0.8 }} className="h-full rounded-full" style={{ background: profile.isFounder ? 'linear-gradient(90deg, #f97316, #ffd700)' : 'var(--color-success-fg)' }} />
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-xs" style={{ color: 'var(--color-fg-muted)' }}>
                   <div className="flex items-center gap-1"><TrendingUp className="w-3 h-3" style={{ color: 'var(--color-success-fg)' }} />{profile.stats?.contributions?.toLocaleString() || 0} contributions</div>
@@ -210,7 +235,28 @@ export function ProfilePage() {
 
             {activeTab === 'achievements' && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4" data-testid="achievement-list">
-                {(profile.achievements || []).map((a: any) => (
+                {/* Founder-exclusive achievements (seeded from DB) */}
+                {profile.isFounder && (
+                  [
+                    { id: 'genesis', name: 'Genesis', desc: 'Account created at platform birth', icon: '🌟' },
+                    { id: 'world-builder', name: 'World Builder', desc: 'Founded CODEHALAAM', icon: '🏗️' },
+                    { id: 'mythic-flame', name: 'Mythic Flame', desc: 'Reached Level 50', icon: '🔥' },
+                  ].map((ach) => {
+                    const unlocked = (profile.achievements || []).find((a: any) => a.id === ach.id)
+                    return (
+                      <div key={ach.id} className="Box p-4 flex flex-col items-center gap-2 text-center" style={{ borderImage: 'linear-gradient(135deg, #f97316, #ffd700) 1', borderWidth: 1, borderStyle: 'solid' }}>
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl" style={{ background: 'linear-gradient(135deg, #f97316, #ffd700)', color: '#0d1117' }}>
+                          {ach.icon}
+                        </div>
+                        <span className="text-sm font-medium" style={{ color: 'var(--color-fg-default)' }}>{ach.name}</span>
+                        <span className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>{ach.desc}</span>
+                        {unlocked && <span className="text-[10px]" style={{ color: '#ffd700' }}>Unlocked {new Date(unlocked.unlockedAt).toLocaleDateString()}</span>}
+                      </div>
+                    )
+                  })
+                )}
+                {/* Regular achievements */}
+                {(profile.achievements || []).filter((a: any) => !profile.isFounder || !['genesis', 'world-builder', 'mythic-flame'].includes(a.id)).map((a: any) => (
                   <div key={a.id} className="Box p-4 flex flex-col items-center gap-2 text-center">
                     <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl" style={{ backgroundColor: 'var(--color-canvas-subtle)', border: '1px solid var(--color-border-default)' }}>
                       {a.id === 'first-commit' && '🎯'}{a.id === 'streak-7' && '🔥'}{a.id === 'team-player' && '👥'}{a.id === 'ship-it' && '🚀'}

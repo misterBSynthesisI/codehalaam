@@ -87,6 +87,7 @@ import remarkGfm from 'remark-gfm'
 import { api } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { VerificationBadge } from '@/components/ui/UserBadge'
+import { AvatarWithFrame } from '@/components/ui/AvatarWithFrame'
 import { PrivateCodexPage } from '@/pages/PrivateCodexPage'
 import { DemoLockButton } from '@/components/ui/DemoLockButton'
 
@@ -483,7 +484,7 @@ export function CodexHomePage() {
           {/* Owner info */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }} className="flex items-center gap-2 mt-2 text-xs" style={{ color: 'rgba(255,255,255,0.8)', textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>
             <Link to={`/${owner}`} className="flex items-center gap-1.5 no-underline hover:underline" style={{ color: 'var(--color-accent-fg)' }}>
-              <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium" style={{ backgroundColor: 'var(--color-success-muted)', color: 'var(--color-success-fg)' }}>{owner?.charAt(0).toUpperCase()}</span>
+              <AvatarWithFrame user={{ username: owner || '?', avatarUrl: repo.owner?.avatarUrl, avatarFrame: repo.owner?.avatarFrame, avatarFrameRef: repo.owner?.avatarFrameRef }} size="sm" />
               {repo.owner?.displayName || owner}
             </Link>
             <VerificationBadge badgeColor={repo.owner?.badgeColor} size={14} />
@@ -701,8 +702,8 @@ export function CodexHomePage() {
                 <div className="space-y-1.5 mt-1">
                   {collaborators.slice(0, 8).map((c: any) => (
                     <div key={c.user?._id || c._id} className="flex items-center gap-2">
-                      <Link to={`/${c.user?.username}`} className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium no-underline hover:scale-110 transition-transform overflow-hidden" style={{ backgroundColor: 'var(--color-success-muted)', color: 'var(--color-success-fg)' }}>
-                        {c.user?.avatarUrl ? <img src={c.user.avatarUrl} alt="" className="w-full h-full object-cover" /> : (c.user?.username?.charAt(0).toUpperCase() || '?')}
+                      <Link to={`/${c.user?.username}`} className="no-underline hover:scale-110 transition-transform">
+                        <AvatarWithFrame user={c.user || { username: '?' }} size="sm" />
                       </Link>
                       <Link to={`/${c.user?.username}`} className="text-sm no-underline hover:underline flex items-center gap-1" style={{ color: 'var(--color-accent-fg)' }}>
                         {c.user?.displayName || c.user?.username}

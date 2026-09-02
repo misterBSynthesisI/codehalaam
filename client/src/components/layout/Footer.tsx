@@ -69,15 +69,13 @@ export function Footer() {
             <ul className="space-y-2">
               <li><Link to="/getting-started" className="text-xs no-underline hover:underline" style={{ color: 'var(--color-fg-muted)' }}>Quick Start</Link></li>
               <li>
-                <a
-                  href="https://github.com/misterBSynthesisI/codehalaam/archive/refs/heads/main.zip"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link
+                  to="/JustShipItAI"
                   className="text-xs no-underline hover:underline inline-flex items-center gap-1"
                   style={{ color: 'var(--color-fg-muted)' }}
                 >
                   <Download className="w-3 h-3" /> Download Source
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

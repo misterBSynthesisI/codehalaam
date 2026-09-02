@@ -125,6 +125,7 @@ router.get('/me', protect, async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
       .select('-password')
+      .populate('avatarFrameRef')
       .lean()
 
     if (!user) {
@@ -217,6 +218,10 @@ router.post('/avatar', protect, requireDemoFree, uploadAvatar.single('avatar'), 
 router.patch('/me', protect, requireDemoFree, async (req, res) => {
   try {
     const { displayName, bio, location, websiteUrl, company, twitter } = req.body
+    // Block founder fields from self-service mutation
+    if (req.body.isFounder !== undefined || req.body.title !== undefined) {
+      return res.status(403).json({ error: 'Founder fields cannot be modified.' })
+    }
     const updates = {}
     if (displayName !== undefined) updates.displayName = displayName
     if (bio !== undefined) updates.bio = bio
@@ -357,61 +362,126 @@ router.post('/demo', requireDB, async (req, res) => {
 })
 
 // POST /api/auth/founder-setup — Create founder account (one-time only)
+// Guards:
+// 1. If ANY user with isFounder:true exists → 403
+// 2. Caller must be authenticated as first admin, OR unauthenticated genesis if zero users
 router.post('/founder-setup', async (req, res) => {
   try {
+    // Idempotent: if a founder already exists, block
+    const existingFounder = await User.findOne({ isFounder: true })
+    if (existingFounder) {
+      return res.status(403).json({ error: 'Founder already exists.' })
+    }
+
+    const userCount = await User.countDocuments()
+    if (userCount > 0) {
+      // Users exist — only the first admin can call this
+      const { authorization } = req.headers
+      if (!authorization || !authorization.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Authentication required when users exist.' })
+      }
+      const { default: jwt } = await import('jsonwebtoken')
+      const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret'
+      let decoded
+      try {
+        decoded = jwt.verify(authorization.split(' ')[1], JWT_SECRET)
+      } catch {
+        return res.status(401).json({ error: 'Invalid token.' })
+      }
+      const caller = await User.findById(decoded.id)
+      if (!caller || !caller.isAdmin) {
+        return res.status(403).json({ error: 'Only admin accounts can create a founder.' })
+      }
+      // Must be the FIRST admin (earliest createdAt among admins)
+      const firstAdmin = await User.findOne({ isAdmin: true }).sort({ createdAt: 1 })
+      if (!firstAdmin || firstAdmin._id.toString() !== caller._id.toString()) {
+        return res.status(403).json({ error: 'Only the first admin can claim founder status.' })
+      }
+    }
+
     const FOUNDER_EMAIL = 'justshipitai@techadda.com.np'
-    const existing = await User.findOne({ email: FOUNDER_EMAIL })
-    if (existing) {
-      return res.status(422).json({ error: 'Founder account already exists' })
+    const FOUNDER_USERNAME = 'JustShipItAI'
+    const FOUNDER_PASSWORD = 'Codehalaam@Founder2026'
+
+    // If founder user already exists by email/username but isn't marked isFounder, convert
+    let founder = await User.findOne({ $or: [{ email: FOUNDER_EMAIL }, { username: FOUNDER_USERNAME }] })
+    if (!founder) {
+      founder = await User.create({
+        username: FOUNDER_USERNAME,
+        email: FOUNDER_EMAIL,
+        password: FOUNDER_PASSWORD,
+        displayName: 'Just Ship It AI',
+        bio: 'Founder & Creator of CODEHALAAM. Building the future of gamified code hosting. 🚀',
+        level: 50,
+        xp: 50000,
+        xpToNext: 100000,
+        stats: { commits: 2500, pullRequests: 800, reviews: 1200, issues: 350, contributions: 5000 },
+        streak: 60,
+        longestStreak: 60,
+        isAdmin: true,
+        badgeColor: 'red',
+        characterClass: 'Mage',
+        avatarFrame: 'Mythic Flame',
+        isFounder: true,
+        title: 'Grandmaster Founder',
+        demoMode: false,
+      })
+    } else {
+      // Convert existing user to founder
+      founder.isFounder = true
+      founder.title = 'Grandmaster Founder'
+      founder.isAdmin = true
+      founder.badgeColor = 'red'
+      founder.level = 50
+      founder.xp = 50000
+      founder.avatarFrame = 'Mythic Flame'
     }
 
-    const founder = await User.create({
-      username: 'JustShipItAI',
-      email: FOUNDER_EMAIL,
-      password: 'Codehalaam@Founder2026',
-      displayName: 'JustShipIt AI',
-      bio: 'Founder & Creator of CODEHALAAM. Building the future of gamified code hosting. 🚀',
-      level: 50,
-      xp: 50000,
-      xpToNext: 100000,
-      stats: { commits: 2500, pullRequests: 800, reviews: 1200, issues: 350, contributions: 5000 },
-      streak: 60,
-      longestStreak: 60,
-      isAdmin: true,
-      badgeColor: 'red',
-      characterClass: 'Mage',
-      avatarFrame: 'Mythic Flame',
-      demoMode: false,
-    })
-
-    // Generate contribution heatmap
-    const contributionDays = []
-    for (let i = 364; i >= 0; i--) {
-      const date = new Date()
-      date.setDate(date.getDate() - i)
-      date.setHours(0, 0, 0, 0)
-      const rand = Math.random()
-      let count = 0
-      if (rand > 0.15) count = Math.floor(Math.random() * 5) + 2
-      if (rand > 0.4) count = Math.floor(Math.random() * 10) + 5
-      if (rand > 0.6) count = Math.floor(Math.random() * 15) + 8
-      if (rand > 0.8) count = Math.floor(Math.random() * 20) + 12
-      contributionDays.push({ date, count })
+    // Generate contribution heatmap if not present
+    if (!founder.contributionDays || founder.contributionDays.length === 0) {
+      const contributionDays = []
+      for (let i = 364; i >= 0; i--) {
+        const date = new Date()
+        date.setDate(date.getDate() - i)
+        date.setHours(0, 0, 0, 0)
+        const rand = Math.random()
+        let count = 0
+        if (rand > 0.15) count = Math.floor(Math.random() * 5) + 2
+        if (rand > 0.4) count = Math.floor(Math.random() * 10) + 5
+        if (rand > 0.6) count = Math.floor(Math.random() * 15) + 8
+        if (rand > 0.8) count = Math.floor(Math.random() * 20) + 12
+        contributionDays.push({ date, count })
+      }
+      founder.contributionDays = contributionDays
     }
-    founder.contributionDays = contributionDays
+
+    // Seed founder-exclusive achievements into the user's achievements array
+    const founderAchievementIds = ['genesis', 'world-builder', 'mythic-flame']
+    const existingAch = (founder.achievements || []).map(a => a.id)
+    for (const achId of founderAchievementIds) {
+      if (!existingAch.includes(achId)) {
+        founder.achievements = founder.achievements || []
+        founder.achievements.push({
+          id: achId,
+          name: achId === 'genesis' ? 'Genesis' : achId === 'world-builder' ? 'World Builder' : 'Mythic Flame',
+          unlockedAt: new Date('2026-01-01'),
+        })
+      }
+    }
+
     await founder.save()
 
-    // Seed default avatar frames
+    // Seed default avatar frames (idempotent)
     const defaultFrames = [
       { name: 'None', borderStyle: 'none', rarity: 'common', isDefault: true, description: 'No frame' },
       { name: 'Iron Circle', borderStyle: 'solid', borderColor: '#8b949e', borderWidth: 3, rarity: 'common', requiredLevel: 1, description: 'A simple iron ring' },
       { name: 'Silver Ring', borderStyle: 'solid', borderColor: '#c0c0c0', borderWidth: 3, rarity: 'common', requiredLevel: 5, description: 'Polished silver frame' },
       { name: 'Gold Crown', borderStyle: 'gradient', borderColor: '#ffd700', borderWidth: 4, gradientColors: ['#ffd700', '#ffaa00', '#ffd700'], rarity: 'rare', requiredLevel: 10, description: 'Golden crown of achievement' },
       { name: 'Emerald Guardian', borderStyle: 'glow', borderColor: '#3fb950', borderWidth: 4, gradientColors: ['#3fb950', '#238636'], rarity: 'rare', requiredLevel: 15, description: 'Pulsing emerald energy' },
-      { name: 'Sapphire Storm', borderStyle: 'glow', borderColor: '#58a6ff', borderWidth: 4, gradientColors: ['#58a6ff', '#1f6feb'], rarity: 'epic', requiredLevel: 25, description: ' crackling sapphire lightning' },
+      { name: 'Sapphire Storm', borderStyle: 'glow', borderColor: '#58a6ff', borderWidth: 4, gradientColors: ['#58a6ff', '#1f6feb'], rarity: 'epic', requiredLevel: 25, description: 'Crackling sapphire lightning' },
       { name: 'Crimson Blade', borderStyle: 'flame', borderColor: '#f85149', borderWidth: 4, gradientColors: ['#f85149', '#da3633', '#f97316'], rarity: 'epic', requiredLevel: 30, description: 'Wreathed in crimson flames' },
       { name: 'Void Emperor', borderStyle: 'glow', borderColor: '#a371f7', borderWidth: 5, gradientColors: ['#a371f7', '#8957e5', '#a371f7'], rarity: 'legendary', requiredLevel: 40, description: 'Dark purple void energy' },
-      { name: 'Mythic Flame', borderStyle: 'flame', borderColor: '#f97316', borderWidth: 5, gradientColors: ['#f97316', '#ffd700', '#f85149', '#f97316'], rarity: 'mythic', requiredLevel: 50, description: 'Legendary flames of creation', overlaySvg: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="none" stroke="url(#flame-grad)" stroke-width="4"/><defs><linearGradient id="flame-grad"><stop offset="0%" stop-color="#f97316"/><stop offset="50%" stop-color="#ffd700"/><stop offset="100%" stop-color="#f85149"/></linearGradient></defs></svg>' },
+      { name: 'Mythic Flame', borderStyle: 'flame', borderColor: '#f97316', borderWidth: 5, gradientColors: ['#f97316', '#ffd700', '#f85149', '#f97316'], rarity: 'mythic', requiredLevel: 50, description: 'Legendary flames of creation', overlaySvg: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="none" stroke="url(#flame-grad)" stroke-width="4"/><defs><linearGradient id="flame-grad"><stop offset="0%" stop-color="#f97316"/><stop offset="50%" stop-color="#ffd700"/><stop offset="100%" stop-color="#f85149"/></linearGradient></defs></svg>', imageUrl: '/frames/mythic-founder.png', blend: 'screen', animation: 'pulse' },
       { name: 'Dragon Heart', borderStyle: 'gradient', borderColor: '#da3633', borderWidth: 5, gradientColors: ['#da3633', '#f97316', '#ffd700', '#f97316', '#da3633'], rarity: 'mythic', requiredLevel: 50, description: 'Forged in dragon fire' },
     ]
 
@@ -419,9 +489,7 @@ router.post('/founder-setup', async (req, res) => {
       await AvatarFrame.findOneAndUpdate({ name: frame.name }, frame, { upsert: true, new: true })
     }
 
-    console.log('[FOUNDER] Created founder account: JustShipItAI')
-    console.log('[FOUNDER] Email: justshipitai@techadda.com.np')
-    console.log('[FOUNDER] Password: Codehalaam@Founder2026')
+    console.log('[FOUNDER] Created/converged founder account: JustShipItAI')
 
     res.json({
       message: 'Founder account created',

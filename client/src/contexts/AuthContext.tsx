@@ -41,6 +41,9 @@ interface User {
   characterClass?: string
   demoMode?: boolean
   avatarFrame?: string
+  avatarFrameRef?: { imageUrl?: string; blend?: string; animation?: string; name?: string; borderStyle?: string; borderColor?: string; borderWidth?: number; gradientColors?: string[] } | null
+  isFounder?: boolean
+  title?: string
   stats: {
     commits: number
     pullRequests: number

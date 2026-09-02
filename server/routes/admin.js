@@ -183,6 +183,12 @@ router.get('/activity', async (req, res) => {
 router.patch('/users/:userId', async (req, res) => {
   try {
     const { level, xp, badgeColor, characterClass } = req.body
+
+    // Block founder field mutation
+    if (req.body.isFounder !== undefined || req.body.title !== undefined) {
+      return res.status(403).json({ error: 'Founder fields cannot be modified.' })
+    }
+
     const update = {}
 
     if (level !== undefined) update.level = level
@@ -200,6 +206,13 @@ router.patch('/users/:userId', async (req, res) => {
         return res.status(400).json({ error: 'Invalid character class' })
       }
       update.characterClass = characterClass
+    }
+
+    // Prevent demoting founder's isAdmin
+    const targetUser = await User.findById(req.params.userId)
+    if (!targetUser) return res.status(404).json({ error: 'User not found' })
+    if (targetUser.isFounder && req.body.isAdmin === false) {
+      return res.status(403).json({ error: 'Cannot demote the founder.' })
     }
 
     const user = await User.findByIdAndUpdate(
@@ -250,6 +263,11 @@ router.delete('/users/:userId', async (req, res) => {
     // Prevent admin from deleting themselves
     if (user._id.toString() === req.user._id.toString()) {
       return res.status(400).json({ error: 'Cannot delete your own admin account' })
+    }
+
+    // Prevent deleting the founder
+    if (user.isFounder) {
+      return res.status(403).json({ error: 'Cannot delete the founder account.' })
     }
 
     await User.findByIdAndDelete(req.params.userId)
@@ -437,7 +455,7 @@ router.get('/frames', async (req, res) => {
 // POST /api/admin/frames — create a new avatar frame
 router.post('/frames', async (req, res) => {
   try {
-    const { name, description, borderStyle, borderColor, borderWidth, gradientColors, overlaySvg, requiredLevel, requiredAchievement, rarity } = req.body
+    const { name, description, borderStyle, borderColor, borderWidth, gradientColors, overlaySvg, requiredLevel, requiredAchievement, rarity, imageUrl, blend, animation } = req.body
     if (!name) return res.status(400).json({ error: 'Frame name is required' })
 
     const existing = await AvatarFrame.findOne({ name })
@@ -446,6 +464,7 @@ router.post('/frames', async (req, res) => {
     const frame = await AvatarFrame.create({
       name, description, borderStyle, borderColor, borderWidth,
       gradientColors, overlaySvg, requiredLevel, requiredAchievement, rarity,
+      imageUrl, blend, animation,
     })
 
     res.status(201).json({ frame })
@@ -482,7 +501,7 @@ router.post('/frames/:frameId/assign/:userId', async (req, res) => {
   try {
     const frame = await AvatarFrame.findById(req.params.frameId)
     if (!frame) return res.status(404).json({ error: 'Frame not found' })
-    const user = await User.findByIdAndUpdate(req.params.userId, { avatarFrame: frame.name }, { new: true }).select('-password')
+    const user = await User.findByIdAndUpdate(req.params.userId, { avatarFrame: frame.name, avatarFrameRef: frame._id }, { new: true }).select('-password')
     if (!user) return res.status(404).json({ error: 'User not found' })
     res.json({ user, frame })
   } catch (err) {

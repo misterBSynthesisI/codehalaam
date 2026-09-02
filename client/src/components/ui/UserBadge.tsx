@@ -17,6 +17,7 @@
  */
 
 import { BadgeCheck } from 'lucide-react'
+import { AvatarWithFrame } from '@/components/ui/AvatarWithFrame'
 
 const BADGE_COLORS: Record<string, string> = {
   blue: '#58a6ff',
@@ -62,22 +63,16 @@ export function UserBadge({ user, size = 'md', showAvatar = false, showUsername 
   const content = (
     <span className={`inline-flex items-center ${sizeConfig.gap} ${className}`}>
       {showAvatar && (
-        <div
-          className="rounded-full flex items-center justify-center font-medium overflow-hidden shrink-0"
-          style={{
-            width: sizeConfig.avatar,
-            height: sizeConfig.avatar,
-            backgroundColor: 'var(--color-canvas-subtle)',
-            border: '1px solid var(--color-border-default)',
-            color: 'var(--color-fg-default)',
-            fontSize: size === 'sm' ? 10 : size === 'md' ? 12 : 16,
-          }}
-        >
-          {user.avatarUrl ? (
-            <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" />
-          ) : (
-            displayName.charAt(0).toUpperCase()
-          )}
+        <div className="shrink-0">
+          <AvatarWithFrame
+            user={{
+              username: user.username || '?',
+              avatarUrl: user.avatarUrl,
+              avatarFrame: (user as any).avatarFrame,
+              avatarFrameRef: (user as any).avatarFrameRef,
+            }}
+            size="sm"
+          />
         </div>
       )}
       <span

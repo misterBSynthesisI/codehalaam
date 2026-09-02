@@ -41,7 +41,7 @@ router.get('/stats', async (req, res) => {
 router.get('/leaderboard/top', async (req, res) => {
   try {
     const users = await User.find({ isActive: true })
-      .select('username displayName level xp avatarUrl badgeUrl streak longestStreak stats.contributions badgeColor isAdmin')
+      .select('username displayName level xp avatarUrl badgeUrl streak longestStreak stats.contributions badgeColor isAdmin isFounder title avatarFrame avatarFrameRef')
       .sort({ level: -1, xp: -1 })
       .limit(50)
 
@@ -56,6 +56,7 @@ router.get('/me', protect, async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
       .select('-password')
+      .populate('avatarFrameRef')
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' })
@@ -72,6 +73,7 @@ router.get('/:username', optionalAuth, async (req, res) => {
   try {
     const user = await User.findOne({ username: req.params.username })
       .select('-password -email -emailNotifications')
+      .populate('avatarFrameRef')
       .lean()
 
     if (!user) {

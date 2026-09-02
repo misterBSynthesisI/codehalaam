@@ -59,6 +59,7 @@ const userSchema = new mongoose.Schema({
   avatarUrl: { type: String, default: '' },
   coverUrl: { type: String, default: null },
   avatarFrame: { type: String, default: '' },
+  avatarFrameRef: { type: mongoose.Schema.Types.ObjectId, ref: 'AvatarFrame', default: null },
 
   // Gamification
   level: { type: Number, default: 1 },
@@ -97,6 +98,10 @@ const userSchema = new mongoose.Schema({
   isAdmin: { type: Boolean, default: false },
   badgeColor: { type: String, enum: ['none', 'blue', 'black', 'red'], default: 'none' },
   characterClass: { type: String, enum: ['Mage', 'Tank', 'Rogue'], required: false },
+
+  // Founder
+  isFounder: { type: Boolean, default: false },
+  title: { type: String, default: '' },
 
   // Account status
   isPublic: { type: Boolean, default: true },
