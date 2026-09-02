@@ -49,12 +49,6 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
-/**
- * The founder frame colors — used for the Mythic Flame / Grandmaster Founder
- * visual fallback when no image URL is set.
- */
-const MYTHIC_COLORS = ['#f97316', '#ffd700', '#f85149']
-
 export function AvatarWithFrame({ user, size = 'md', className = '', style: overrideStyle }: AvatarWithFrameProps) {
   const px = SIZE_MAP[size]
   const fontSize = FONT_SIZE_MAP[size]
@@ -62,121 +56,50 @@ export function AvatarWithFrame({ user, size = 'md', className = '', style: over
   const frameName = user.avatarFrame || ''
   const reducedMotion = useMemo(() => prefersReducedMotion(), [])
 
-  const hasImageFrame = !!frameRef?.imageUrl
-  const hasFrame = !!frameRef || !!frameName
+  // Frame image URL — from avatarFrameRef, OR hardcode the mythic founder frame
+  const frameImageUrl = frameRef?.imageUrl
+    || (frameName === 'Mythic Flame' ? '/frames/mythic-founder.png' : null)
+
+  const hasFrameImage = !!frameImageUrl
   const hasAnimation = frameRef?.animation && frameRef.animation !== 'none' && !reducedMotion
   const useBlend = frameRef?.blend === 'screen'
 
-  // Frame ring extends 40% beyond the avatar
-  const ringExtra = hasFrame ? Math.round(px * 0.4) : 0
-  const borderWidth = frameRef?.borderWidth || 4
+  // Frame image extends 40% beyond the avatar — that's the "ring" you see
+  const frameExtra = hasFrameImage ? Math.round(px * 0.4) : 0
+  const frameSize = px + frameExtra * 2
 
-  // Colors for gradient/glow fallback
-  const colors = frameRef?.gradientColors?.length
-    ? frameRef.gradientColors
-    : frameName.toLowerCase().includes('mythic') || frameName.toLowerCase().includes('flame')
-      ? MYTHIC_COLORS
-      : [frameRef?.borderColor || '#58a6ff']
-
-  const primaryColor = colors[0] || '#f97316'
-  const secondaryColor = colors[1] || primaryColor
-
-  const wrapperSize = px + ringExtra * 2 + (hasAnimation ? 8 : 0)
-
-  // Outer wrapper with glow animation — no overflow clipping
+  // Outer wrapper — sized to fit frame + optional glow animation
   const Wrapper = hasAnimation ? motion.div : 'div'
   const wrapperProps: any = hasAnimation
     ? {
         animate: {
           boxShadow: [
-            `0 0 12px 4px ${primaryColor}50`,
-            `0 0 24px 8px ${primaryColor}70`,
-            `0 0 12px 4px ${primaryColor}50`,
+            `0 0 12px 4px ${frameRef?.gradientColors?.[0] || '#f97316'}50`,
+            `0 0 24px 8px ${frameRef?.gradientColors?.[0] || '#f97316'}70`,
+            `0 0 12px 4px ${frameRef?.gradientColors?.[0] || '#f97316'}50`,
           ],
         },
         transition: { duration: 2.5, repeat: Infinity, ease: 'easeInOut' },
       }
     : {}
 
-  // The ring is a full circle around the avatar
-  const ringSize = px + ringExtra * 2
-
   return (
     <Wrapper
       className={`relative inline-flex items-center justify-center ${className}`}
-      style={{ width: wrapperSize, height: wrapperSize, ...overrideStyle }}
+      style={{
+        width: px + frameExtra * 2 + (hasAnimation ? 8 : 0),
+        height: px + frameExtra * 2 + (hasAnimation ? 8 : 0),
+        ...overrideStyle,
+      }}
       {...wrapperProps}
     >
-      {/* ── CSS gradient ring (always visible when frame is set) ── */}
-      {hasFrame && !hasImageFrame && (
-        <div
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            width: ringSize,
-            height: ringSize,
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            background: `conic-gradient(from 0deg, ${colors.join(', ')}, ${colors[0]})`,
-            padding: borderWidth,
-            zIndex: 0,
-          }}
-        >
-          {/* Inner transparent circle to create ring effect */}
-          <div
-            className="w-full h-full rounded-full"
-            style={{ backgroundColor: 'var(--color-canvas-default)' }}
-          />
-        </div>
-      )}
-
-      {/* ── Image-based frame overlay ── */}
-      {hasImageFrame && (
-        <img
-          src={frameRef!.imageUrl!}
-          alt=""
-          className="absolute pointer-events-none"
-          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-          style={{
-            width: ringSize,
-            height: ringSize,
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            objectFit: 'contain',
-            mixBlendMode: useBlend ? 'screen' : 'normal',
-            zIndex: 0,
-          }}
-        />
-      )}
-
-      {/* ── Glow ring for glow/flame styles (CSS-only, no image needed) ── */}
-      {hasFrame && !hasImageFrame && (frameRef?.borderStyle === 'glow' || frameRef?.borderStyle === 'flame') && (
-        <div
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            width: ringSize + 8,
-            height: ringSize + 8,
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            boxShadow: `0 0 20px 6px ${primaryColor}50, inset 0 0 12px 4px ${primaryColor}20`,
-            zIndex: 0,
-          }}
-        />
-      )}
-
-      {/* ── Avatar circle ── */}
+      {/* Avatar circle — the profile picture underneath */}
       <div
         className="relative rounded-full overflow-hidden flex items-center justify-center"
         style={{
           width: px,
           height: px,
-          zIndex: 1,
           backgroundColor: 'var(--color-canvas-subtle)',
-          border: hasFrame && !hasImageFrame
-            ? `${Math.max(borderWidth, 2)}px solid ${primaryColor}`
-            : 'none',
           color: 'var(--color-fg-default)',
           fontSize,
           fontWeight: 600,
@@ -188,6 +111,24 @@ export function AvatarWithFrame({ user, size = 'md', className = '', style: over
           user.username.charAt(0).toUpperCase()
         )}
       </div>
+
+      {/* Frame image — ON TOP of the avatar, like Google/gaming frames */}
+      {hasFrameImage && (
+        <img
+          src={frameImageUrl!}
+          alt=""
+          className="absolute inset-0 m-auto pointer-events-none"
+          style={{
+            width: frameSize,
+            height: frameSize,
+            mixBlendMode: useBlend ? 'screen' : 'normal',
+          }}
+          onError={(e) => {
+            // If frame image fails to load, hide it silently
+            ;(e.target as HTMLImageElement).style.display = 'none'
+          }}
+        />
+      )}
     </Wrapper>
   )
 }

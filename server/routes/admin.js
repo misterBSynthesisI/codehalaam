@@ -119,6 +119,7 @@ router.get('/users', async (req, res) => {
       .skip((page - 1) * limit)
       .limit(parseInt(limit))
       .select('-contributionDays -password')
+      .populate('avatarFrameRef')
 
     const total = await User.countDocuments(query)
 
